@@ -21,7 +21,7 @@
  */
 
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js'; // must stay at the top
-import { Gio, GLib, Meta } from './gi/ext';
+import { Gio, GLib, Meta, St } from './gi/ext';
 import { logger } from './utils/logger';
 import {
     filterUnfocusableWindows,
@@ -121,9 +121,7 @@ export default class TilingShellExtension extends Extension {
         // force initialization and tracking of windows
         TilingShellWindowManager.get();
 
-        this._fractionalScalingEnabled = this._isFractionalScalingEnabled(
-            new Gio.Settings({ schema: 'org.gnome.mutter' }),
-        );
+        this._fractionalScalingEnabled = this._isLogicalScaling();
 
         if (this._keybindings) this._keybindings.destroy();
         this._keybindings = new KeyBindings(this.getSettings());
@@ -208,39 +206,28 @@ export default class TilingShellExtension extends Extension {
             }
         });
 
-        const mutterSettings = new Gio.Settings({ schema: 'org.gnome.mutter' });
-        // the key does not exist on GNOME 51+, so there is nothing to watch
-        if (this._hasExperimentalFeatures(mutterSettings)) {
-            this._signals.connect(
-                mutterSettings,
-                'changed::experimental-features',
-                (_mutterSettings: Gio.Settings) => {
-                    if (!_mutterSettings) return;
+        // scaling mode can change when the display configuration changes
+        this._signals.connect(
+            St.ThemeContext.get_for_stage(global.stage),
+            'notify::scale-factor',
+            () => {
+                const logicalScaling = this._isLogicalScaling();
+                if (this._fractionalScalingEnabled === logicalScaling) return;
 
-                    const fractionalScalingEnabled =
-                        this._isFractionalScalingEnabled(_mutterSettings);
-
-                    if (
-                        this._fractionalScalingEnabled ===
-                        fractionalScalingEnabled
-                    )
-                        return;
-
-                    this._fractionalScalingEnabled = fractionalScalingEnabled;
-                    this._createTilingManagers();
-                    if (this._indicator) {
-                        this._indicator.enableScaling =
-                            !this._fractionalScalingEnabled;
-                    }
-                    if (this._windowBorderManager)
-                        this._windowBorderManager.destroy();
-                    this._windowBorderManager = new WindowBorderManager(
-                        this._fractionalScalingEnabled,
-                    );
-                    this._windowBorderManager.enable();
-                },
-            );
-        }
+                this._fractionalScalingEnabled = logicalScaling;
+                this._createTilingManagers();
+                if (this._indicator) {
+                    this._indicator.enableScaling =
+                        !this._fractionalScalingEnabled;
+                }
+                if (this._windowBorderManager)
+                    this._windowBorderManager.destroy();
+                this._windowBorderManager = new WindowBorderManager(
+                    !this._fractionalScalingEnabled,
+                );
+                this._windowBorderManager.enable();
+            },
+        );
 
         if (this._keybindings) {
             this._signals.connect(
@@ -744,24 +731,16 @@ export default class TilingShellExtension extends Extension {
         monitorTilingManager.onUntileWindow(focus_window, true);
     }
 
-    private _hasExperimentalFeatures(mutterSettings: Gio.Settings): boolean {
+    /**
+     * GNOME 50 and newer lay out monitors in logical pixels by default (Mutter dropped the
+     * experimental flag): monitor and window sizes are already divided by the scale and the
+     * shell's theme scale factor stays 1. Only if the user explicitly selected the physical
+     * layout mode, the monitors keep their pixel size and the theme scale factor carries
+     * the scale. At scale 1 both modes are identical, so logical (the default) is reported.
+     */
+    private _isLogicalScaling(): boolean {
         return (
-            mutterSettings.settings_schema?.has_key('experimental-features') ??
-            false
-        );
-    }
-
-    private _isFractionalScalingEnabled(
-        _mutterSettings: Gio.Settings,
-    ): boolean {
-        // GNOME 51+ dropped the key: scaling is always logical (fractional)
-        if (!this._hasExperimentalFeatures(_mutterSettings)) return true;
-
-        return (
-            _mutterSettings
-                .get_strv('experimental-features')
-                .find((feat) => feat === 'scale-monitor-framebuffer') !==
-            undefined
+            St.ThemeContext.get_for_stage(global.stage).scaleFactor === 1
         );
     }
 
