@@ -2,13 +2,13 @@
 
 [![release](https://img.shields.io/badge/Release_v16-blue?style=for-the-badge)]([https://ko-fi.com/domferr](https://github.com/domferr/tilingshell/releases))
 ![](https://img.shields.io/github/license/domferr/tilingshell?style=for-the-badge)
-![](https://img.shields.io/badge/GNOME-42--49-e04196?style=for-the-badge&logo=gnome&logoColor=white)
+![](https://img.shields.io/badge/GNOME-50--51-e04196?style=for-the-badge&logo=gnome&logoColor=white)
 [![kofi](https://img.shields.io/badge/Donate_on_Ko--fi-purple?logo=ko-fi&style=for-the-badge)](https://ko-fi.com/domferr)
 [![patreon](https://img.shields.io/badge/Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white)](https://patreon.com/domferr)
 
 # Tiling Shell #
 
-This is a Gnome Shell extension implementing modern windows tiling system by extending GNOME's default 2 columns to any layout you want! Can be installed on Gnome Shells from **42 to 49** on X11 and Wayland: the most recent GNOME Shell is supported, and older releases will include all the features and bug fixes!
+This is a Gnome Shell extension implementing modern windows tiling system by extending GNOME's default 2 columns to any layout you want! Can be installed on Gnome Shells **50 and 51** (Wayland only). Older GNOME Shells (42 to 49) are no longer supported by this fork: use the frozen release 17.3 for them.
 
 - 🤩 First and only extension that provides Windows 11's **snap assistant**
 - 🖥️🖥️ **multiple monitors support**, even with different scaling factors!
@@ -205,7 +205,7 @@ Clone the repo then run ```npm i``` to install dependencies and then run ```npm 
 ```bash
 npm run install:extension
 ```
-You can restart your GNOME shell e.g. logout then login, or restart in place with an `alt-F2` and entering `r` (X11 only) and enable the extension. Enjoy it!
+You need to restart your GNOME shell by logging out and in again, then enable the extension. Enjoy it!
 To enable via the command line you can run 
 ```bash
 /usr/bin/gnome-extensions enable tilingshell@ferrarodomenico.com
@@ -301,18 +301,3 @@ The first element is the settings key, the second element is the title and the t
 _Please use the same description you wrote in the schema at step 1._
 
 For any problem, doubts or if you are stuck, feel free to open a pull request with what you have already done. I'm more than happy to help!
-
-## Vagrant
-
-```
-The private key to connect to the machine via SSH must be owned
-by the user running Vagrant. This is a strict requirement from
-SSH itself. Please fix the following key to be owned by the user
-running Vagrant:
-```
-
-If you are running on a NTFS file system then you have to move out the key:
-```
-mv /path/to/box/virtualbox/private_key $HOME/.ssh/vagrant_key
-ln -sr $HOME/.ssh/vagrant_key /path/to/box/virtualbox/private_key
-```

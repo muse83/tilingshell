@@ -771,11 +771,8 @@ export default class TilingShellExtension extends Extension {
         return (
             _mutterSettings
                 .get_strv('experimental-features')
-                .find(
-                    (feat) =>
-                        feat === 'scale-monitor-framebuffer' ||
-                        feat === 'x11-randr-fractional-scaling',
-                ) !== undefined
+                .find((feat) => feat === 'scale-monitor-framebuffer') !==
+            undefined
         );
     }
 
