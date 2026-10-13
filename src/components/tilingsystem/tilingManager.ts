@@ -1,6 +1,7 @@
 import { Clutter, Mtk, Meta, GLib } from '../../gi/ext';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { logger } from '../../utils/logger';
+import WindowMemory from '../windowMemory/windowMemory';
 import {
     buildMargin,
     buildRectangle,
@@ -296,6 +297,8 @@ export class TilingManager {
             global.display,
             'window-created',
             (_display: Meta.Display, window: Meta.Window) => {
+                // a remembered window comes back by itself where it was
+                if (WindowMemory.hasEntryFor(window)) return;
                 if (Settings.ENABLE_AUTO_TILING) this._autoTile(window, true);
             },
         );
@@ -1215,6 +1218,11 @@ export class TilingManager {
 
     public onTileFromWindowMenu(tile: Tile, window: Meta.Window) {
         this._easeWindowRectFromTile(tile, window);
+    }
+
+    /** Tile a window right away, without animation, e.g. when its app is reopened. */
+    public restoreTile(tile: Tile, window: Meta.Window) {
+        this._easeWindowRectFromTile(tile, window, true);
     }
 
     public onSpanAllTiles(window: Meta.Window) {

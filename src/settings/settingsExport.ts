@@ -5,6 +5,7 @@ import SettingsOverride from '../settings/settingsOverride';
 const dconfPath = '/org/gnome/shell/extensions/tilingshell/';
 const excludedKeys: string[] = [
     Settings.KEY_SETTING_LAYOUTS_JSON,
+    Settings.KEY_REMEMBERED_WINDOWS,
     Settings.KEY_LAST_VERSION_NAME_INSTALLED,
     Settings.KEY_OVERRIDDEN_SETTINGS,
 ];

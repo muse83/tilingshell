@@ -287,6 +287,26 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         );
         behaviourGroup.add(restoreToOriginalSizeRow);
 
+        const rememberWindowsRow = this._buildSwitchRow(
+            Settings.KEY_REMEMBER_WINDOWS,
+            _('Remember windows'),
+            _(
+                'Reopen the windows of an application with the size, position and tile they had when it was last closed',
+            ),
+        );
+        behaviourGroup.add(rememberWindowsRow);
+        behaviourGroup.add(
+            this._buildButtonRow(
+                _('Clear'),
+                _('Clear remembered windows'),
+                _('Forget the size, position and tile of all applications'),
+                () => {
+                    Settings.REMEMBERED_WINDOWS = '{}';
+                },
+                'destructive-action',
+            ),
+        );
+
         const overrideWindowMenuRow = this._buildSwitchRow(
             Settings.KEY_OVERRIDE_WINDOW_MENU,
             _('Add snap assistant and auto-tile buttons to window menu'),
