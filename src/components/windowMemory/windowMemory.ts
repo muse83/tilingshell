@@ -133,7 +133,10 @@ export default class WindowMemory {
         if (!Settings.REMEMBER_WINDOWS) return;
 
         const appId = this._appIdOf(window);
-        if (appId === null || window.is_fullscreen()) return;
+        if (appId === null || window.is_fullscreen()) {
+            debug('not remembering window', window.get_title(), appId);
+            return;
+        }
 
         const extWin = window as ExtendedWindow;
         const maximized =
@@ -174,15 +177,23 @@ export default class WindowMemory {
             .forEach((key) => delete remembered[key]);
 
         Settings.REMEMBERED_WINDOWS = JSON.stringify(remembered);
+        debug('remembered', appId, JSON.stringify(entry));
     }
 
     private _restore(window: Meta.Window): void {
         if (!Settings.REMEMBER_WINDOWS) return;
 
         const appId = this._appIdOf(window);
-        if (appId === null) return;
+        if (appId === null) {
+            debug('not restoring window without application id');
+            return;
+        }
         const entry = this._load()[appId];
-        if (!entry || !window.allows_move() || !window.allows_resize()) return;
+        if (!entry || !window.allows_move() || !window.allows_resize()) {
+            debug('nothing to restore for', appId, 'known:', !!entry);
+            return;
+        }
+        debug('restoring', appId, JSON.stringify(entry));
 
         const frame = this._fitOnMonitors(entry.frame);
         if (!entry.tile) this._avoidCovering(window, appId, frame);
