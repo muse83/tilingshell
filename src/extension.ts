@@ -219,32 +219,39 @@ export default class TilingShellExtension extends Extension {
             }
         });
 
-        this._signals.connect(
-            new Gio.Settings({ schema: 'org.gnome.mutter' }),
-            'changed::experimental-features',
-            (_mutterSettings: Gio.Settings) => {
-                if (!_mutterSettings) return;
+        const mutterSettings = new Gio.Settings({ schema: 'org.gnome.mutter' });
+        // the key does not exist on GNOME 51+, so there is nothing to watch
+        if (this._hasExperimentalFeatures(mutterSettings)) {
+            this._signals.connect(
+                mutterSettings,
+                'changed::experimental-features',
+                (_mutterSettings: Gio.Settings) => {
+                    if (!_mutterSettings) return;
 
-                const fractionalScalingEnabled =
-                    this._isFractionalScalingEnabled(_mutterSettings);
+                    const fractionalScalingEnabled =
+                        this._isFractionalScalingEnabled(_mutterSettings);
 
-                if (this._fractionalScalingEnabled === fractionalScalingEnabled)
-                    return;
+                    if (
+                        this._fractionalScalingEnabled ===
+                        fractionalScalingEnabled
+                    )
+                        return;
 
-                this._fractionalScalingEnabled = fractionalScalingEnabled;
-                this._createTilingManagers();
-                if (this._indicator) {
-                    this._indicator.enableScaling =
-                        !this._fractionalScalingEnabled;
-                }
-                if (this._windowBorderManager)
-                    this._windowBorderManager.destroy();
-                this._windowBorderManager = new WindowBorderManager(
-                    this._fractionalScalingEnabled,
-                );
-                this._windowBorderManager.enable();
-            },
-        );
+                    this._fractionalScalingEnabled = fractionalScalingEnabled;
+                    this._createTilingManagers();
+                    if (this._indicator) {
+                        this._indicator.enableScaling =
+                            !this._fractionalScalingEnabled;
+                    }
+                    if (this._windowBorderManager)
+                        this._windowBorderManager.destroy();
+                    this._windowBorderManager = new WindowBorderManager(
+                        this._fractionalScalingEnabled,
+                    );
+                    this._windowBorderManager.enable();
+                },
+            );
+        }
 
         if (this._keybindings) {
             this._signals.connect(
@@ -748,9 +755,19 @@ export default class TilingShellExtension extends Extension {
         monitorTilingManager.onUntileWindow(focus_window, true);
     }
 
+    private _hasExperimentalFeatures(mutterSettings: Gio.Settings): boolean {
+        return (
+            mutterSettings.settings_schema?.has_key('experimental-features') ??
+            false
+        );
+    }
+
     private _isFractionalScalingEnabled(
         _mutterSettings: Gio.Settings,
     ): boolean {
+        // GNOME 51+ dropped the key: scaling is always logical (fractional)
+        if (!this._hasExperimentalFeatures(_mutterSettings)) return true;
+
         return (
             _mutterSettings
                 .get_strv('experimental-features')
@@ -763,6 +780,10 @@ export default class TilingShellExtension extends Extension {
     }
 
     disable(): void {
+        // disconnect signals first, while the objects they belong to are alive
+        this._signals?.disconnect();
+        this._signals = null;
+
         // bring back overridden keybindings
         this._keybindings?.destroy();
         this._keybindings = null;
@@ -774,10 +795,6 @@ export default class TilingShellExtension extends Extension {
         // destroy tiling managers
         this._tilingManagers.forEach((tm) => tm.destroy());
         this._tilingManagers = [];
-
-        // disconnect signals
-        this._signals?.disconnect();
-        this._signals = null;
 
         this._resizingManager?.destroy();
         this._resizingManager = null;
