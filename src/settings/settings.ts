@@ -96,6 +96,8 @@ export default class Settings {
     static KEY_SPAN_MULTIPLE_TILES_ACTIVATION_KEY = 'span-multiple-tiles-activation-key';
     static KEY_SPAN_MULTIPLE_TILES = 'enable-span-multiple-tiles';
     static KEY_RESTORE_WINDOW_ORIGINAL_SIZE = 'restore-window-original-size';
+    static KEY_REMEMBER_WINDOWS = 'remember-windows';
+    static KEY_REMEMBERED_WINDOWS = 'remembered-windows';
     static KEY_WRAPAROUND_FOCUS = 'enable-wraparound-focus';
     static KEY_ENABLE_DIRECTIONAL_FOCUS_TILED_ONLY = 'enable-directional-focus-tiled-only';
     static KEY_RESIZE_COMPLEMENTING_WINDOWS = 'resize-complementing-windows';
@@ -280,6 +282,22 @@ export default class Settings {
 
     static set SPAN_MULTIPLE_TILES_ACTIVATION_KEY(val: ActivationKey) {
         set_activationkey(Settings.KEY_SPAN_MULTIPLE_TILES_ACTIVATION_KEY, val);
+    }
+
+    static get REMEMBER_WINDOWS(): boolean {
+        return get_boolean(Settings.KEY_REMEMBER_WINDOWS);
+    }
+
+    static set REMEMBER_WINDOWS(val: boolean) {
+        set_boolean(Settings.KEY_REMEMBER_WINDOWS, val);
+    }
+
+    static get REMEMBERED_WINDOWS(): string {
+        return get_string(Settings.KEY_REMEMBERED_WINDOWS);
+    }
+
+    static set REMEMBERED_WINDOWS(val: string) {
+        set_string(Settings.KEY_REMEMBERED_WINDOWS, val);
     }
 
     static get RESTORE_WINDOW_ORIGINAL_SIZE(): boolean {

@@ -33,6 +33,7 @@ import {
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { TilingManager } from './components/tilingsystem/tilingManager';
 import Settings from './settings/settings';
+import WindowMemory from './components/windowMemory/windowMemory';
 import SignalHandling from './utils/signalHandling';
 import GlobalState from './utils/globalState';
 import Indicator from './indicator/indicator';
@@ -59,6 +60,7 @@ export default class TilingShellExtension extends Extension {
     private _indicator: Indicator | null;
     private _tilingManagers: TilingManager[];
     private _fractionalScalingEnabled: boolean;
+    private _windowMemory: WindowMemory | null = null;
     private _dbus: DBus | null;
     private _signals: SignalHandling | null;
     private _keybindings: KeyBindings | null;
@@ -174,6 +176,15 @@ export default class TilingShellExtension extends Extension {
 
         this._raiseTogetherManager = new RaiseTogetherManager();
         this._raiseTogetherManager.enable();
+
+        this._windowMemory?.destroy();
+        this._windowMemory = new WindowMemory((window, tile) =>
+            this._tilingManagers[window.get_monitor()]?.restoreTile(
+                tile,
+                window,
+            ),
+        );
+        this._windowMemory.enable();
 
         this.createIndicator();
 
@@ -799,6 +810,9 @@ export default class TilingShellExtension extends Extension {
 
         this._raiseTogetherManager?.destroy();
         this._raiseTogetherManager = null;
+
+        this._windowMemory?.destroy();
+        this._windowMemory = null;
 
         // disable dbus
         this._dbus?.disable();
