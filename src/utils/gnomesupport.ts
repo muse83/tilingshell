@@ -18,7 +18,9 @@ export function buildBlurEffect(sigma: number): Shell.BlurEffect {
     return effect;
 }
 
-export function getEventCoords(event: Clutter.Event): number[] {
+export function getEventCoords(event: {
+    get_coords(): number[];
+}): number[] {
     return event.get_coords();
 }
 

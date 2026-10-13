@@ -1,4 +1,4 @@
-import { GObject, St, Clutter, Gio } from '../gi/ext';
+import { GObject, St, Clutter } from '../gi/ext';
 import SignalHandling from '../utils/signalHandling';
 import Indicator from './indicator';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -105,42 +105,22 @@ class LayoutsRow extends St.BoxLayout {
 
     public updateMonitorName(
         showMonitorName: boolean,
-        monitorsDetails: {
-            name: string;
-            index?: number;
-            x?: number;
-            y?: number;
-            height?: number;
-            width?: number;
-        }[],
+        monitorsDetails: { name: string; index: number }[],
     ) {
-        if (!showMonitorName) this._label.hide();
-        else this._label.show();
-
-        debug(`updateMonitorName: monitor=${this._monitor.index}, x=${this._monitor.x}, y=${this._monitor.y}`);
-        debug(`updateMonitorName: monitorsDetails=${JSON.stringify(monitorsDetails)}`);
-
-        // Try to match by index first, then fall back to coordinates
-        let details = monitorsDetails.find(
-            (m) => m.index === this._monitor.index,
-        );
-        if (details) {
-            debug(`updateMonitorName: matched by index ${this._monitor.index}`);
-        }
-        if (!details) {
-            details = monitorsDetails.find(
-                (m) => m.x === this._monitor.x && m.y === this._monitor.y,
-            );
-            if (details) {
-                debug(`updateMonitorName: matched by coordinates (${this._monitor.x}, ${this._monitor.y})`);
-            }
-        }
-        if (!details) {
-            debug(`updateMonitorName: no match found for monitor ${this._monitor.index}`);
+        if (!showMonitorName) {
+            this._label.hide();
             return;
         }
 
-        debug(`updateMonitorName: setting label to "${details.name}"`);
+        this._label.show();
+        const details = monitorsDetails.find(
+            (m) => m.index === this._monitor.index,
+        );
+        if (!details) {
+            debug(`no name found for monitor ${this._monitor.index}`);
+            return;
+        }
+
         this._label.set_text(details.name);
     }
 }
@@ -270,95 +250,33 @@ export default class DefaultMenu implements CurrentMenu {
         this._children.push(buttonsPopupMenu);
     }
 
-    // compute monitors details and update labels asynchronously (if we have successful results...)
+    // show the name of each monitor in the label of its layouts row
     private _computeMonitorsDetails() {
         if (getMonitors().length === 1) {
             this._layoutsRows.forEach((lr) => lr.updateMonitorName(false, []));
             return;
         }
 
-        // GNOME 49+ has Meta.Monitor with get_display_name()
-        const monitorsDetails: {
-            name: string;
-            index: number;
-            x: number;
-            y: number;
-        }[] | undefined = this._get_display_name();
-
-        if (monitorsDetails) {
-            this._layoutsRows.forEach((lr) =>
-                lr.updateMonitorName(true, monitorsDetails),
-            );
-            return;
-        }
-
-        // Fallback for GNOME < 49: use subprocess with Gdk
-        try {
-            // Since Gdk.Monitor has monitor's name but we can't import Gdk into gnome-shell, we run a gjs code in a subprocess.
-            // This code will just get all the monitors, printing into JSON format to stdout each monitor's name and geometry.
-            // If we are successfull, we parse the stdout of the subprocess and update monitor's name
-            const proc = Gio.Subprocess.new(
-                ['gjs', '-m', `${this._indicator.path}/monitorDescription.js`],
-                Gio.SubprocessFlags.STDOUT_PIPE |
-                    Gio.SubprocessFlags.STDERR_PIPE,
-            );
-
-            proc.communicate_utf8_async(
-                null,
-                null,
-                (pr: Gio.Subprocess | null, res: Gio.AsyncResult) => {
-                    if (!pr) return;
-
-                    const [, stdout, stderr] = pr.communicate_utf8_finish(res);
-                    if (pr.get_successful()) {
-                        debug(stdout);
-                        const parsedMonitorsDetails = JSON.parse(stdout);
-                        this._layoutsRows.forEach((lr) =>
-                            lr.updateMonitorName(true, parsedMonitorsDetails),
-                        );
-                    } else {
-                        debug('error:', stderr);
-                    }
-                },
-            );
-        } catch (e) {
-            debug(e);
-        }
+        const monitorsDetails = this._getMonitorsDetails();
+        this._layoutsRows.forEach((lr) =>
+            lr.updateMonitorName(true, monitorsDetails),
+        );
     }
 
-    // Use GNOME 49+'s Meta.Monitor with get_display_name()
-    private _get_display_name() {
-        const monitorManager = global.backend.get_monitor_manager();
-        if (!monitorManager.get_logical_monitors) return undefined;
+    private _getMonitorsDetails(): { name: string; index: number }[] {
+        const logicalMonitors =
+            global.backend.get_monitor_manager().get_logical_monitors() ?? [];
 
-        const logicalMonitors = monitorManager.get_logical_monitors();
-        if (!logicalMonitors || logicalMonitors.length <= 0) return undefined;
-
-        const monitorsDetails: {
-            name: string;
-            index: number;
-            x: number;
-            y: number;
-        }[] = [];
-        logicalMonitors.forEach(logicalMonitor => {
-            const metaMonitors = logicalMonitor.get_monitors();
-            if (metaMonitors.length <= 0) return;
-
-            const metaMonitor = metaMonitors[0];
-            if (!metaMonitor.get_display_name) return;
-
-            // MetaLogicalMonitor has x, y as direct properties
-            const x = (logicalMonitor as any).x ?? 0;
-            const y = (logicalMonitor as any).y ?? 0;
-            monitorsDetails.push({
-                name: metaMonitor.get_display_name(),
-                index: logicalMonitor.get_number(),
-                x,
-                y,
-            });
+        return logicalMonitors.flatMap((logicalMonitor) => {
+            const metaMonitor = logicalMonitor.get_monitors()[0];
+            if (!metaMonitor) return [];
+            return [
+                {
+                    name: metaMonitor.get_display_name(),
+                    index: logicalMonitor.get_number(),
+                },
+            ];
         });
-
-        return monitorsDetails;
     }
 
     private _updateScaling() {

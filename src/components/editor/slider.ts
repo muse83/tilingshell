@@ -65,9 +65,7 @@ export default class Slider extends St.Button {
             Math.round(y - this.height / 2),
         );
 
-        this.connect('notify::hover', () =>
-            global.display.set_cursor(this.preferredCursor),
-        );
+        this.connect('notify::hover', () => this._updateCursor());
         this.connect('destroy', this._onDestroy.bind(this));
     }
 
@@ -87,18 +85,31 @@ export default class Slider extends St.Button {
         );
     }
 
-    private get preferredCursor(): Meta.Cursor {
-        // These constants were renamed in Gnome 48 from NORTH/WEST_* to N/W_*
-        // @ts-expect-error "WEST_RESIZE is valid for GNOME < 48"
-        const horizCursor = Meta.Cursor.WEST_RESIZE ?? Meta.Cursor.W_RESIZE;
-        // @ts-expect-error "NORTH_RESIZE is valid for GNOME < 48"
-        const vertCursor = Meta.Cursor.NORTH_RESIZE ?? Meta.Cursor.N_RESIZE;
+    private _updateCursor(): void {
+        const active = this.hover || this._dragging;
+        // GNOME 51 removed Meta.Display.set_cursor: the cursor is a property of the actor
+        // @ts-expect-error "set_cursor_type and CursorType are not in the typings yet"
+        if (this.set_cursor_type !== undefined) {
+            // @ts-expect-error "see above"
+            const type = Clutter.CursorType;
+            // @ts-expect-error "see above"
+            this.set_cursor_type(
+                !active
+                    ? type.DEFAULT
+                    : this._horizontalDir
+                      ? type.EW_RESIZE
+                      : type.NS_RESIZE,
+            );
+            return;
+        }
 
-        return this.hover || this._dragging
-            ? this._horizontalDir
-                ? horizCursor
-                : vertCursor
-            : Meta.Cursor.DEFAULT;
+        // GNOME 50
+        const cursor = !active
+            ? Meta.Cursor.DEFAULT
+            : this._horizontalDir
+              ? Meta.Cursor.W_RESIZE
+              : Meta.Cursor.N_RESIZE;
+        global.display.set_cursor(cursor);
     }
 
     public addTile(tile: EditableTilePreview) {
@@ -325,7 +336,7 @@ export default class Slider extends St.Button {
         if (this._dragging) return Clutter.EVENT_PROPAGATE;
 
         this._dragging = true;
-        global.display.set_cursor(this.preferredCursor);
+        this._updateCursor();
 
         this._grab = global.stage.grab(this);
 
@@ -344,7 +355,7 @@ export default class Slider extends St.Button {
             this._dragging = false;
             this._lastEventCoord = null;
         }
-        global.display.set_cursor(this.preferredCursor);
+        this._updateCursor();
         return Clutter.EVENT_STOP;
     }
 
