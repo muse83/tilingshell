@@ -32,6 +32,7 @@ export default class WindowMemory {
         tile: Tile,
         monitorIndex: number
     ) => void;
+
     private readonly _unmanagingIds: Map<Meta.Window, number>;
     private readonly _shownIds: Map<Meta.Window, number>;
 
