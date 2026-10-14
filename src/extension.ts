@@ -178,11 +178,8 @@ export default class TilingShellExtension extends Extension {
         this._raiseTogetherManager.enable();
 
         this._windowMemory?.destroy();
-        this._windowMemory = new WindowMemory((window, tile) =>
-            this._tilingManagers[window.get_monitor()]?.restoreTile(
-                tile,
-                window,
-            ),
+        this._windowMemory = new WindowMemory((window, tile, monitorIndex) =>
+            this._tilingManagers[monitorIndex]?.restoreTile(tile, window),
         );
         this._windowMemory.enable();
 

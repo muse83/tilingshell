@@ -7,56 +7,55 @@ import { buildRectangle } from '../../utils/ui';
 import { maximizeWindow } from '../../utils/gnomesupport';
 import Tile from '../layout/Tile';
 import ExtendedWindow from '../tilingsystem/extendedWindow';
+import {
+    parseRememberedFrames,
+    placeRestored,
+    RememberedFrame,
+    rememberClosing,
+    Rect,
+} from './frameMemory';
 
 const debug = logger('WindowMemory');
-
-// how many applications are remembered at most, the least recently used are dropped
-const MAX_REMEMBERED_APPS = 200;
-// offset applied to a window that would cover another window of the same application
-const CASCADE_OFFSET = 30;
-const MAX_CASCADE_STEPS = 10;
-
-interface Rect {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
-
-interface RememberedWindow {
-    // size and position the window has when it is not tiled
-    frame: Rect;
-    tile?: Rect & { groups: number[] };
-    maximized?: boolean;
-}
-
-type RememberedWindows = { [appId: string]: RememberedWindow };
 
 /**
  * Reopens the windows of an application where the last window of that application was
  * closed: same size, same position, same tile (like macOS does). Monitor independent: if the
  * remembered position is no longer on a monitor, the window is moved onto the nearest one.
+ * The decisions live in frameMemory; this class only connects them to the windows.
  */
 export default class WindowMemory {
     private static _instance: WindowMemory | null = null;
 
     private readonly _signals: SignalHandling;
-    private readonly _tileWindow: (window: Meta.Window, tile: Tile) => void;
+    private readonly _tileWindow: (
+        window: Meta.Window,
+        tile: Tile,
+        monitorIndex: number
+    ) => void;
     private readonly _unmanagingIds: Map<Meta.Window, number>;
+    private readonly _shownIds: Map<Meta.Window, number>;
 
     /**
-     * @param tileWindow tiles the window into the given tile on the monitor the window is on
+     * @param tileWindow tiles the window into the given tile on the given monitor
      */
-    constructor(tileWindow: (window: Meta.Window, tile: Tile) => void) {
+    constructor(
+        tileWindow: (
+            window: Meta.Window,
+            tile: Tile,
+            monitorIndex: number
+        ) => void
+    ) {
         this._signals = new SignalHandling();
         this._tileWindow = tileWindow;
         this._unmanagingIds = new Map();
+        this._shownIds = new Map();
     }
 
     /** Whether a window of this application will be restored by this module. */
     public static hasEntryFor(window: Meta.Window): boolean {
         const instance = WindowMemory._instance;
         if (!instance || !Settings.REMEMBER_WINDOWS) return false;
+        if (!window.allows_move() || !window.allows_resize()) return false;
 
         const appId = instance._appIdOf(window);
         return appId !== null && instance._load()[appId] !== undefined;
@@ -65,16 +64,17 @@ export default class WindowMemory {
     public enable(): void {
         WindowMemory._instance = this;
 
-        global.get_window_actors().forEach((actor) => {
-            if (this._appIdOf(actor.metaWindow) !== null)
-                this._trackClosing(actor.metaWindow);
+        global.get_window_actors().forEach(actor => {
+            const window = actor.metaWindow;
+            if (window && this._appIdOf(window) !== null)
+                this._trackClosing(window);
         });
 
         this._signals.connect(
             global.display,
             'window-created',
             (_display: Meta.Display, window: Meta.Window) =>
-                this._onWindowCreated(window),
+                this._onWindowCreated(window)
         );
     }
 
@@ -82,8 +82,34 @@ export default class WindowMemory {
         if (WindowMemory._instance === this) WindowMemory._instance = null;
         this._signals.disconnect();
 
+        this._rememberOpenWindows();
+
         this._unmanagingIds.forEach((id, window) => window.disconnect(id));
         this._unmanagingIds.clear();
+        this._shownIds.forEach((id, window) => window.disconnect(id));
+        this._shownIds.clear();
+    }
+
+    /**
+     * On shutdown or disable the windows are not closed one by one, so remember what is open.
+     * The most recently used window of an app is saved last and therefore wins.
+     */
+    private _rememberOpenWindows(): void {
+        const recentFirst = global.display.get_tab_list(
+            Meta.TabList.NORMAL,
+            null
+        );
+        [...recentFirst]
+            .reverse()
+            .filter(window => this._unmanagingIds.has(window))
+            .forEach(window => {
+                try {
+                    this._remember(window);
+                } catch (e) {
+                    // shutting down: never let saving block the cleanup
+                    debug('could not remember window on shutdown', e);
+                }
+            });
     }
 
     private _appIdOf(window: Meta.Window): string | null {
@@ -97,14 +123,8 @@ export default class WindowMemory {
         return window.get_gtk_application_id() || window.get_wm_class() || null;
     }
 
-    private _load(): RememberedWindows {
-        try {
-            const parsed = JSON.parse(Settings.REMEMBERED_WINDOWS);
-            if (parsed && typeof parsed === 'object') return parsed;
-        } catch (e) {
-            debug('ignoring unreadable remembered windows', e);
-        }
-        return {};
+    private _load() {
+        return parseRememberedFrames(Settings.REMEMBERED_WINDOWS);
     }
 
     private _onWindowCreated(window: Meta.Window): void {
@@ -114,8 +134,10 @@ export default class WindowMemory {
         // the application id is only known once the window is shown
         const id = window.connect('shown', () => {
             window.disconnect(id);
+            this._shownIds.delete(window);
             this._restore(window);
         });
+        this._shownIds.set(window, id);
     }
 
     private _trackClosing(window: Meta.Window): void {
@@ -125,6 +147,11 @@ export default class WindowMemory {
             this._remember(window);
             window.disconnect(id);
             this._unmanagingIds.delete(window);
+
+            // a window closed before it was shown never fires 'shown'
+            const shownId = this._shownIds.get(window);
+            if (shownId !== undefined) window.disconnect(shownId);
+            this._shownIds.delete(window);
         });
         this._unmanagingIds.set(window, id);
     }
@@ -139,45 +166,18 @@ export default class WindowMemory {
         }
 
         const extWin = window as ExtendedWindow;
-        const maximized =
-            window.maximizedHorizontally && window.maximizedVertically;
-        const remembered = this._load();
-        const previous = remembered[appId];
+        const monitor = window.get_monitor();
+        const updated = rememberClosing(this._load(), appId, {
+            frame: window.get_frame_rect(),
+            maximized:
+                window.maximizedHorizontally && window.maximizedVertically,
+            tile: extWin.assignedTile,
+            sizeBeforeTile: extWin.originalSize,
+            workArea: Main.layoutManager.getWorkAreaForMonitor(monitor),
+        });
 
-        // a tiled window forgets its tile when closed, but the size it had before
-        // being tiled is what the user would expect after dragging it out of the tile
-        let frame: Rect = window.get_frame_rect();
-        if (extWin.assignedTile && extWin.originalSize)
-            frame = extWin.originalSize;
-        else if (maximized && previous) frame = previous.frame;
-
-        const entry: RememberedWindow = {
-            frame: {
-                x: frame.x,
-                y: frame.y,
-                width: frame.width,
-                height: frame.height,
-            },
-        };
-        if (maximized) entry.maximized = true;
-        else if (extWin.assignedTile)
-            entry.tile = {
-                x: extWin.assignedTile.x,
-                y: extWin.assignedTile.y,
-                width: extWin.assignedTile.width,
-                height: extWin.assignedTile.height,
-                groups: [...extWin.assignedTile.groups],
-            };
-
-        // re-insert to keep the most recently used application last
-        delete remembered[appId];
-        remembered[appId] = entry;
-        Object.keys(remembered)
-            .slice(0, -MAX_REMEMBERED_APPS)
-            .forEach((key) => delete remembered[key]);
-
-        Settings.REMEMBERED_WINDOWS = JSON.stringify(remembered);
-        debug('remembered', appId, JSON.stringify(entry));
+        Settings.REMEMBERED_WINDOWS = JSON.stringify(updated);
+        debug('remembered', appId, JSON.stringify(updated[appId]));
     }
 
     private _restore(window: Meta.Window): void {
@@ -188,83 +188,44 @@ export default class WindowMemory {
             debug('not restoring window without application id');
             return;
         }
-        const entry = this._load()[appId];
+        const entry: RememberedFrame | undefined = this._load()[appId];
         if (!entry || !window.allows_move() || !window.allows_resize()) {
             debug('nothing to restore for', appId, 'known:', !!entry);
             return;
         }
         debug('restoring', appId, JSON.stringify(entry));
 
-        const frame = this._fitOnMonitors(entry.frame);
-        if (!entry.tile) this._avoidCovering(window, appId, frame);
+        const workAreas: Rect[] = Main.layoutManager.monitors.map((_m, i) =>
+            Main.layoutManager.getWorkAreaForMonitor(i)
+        );
+        const occupied = global
+            .get_window_actors()
+            .map(actor => actor.metaWindow)
+            .filter(
+                (w): w is Meta.Window =>
+                    !!w && w !== window && this._appIdOf(w) === appId
+            )
+            .map(w => w.get_frame_rect());
+        const { frame, monitorIndex } = placeRestored(
+            entry,
+            workAreas,
+            occupied
+        );
 
         window.move_resize_frame(
             false,
             frame.x,
             frame.y,
             frame.width,
-            frame.height,
+            frame.height
         );
 
         if (entry.tile) {
-            this._tileWindow(window, new Tile(entry.tile));
-            // the resize above is asynchronous, so tiling captured the old size: dragging
-            // the window out of the tile must bring back the remembered size
+            // the move above is asynchronous: name the monitor instead of asking the window
+            this._tileWindow(window, new Tile(entry.tile), monitorIndex);
+            // tiling captured the old size: dragging the window out of the tile must
+            // bring back the remembered size
             (window as ExtendedWindow).originalSize = buildRectangle(frame);
         } else if (entry.maximized) maximizeWindow(window);
-    }
-
-    /** Move and shrink the rect so it is fully inside the work area of the nearest monitor. */
-    private _fitOnMonitors(frame: Rect): Rect {
-        const centerX = frame.x + frame.width / 2;
-        const centerY = frame.y + frame.height / 2;
-
-        let bestWorkArea: Rect | null = null;
-        let bestDistance = Infinity;
-        Main.layoutManager.monitors.forEach((_monitor, index) => {
-            const area = Main.layoutManager.getWorkAreaForMonitor(index);
-            const dx = Math.max(area.x - centerX, 0, centerX - (area.x + area.width));
-            const dy = Math.max(area.y - centerY, 0, centerY - (area.y + area.height));
-            const distance = dx * dx + dy * dy;
-            if (distance < bestDistance) {
-                bestDistance = distance;
-                bestWorkArea = area;
-            }
-        });
-        if (bestWorkArea === null) return frame;
-
-        const area: Rect = bestWorkArea;
-        const width = Math.min(frame.width, area.width);
-        const height = Math.min(frame.height, area.height);
-        return {
-            x: Math.min(Math.max(frame.x, area.x), area.x + area.width - width),
-            y: Math.min(Math.max(frame.y, area.y), area.y + area.height - height),
-            width,
-            height,
-        };
-    }
-
-    /** Cascade the rect while it sits exactly on top of another window of the same app. */
-    private _avoidCovering(window: Meta.Window, appId: string, frame: Rect): void {
-        const others = global
-            .get_window_actors()
-            .map((actor) => actor.metaWindow)
-            .filter((w) => w !== window && this._appIdOf(w) === appId)
-            .map((w) => w.get_frame_rect());
-
-        for (let step = 0; step < MAX_CASCADE_STEPS; step++) {
-            const covered = others.some(
-                (r) => r.x === frame.x && r.y === frame.y,
-            );
-            if (!covered) return;
-
-            const moved = this._fitOnMonitors({
-                ...frame,
-                x: frame.x + CASCADE_OFFSET,
-                y: frame.y + CASCADE_OFFSET,
-            });
-            frame.x = moved.x;
-            frame.y = moved.y;
-        }
     }
 }

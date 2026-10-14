@@ -27,6 +27,7 @@
     "prettier:check": "prettier --check \"**/*.{ts,scss}\"",
     "prettier:fix": "prettier --write \"**/*.{ts,scss}\"",
     "shexli": "shexli --format text \"$PWD\"/dist && shexli --format text \"$PWD\"/dist_legacy",
+    "test": "node --test tests/",
     "vm:sync": "vagrant rsync",
     "dev:vm:gnome46": "npm run vm:sync gnome46; vagrant up gnome46",
     "vm:destroy:gnome46": "vagrant destroy gnome46",
