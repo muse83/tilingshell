@@ -166,14 +166,12 @@ export default class WindowMemory {
         }
 
         const extWin = window as ExtendedWindow;
-        const monitor = window.get_monitor();
         const updated = rememberClosing(this._load(), appId, {
             frame: window.get_frame_rect(),
             maximized:
                 window.maximizedHorizontally && window.maximizedVertically,
             tile: extWin.assignedTile,
             sizeBeforeTile: extWin.originalSize,
-            workArea: Main.layoutManager.getWorkAreaForMonitor(monitor),
         });
 
         Settings.REMEMBERED_WINDOWS = JSON.stringify(updated);
@@ -195,6 +193,41 @@ export default class WindowMemory {
         }
         debug('restoring', appId, JSON.stringify(entry));
 
+        // no remembered free size: leave the window at the size the application chose
+        let monitorIndex = window.get_monitor();
+        let frame: Rect | undefined;
+        if (entry.frame) {
+            const placed = this._place(
+                { ...entry, frame: entry.frame },
+                window,
+                appId
+            );
+            frame = placed.frame;
+            monitorIndex = placed.monitorIndex;
+            window.move_resize_frame(
+                false,
+                frame.x,
+                frame.y,
+                frame.width,
+                frame.height
+            );
+        }
+
+        if (entry.tile) {
+            // the move above is asynchronous: name the monitor instead of asking the window
+            this._tileWindow(window, new Tile(entry.tile), monitorIndex);
+            // tiling captured the old size: dragging the window out of the tile must
+            // bring back the remembered size
+            if (frame)
+                (window as ExtendedWindow).originalSize = buildRectangle(frame);
+        } else if (entry.maximized) maximizeWindow(window);
+    }
+
+    private _place(
+        entry: RememberedFrame & { frame: Rect },
+        window: Meta.Window,
+        appId: string
+    ) {
         const workAreas: Rect[] = Main.layoutManager.monitors.map((_m, i) =>
             Main.layoutManager.getWorkAreaForMonitor(i)
         );
@@ -206,26 +239,6 @@ export default class WindowMemory {
                     !!w && w !== window && this._appIdOf(w) === appId
             )
             .map(w => w.get_frame_rect());
-        const { frame, monitorIndex } = placeRestored(
-            entry,
-            workAreas,
-            occupied
-        );
-
-        window.move_resize_frame(
-            false,
-            frame.x,
-            frame.y,
-            frame.width,
-            frame.height
-        );
-
-        if (entry.tile) {
-            // the move above is asynchronous: name the monitor instead of asking the window
-            this._tileWindow(window, new Tile(entry.tile), monitorIndex);
-            // tiling captured the old size: dragging the window out of the tile must
-            // bring back the remembered size
-            (window as ExtendedWindow).originalSize = buildRectangle(frame);
-        } else if (entry.maximized) maximizeWindow(window);
+        return placeRestored(entry, workAreas, occupied);
     }
 }

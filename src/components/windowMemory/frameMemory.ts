@@ -10,8 +10,9 @@ export interface Rect {
 export type TileRect = Rect & { groups: number[] };
 
 export interface RememberedFrame {
-    // size and position the window has when it is not tiled
-    frame: Rect;
+    // size and position the window has when it is not tiled; missing when the extension
+    // never saw it, then the application's own default size is used
+    frame?: Rect;
     tile?: TileRect;
     maximized?: boolean;
 }
@@ -34,9 +35,11 @@ function isRect(value: unknown): value is Rect {
 function parseEntry(value: unknown): RememberedFrame | null {
     if (typeof value !== 'object' || value === null) return null;
     const e = value as Record<string, unknown>;
-    if (!isRect(e.frame)) return null;
-
-    const entry: RememberedFrame = { frame: copyRect(e.frame) };
+    const entry: RememberedFrame = {};
+    if (e.frame !== undefined) {
+        if (!isRect(e.frame)) return null;
+        entry.frame = copyRect(e.frame);
+    }
     if (e.tile !== undefined) {
         const tile = e.tile as Record<string, unknown>;
         if (
@@ -48,6 +51,8 @@ function parseEntry(value: unknown): RememberedFrame | null {
         entry.tile = { ...copyRect(tile), groups: [...tile.groups] };
     }
     if (e.maximized === true) entry.maximized = true;
+    // an entry without any of the three says nothing
+    if (!entry.frame && !entry.tile && !entry.maximized) return null;
     return entry;
 }
 
@@ -76,8 +81,6 @@ export function parseRememberedFrames(raw: string): RememberedFrames {
 
 // how many applications are remembered at most, the least recently used are dropped
 export const MAX_REMEMBERED_APPS = 200;
-// share of the work area given to a window that was maximised with no free size known
-const FALLBACK_SHARE = 0.75;
 
 export interface ClosingWindow {
     frame: Rect;
@@ -85,20 +88,6 @@ export interface ClosingWindow {
     tile?: TileRect;
     // size the window had before it was tiled, if the extension knows it
     sizeBeforeTile?: Rect;
-    // work area of the monitor the window is on
-    workArea: Rect;
-}
-
-/** A smaller frame, centred in the work area, for windows whose free size is unknown. */
-function centeredShare(workArea: Rect): Rect {
-    const width = Math.round(workArea.width * FALLBACK_SHARE);
-    const height = Math.round(workArea.height * FALLBACK_SHARE);
-    return {
-        x: workArea.x + Math.round((workArea.width - width) / 2),
-        y: workArea.y + Math.round((workArea.height - height) / 2),
-        width,
-        height,
-    };
 }
 
 /**
@@ -110,19 +99,15 @@ export function rememberClosing(
     appId: string,
     closing: ClosingWindow
 ): RememberedFrames {
-    const previous = entries[appId];
+    // a tiled or maximised window is not at its free size: use the size from before, and
+    // if that is unknown remember none, so the application keeps its own default
+    const frame =
+        closing.tile || closing.maximized
+            ? closing.sizeBeforeTile
+            : closing.frame;
 
-    // the frame a user expects after dragging the window out of its tile or
-    // un-maximising it is a free one, never the tile or the whole work area
-    let frame: Rect;
-    if (closing.tile || closing.maximized) {
-        frame =
-            closing.sizeBeforeTile ??
-            previous?.frame ??
-            centeredShare(closing.workArea);
-    } else frame = closing.frame;
-
-    const entry: RememberedFrame = { frame: copyRect(frame) };
+    const entry: RememberedFrame = {};
+    if (frame) entry.frame = copyRect(frame);
     if (closing.maximized) entry.maximized = true;
     else if (closing.tile)
         entry.tile = {
@@ -200,7 +185,7 @@ function fitOntoNearestWorkArea(frame: Rect, workAreas: Rect[]): Placement {
  * @param occupied frames of the other windows of the same application
  */
 export function placeRestored(
-    entry: RememberedFrame,
+    entry: RememberedFrame & { frame: Rect },
     workAreas: Rect[],
     occupied: Rect[]
 ): Placement {

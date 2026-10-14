@@ -22,6 +22,14 @@ test('loading keeps valid entries including tile and maximised flag', () => {
     });
 });
 
+test('loading keeps an entry that has a tile but no size', () => {
+    const tile = { x: 0, y: 0, width: 0.5, height: 1, groups: [] };
+
+    assert.deepEqual(parseRememberedFrames(JSON.stringify({ app: { tile } })), {
+        app: { tile },
+    });
+});
+
 test('loading drops corrupt entries and survives unreadable data', () => {
     assert.deepEqual(parseRememberedFrames('not json'), {});
     assert.deepEqual(parseRememberedFrames('[1,2]'), {});
@@ -29,10 +37,10 @@ test('loading drops corrupt entries and survives unreadable data', () => {
 
     const raw = JSON.stringify({
         ok: { frame },
-        noFrame: {},
         zeroSize: { frame: { ...frame, width: 0 } },
         textCoordinate: { frame: { ...frame, x: 'left' } },
         brokenTile: { frame, tile: { x: 0, y: 0, width: 1, height: 1 } },
+        empty: {},
         notAnObject: 5,
     });
 
@@ -40,7 +48,7 @@ test('loading drops corrupt entries and survives unreadable data', () => {
 });
 
 const workArea = { x: 0, y: 0, width: 1920, height: 1080 };
-const free: ClosingWindow = { frame, maximized: false, workArea };
+const free: ClosingWindow = { frame, maximized: false };
 const halfTile = { x: 0, y: 0, width: 0.5, height: 1, groups: [1] };
 
 test('a free window is remembered by its frame', () => {
@@ -61,47 +69,35 @@ test('a tiled window keeps the size it had before tiling', () => {
     });
 });
 
-test('a tiled window of unknown free size reuses the earlier free frame', () => {
-    const earlier = { app: { frame } };
+test('a tiled window of unknown free size remembers no size, only the tile', () => {
     const closing = {
         ...free,
         frame: { x: 0, y: 0, width: 960, height: 1080 },
         tile: halfTile,
     };
 
-    assert.deepEqual(rememberClosing(earlier, 'app', closing), {
-        app: { frame, tile: halfTile },
+    assert.deepEqual(rememberClosing({ app: { frame } }, 'app', closing), {
+        app: { tile: halfTile },
     });
 });
 
-test('a tiled window of unknown free size without history gets a centred free frame', () => {
+test('a maximised window of unknown free size remembers no size, only the flag', () => {
+    const closing = { ...free, frame: workArea, maximized: true };
+
+    assert.deepEqual(rememberClosing({}, 'app', closing), {
+        app: { maximized: true },
+    });
+});
+
+test('a maximised window keeps the size it had before', () => {
     const closing = {
         ...free,
-        frame: { x: 0, y: 0, width: 960, height: 1080 },
-        tile: halfTile,
+        frame: workArea,
+        maximized: true,
+        sizeBeforeTile: frame,
     };
 
-    const { app } = rememberClosing({}, 'app', closing);
-
-    assert.deepEqual(app.frame, { x: 240, y: 135, width: 1440, height: 810 });
-    assert.deepEqual(app.tile, halfTile);
-});
-
-test('a maximised window without history comes back smaller than the work area', () => {
-    const closing = { ...free, frame: workArea, maximized: true };
-
-    const { app } = rememberClosing({}, 'app', closing);
-
-    assert.equal(app.maximized, true);
-    assert.ok(app.frame.width < workArea.width);
-    assert.ok(app.frame.height < workArea.height);
-    assert.ok(app.frame.x >= 0 && app.frame.x + app.frame.width <= 1920);
-});
-
-test('a maximised window keeps the free frame from before', () => {
-    const closing = { ...free, frame: workArea, maximized: true };
-
-    assert.deepEqual(rememberClosing({ app: { frame } }, 'app', closing), {
+    assert.deepEqual(rememberClosing({}, 'app', closing), {
         app: { frame, maximized: true },
     });
 });
