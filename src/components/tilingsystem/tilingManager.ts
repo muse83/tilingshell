@@ -1265,12 +1265,14 @@ export class TilingManager {
                 // again, we perform easing of movement too
                 // if the window is no longer a good candidate for
                 // autotiling, immediately restore its opacity
+                // the application is only known by now, so ask the memory again
                 if (
                     !window.minimized &&
                     !window.maximizedHorizontally &&
                     !window.maximizedVertically &&
                     window.get_transient_for() === null &&
-                    !window.is_attached_dialog()
+                    !window.is_attached_dialog() &&
+                    !WindowMemory.hasEntryFor(window)
                 )
                     this._easeWindowRectFromTile(vacantTile, window, true);
 

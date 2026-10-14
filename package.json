@@ -26,7 +26,8 @@
     "lint:build": "eslint dist --fix",
     "prettier:check": "prettier --check \"**/*.{ts,scss}\"",
     "prettier:fix": "prettier --write \"**/*.{ts,scss}\"",
-    "shexli": "shexli --format text \"$PWD\"/dist"
+    "shexli": "shexli --format text \"$PWD\"/dist",
+    "test": "node --test tests/"
   },
   "devDependencies": {
     "esbuild": "^0.27.3",
