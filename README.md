@@ -8,7 +8,7 @@
 
 # Tiling Shell #
 
-This is a Gnome Shell extension implementing modern windows tiling system by extending GNOME's default 2 columns to any layout you want! Can be installed on Gnome Shells **50 and 51** (Wayland only). Older GNOME Shells (42 to 49) are no longer supported by this fork: use the frozen release 17.3 for them.
+This is a Gnome Shell extension implementing modern windows tiling system by extending GNOME's default 2 columns to any layout you want! Can be installed on Gnome Shells **50 and 51** (Wayland only). Older GNOME Shells (42 to 49) are no longer supported by this fork: use the frozen release `17.3` (git tag `17.3`) for them. Releases from this fork on (`18.0` and later) are for GNOME 50 and 51 only.
 
 - 🤩 First and only extension that provides Windows 11's **snap assistant**
 - 🖥️🖥️ **multiple monitors support**, even with different scaling factors!

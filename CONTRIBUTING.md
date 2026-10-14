@@ -12,7 +12,7 @@ When contributing to this repository, please first discuss with the owners of th
 ## Pull Request Process
 
 1. Fork the repo and create your branch from `main`.
-2. If you've added code, test it for GNOME shell versions <= 44 and >= 45. (If don't know how to do it, don't worry, we can do it for you!)
+2. If you've added code, test it on GNOME shell 50 and 51. (If don't know how to do it, don't worry, we can do it for you!)
 3. If you've changed behaviour, record a demonstration video or describe what's new.
 4. Ensure the other features are still working.
 5. Make sure your code lints.

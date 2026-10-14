@@ -65,7 +65,7 @@ export default class WindowMemory {
     public enable(): void {
         WindowMemory._instance = this;
 
-        global.get_window_actors().forEach((actor) => {
+        global.get_window_actors().forEach(actor => {
             if (this._appIdOf(actor.metaWindow) !== null)
                 this._trackClosing(actor.metaWindow);
         });
@@ -74,7 +74,7 @@ export default class WindowMemory {
             global.display,
             'window-created',
             (_display: Meta.Display, window: Meta.Window) =>
-                this._onWindowCreated(window),
+                this._onWindowCreated(window)
         );
     }
 
@@ -174,7 +174,7 @@ export default class WindowMemory {
         remembered[appId] = entry;
         Object.keys(remembered)
             .slice(0, -MAX_REMEMBERED_APPS)
-            .forEach((key) => delete remembered[key]);
+            .forEach(key => delete remembered[key]);
 
         Settings.REMEMBERED_WINDOWS = JSON.stringify(remembered);
         debug('remembered', appId, JSON.stringify(entry));
@@ -203,7 +203,7 @@ export default class WindowMemory {
             frame.x,
             frame.y,
             frame.width,
-            frame.height,
+            frame.height
         );
 
         if (entry.tile) {
@@ -223,8 +223,16 @@ export default class WindowMemory {
         let bestDistance = Infinity;
         Main.layoutManager.monitors.forEach((_monitor, index) => {
             const area = Main.layoutManager.getWorkAreaForMonitor(index);
-            const dx = Math.max(area.x - centerX, 0, centerX - (area.x + area.width));
-            const dy = Math.max(area.y - centerY, 0, centerY - (area.y + area.height));
+            const dx = Math.max(
+                area.x - centerX,
+                0,
+                centerX - (area.x + area.width)
+            );
+            const dy = Math.max(
+                area.y - centerY,
+                0,
+                centerY - (area.y + area.height)
+            );
             const distance = dx * dx + dy * dy;
             if (distance < bestDistance) {
                 bestDistance = distance;
@@ -238,23 +246,30 @@ export default class WindowMemory {
         const height = Math.min(frame.height, area.height);
         return {
             x: Math.min(Math.max(frame.x, area.x), area.x + area.width - width),
-            y: Math.min(Math.max(frame.y, area.y), area.y + area.height - height),
+            y: Math.min(
+                Math.max(frame.y, area.y),
+                area.y + area.height - height
+            ),
             width,
             height,
         };
     }
 
     /** Cascade the rect while it sits exactly on top of another window of the same app. */
-    private _avoidCovering(window: Meta.Window, appId: string, frame: Rect): void {
+    private _avoidCovering(
+        window: Meta.Window,
+        appId: string,
+        frame: Rect
+    ): void {
         const others = global
             .get_window_actors()
-            .map((actor) => actor.metaWindow)
-            .filter((w) => w !== window && this._appIdOf(w) === appId)
-            .map((w) => w.get_frame_rect());
+            .map(actor => actor.metaWindow)
+            .filter(w => w !== window && this._appIdOf(w) === appId)
+            .map(w => w.get_frame_rect());
 
         for (let step = 0; step < MAX_CASCADE_STEPS; step++) {
             const covered = others.some(
-                (r) => r.x === frame.x && r.y === frame.y,
+                r => r.x === frame.x && r.y === frame.y
             );
             if (!covered) return;
 

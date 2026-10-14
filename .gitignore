@@ -41,7 +41,6 @@ node_modules/
 
 # build outputs
 dist/
-dist_legacy/
 
 ### VisualStudioCode ###
 .vscode/*
@@ -57,6 +56,5 @@ package-lock.json
 
 *tilingshell@ferrarodomenico.com.zip
 
-.vagrant
 
 shexli-result.html

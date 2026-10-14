@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js'; // must stay at the top
+import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import { Gio, GLib, Meta, St } from './gi/ext';
 import { logger } from './utils/logger';
 import {
@@ -57,7 +57,7 @@ const debug = logger('extension');
 export default class TilingShellExtension extends Extension {
     private _indicator: Indicator | null;
     private _tilingManagers: TilingManager[];
-    private _fractionalScalingEnabled: boolean;
+    private _logicalScaling: boolean;
     private _windowMemory: WindowMemory | null = null;
     private _dbus: DBus | null;
     private _signals: SignalHandling | null;
@@ -69,7 +69,7 @@ export default class TilingShellExtension extends Extension {
     constructor(metadata: ExtensionMetadata) {
         super(metadata);
         this._signals = null;
-        this._fractionalScalingEnabled = false;
+        this._logicalScaling = false;
         this._tilingManagers = [];
         this._indicator = null;
         this._dbus = null;
@@ -81,7 +81,7 @@ export default class TilingShellExtension extends Extension {
 
     createIndicator() {
         this._indicator = new Indicator(this.path, this.uuid);
-        this._indicator.enableScaling = !this._fractionalScalingEnabled;
+        this._indicator.enableScaling = !this._logicalScaling;
         this._indicator.enable();
         this._signals?.connect(this._indicator, 'open-preferences', () => this.openPreferences());
     }
@@ -123,7 +123,7 @@ export default class TilingShellExtension extends Extension {
         // force initialization and tracking of windows
         TilingShellWindowManager.get();
 
-        this._fractionalScalingEnabled = this._isLogicalScaling();
+        this._logicalScaling = this._isLogicalScaling();
 
         if (this._keybindings) this._keybindings.destroy();
         this._keybindings = new KeyBindings(this.getSettings());
@@ -156,7 +156,7 @@ export default class TilingShellExtension extends Extension {
 
         if (this._windowBorderManager) this._windowBorderManager.destroy();
         this._windowBorderManager = new WindowBorderManager(
-            !this._fractionalScalingEnabled,
+            !this._logicalScaling,
         );
         this._windowBorderManager.enable();
 
@@ -193,7 +193,7 @@ export default class TilingShellExtension extends Extension {
         this._tilingManagers.forEach((tm) => tm.destroy());
         this._tilingManagers = getMonitors().map(
             (monitor) =>
-                new TilingManager(monitor, !this._fractionalScalingEnabled),
+                new TilingManager(monitor, !this._logicalScaling),
         );
         this._tilingManagers.forEach((tm) => tm.enable());
     }
@@ -223,18 +223,18 @@ export default class TilingShellExtension extends Extension {
             'notify::scale-factor',
             () => {
                 const logicalScaling = this._isLogicalScaling();
-                if (this._fractionalScalingEnabled === logicalScaling) return;
+                if (this._logicalScaling === logicalScaling) return;
 
-                this._fractionalScalingEnabled = logicalScaling;
+                this._logicalScaling = logicalScaling;
                 this._createTilingManagers();
                 if (this._indicator) {
                     this._indicator.enableScaling =
-                        !this._fractionalScalingEnabled;
+                        !this._logicalScaling;
                 }
                 if (this._windowBorderManager)
                     this._windowBorderManager.destroy();
                 this._windowBorderManager = new WindowBorderManager(
-                    !this._fractionalScalingEnabled,
+                    !this._logicalScaling,
                 );
                 this._windowBorderManager.enable();
             },
@@ -341,7 +341,7 @@ export default class TilingShellExtension extends Extension {
                     const switcher = new LayoutSwitcherPopup(
                         kb.cycleLayoutsAction!,
                         backwardAction!,
-                        !this._fractionalScalingEnabled,
+                        !this._logicalScaling,
                     );
 
                     if (!switcher.show(currentAction === backwardAction, '', mask)) switcher.destroy();
@@ -788,7 +788,7 @@ export default class TilingShellExtension extends Extension {
         this._dbus?.disable();
         this._dbus = null;
 
-        this._fractionalScalingEnabled = false;
+        this._logicalScaling = false;
 
         OverriddenWindowMenu.destroy();
         OverriddenAltTab.destroy();

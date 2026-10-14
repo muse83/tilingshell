@@ -87,29 +87,27 @@ export default class Slider extends St.Button {
 
     private _updateCursor(): void {
         const active = this.hover || this._dragging;
-        // GNOME 51 removed Meta.Display.set_cursor: the cursor is a property of the actor
-        // @ts-expect-error "set_cursor_type and CursorType are not in the typings yet"
-        if (this.set_cursor_type !== undefined) {
-            // @ts-expect-error "see above"
-            const type = Clutter.CursorType;
-            // @ts-expect-error "see above"
-            this.set_cursor_type(
-                !active
-                    ? type.DEFAULT
-                    : this._horizontalDir
-                      ? type.EW_RESIZE
-                      : type.NS_RESIZE,
-            );
+        // GNOME 51 removed Meta.Display.set_cursor: the cursor is a property of the actor.
+        // set_cursor_type and Clutter.CursorType are not in the typings yet.
+        const actor = this as unknown as {
+            set_cursor_type?: (type: unknown) => void;
+        };
+        if (actor.set_cursor_type !== undefined) {
+            const type = (
+                Clutter as unknown as {
+                    CursorType: Record<string, unknown>;
+                }
+            ).CursorType;
+            const resize = this._horizontalDir ? 'EW_RESIZE' : 'NS_RESIZE';
+            actor.set_cursor_type(type[active ? resize : 'DEFAULT']);
             return;
         }
 
         // GNOME 50
-        const cursor = !active
-            ? Meta.Cursor.DEFAULT
-            : this._horizontalDir
-              ? Meta.Cursor.W_RESIZE
-              : Meta.Cursor.N_RESIZE;
-        global.display.set_cursor(cursor);
+        const resize = this._horizontalDir
+            ? Meta.Cursor.W_RESIZE
+            : Meta.Cursor.N_RESIZE;
+        global.display.set_cursor(active ? resize : Meta.Cursor.DEFAULT);
     }
 
     public addTile(tile: EditableTilePreview) {
