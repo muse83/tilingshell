@@ -36,17 +36,21 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         const resource = Gio.Resource.load(`${this.path}/resources.gresource`);
         Gio.resources_register(resource);
 
+        // no default display means no GUI to style, e.g. before a display is opened
+        const display = Gdk.Display.get_default();
+        if (!display) return;
+
         const provider = new Gtk.CssProvider();
         provider.load_from_path(`${this.path}/prefs.css`);
 
         Gtk.StyleContext.add_provider_for_display(
-            Gdk.Display.get_default(),
+            display,
             provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         );
 
         Gtk.IconTheme
-            .get_for_display(Gdk.Display.get_default())
+            .get_for_display(display)
             .add_resource_path(`${RESOURCES_PREFIX}/icons/scalable/actions`);
     }
 

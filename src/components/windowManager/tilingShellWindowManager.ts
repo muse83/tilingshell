@@ -64,8 +64,11 @@ export default class TilingShellWindowManager extends GObject.Object {
 
         this._signals = new SignalHandling();
         global.get_window_actors().forEach((winActor) => {
-            (winActor.metaWindow as WindowWithCachedProps).__ts_cached =
-                new CachedWindowProperties(winActor.metaWindow, this);
+            // the window of an actor is null once the window is gone
+            const window = winActor.metaWindow;
+            if (!window) return;
+            (window as WindowWithCachedProps).__ts_cached =
+                new CachedWindowProperties(window, this);
         });
 
         this._signals.connect(
@@ -80,8 +83,10 @@ export default class TilingShellWindowManager extends GObject.Object {
             global.windowManager,
             'minimize',
             (_, actor: Meta.WindowActor) => {
-                (actor.metaWindow as WindowWithCachedProps).__ts_cached?.update(
-                    actor.metaWindow,
+                const window = actor.metaWindow;
+                if (!window) return;
+                (window as WindowWithCachedProps).__ts_cached?.update(
+                    window,
                     this,
                 );
             },
@@ -90,8 +95,10 @@ export default class TilingShellWindowManager extends GObject.Object {
             global.windowManager,
             'unminimize',
             (_, actor: Meta.WindowActor) => {
-                (actor.metaWindow as WindowWithCachedProps).__ts_cached?.update(
-                    actor.metaWindow,
+                const window = actor.metaWindow;
+                if (!window) return;
+                (window as WindowWithCachedProps).__ts_cached?.update(
+                    window,
                     this,
                 );
             },
@@ -101,8 +108,10 @@ export default class TilingShellWindowManager extends GObject.Object {
             'size-changed',
             (_, actor: Meta.WindowActor) => {
                 // TODO disable default window animations Main.wm.skipNextEffect(actor);
-                (actor.metaWindow as WindowWithCachedProps).__ts_cached?.update(
-                    actor.metaWindow,
+                const window = actor.metaWindow;
+                if (!window) return;
+                (window as WindowWithCachedProps).__ts_cached?.update(
+                    window,
                     this,
                 );
             },

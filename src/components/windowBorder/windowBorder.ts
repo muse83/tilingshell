@@ -246,12 +246,16 @@ export default class WindowBorder extends St.DrawingArea {
     private async _computeBorderRadius(winActor: Meta.WindowActor) {
         // we are only interested into analyze the leftmost pixels (i.e. the whole left border)
         const width = 3;
-        const height = winActor.metaWindow.get_frame_rect().height;
+        // the window of an actor is null once the window is gone
+        const window = winActor.metaWindow;
+        if (!window) return;
+        const frameRect = window.get_frame_rect();
+        const height = frameRect.height;
         if (height <= 0) return;
         const content = winActor.paint_to_content(
             buildRectangle({
-                x: winActor.metaWindow.get_frame_rect().x,
-                y: winActor.metaWindow.get_frame_rect().y,
+                x: frameRect.x,
+                y: frameRect.y,
                 height,
                 width,
             }),

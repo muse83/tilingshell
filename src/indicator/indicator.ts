@@ -12,6 +12,7 @@ import EditorDialog from '../components/editor/editorDialog';
 import CurrentMenu from './currentMenu';
 import { registerGObjectClass } from '../utils/gjs';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import * as BoxPointer from 'resource:///org/gnome/shell/ui/boxpointer.js';
 
 enum IndicatorState {
     DEFAULT = 1,
@@ -96,7 +97,8 @@ export default class Indicator extends PanelMenu.Button {
     }
 
     public newLayoutOnClick(showLegendOnly: boolean) {
-        this.menu.close(true);
+        // SLIDE equals the former `true` (bit 0), so the animation is unchanged
+        this.menu.close(BoxPointer.PopupAnimation.SLIDE);
 
         const newLayout = new Layout(
             [
