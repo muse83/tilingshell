@@ -35,6 +35,8 @@ export default class SuggestedWindowPreview extends Shell.WindowPreview {
     private _stackAbove: Clutter.Actor | null;
     private _destroyed: boolean;
     private _idleHideOverlayId: number;
+    private _windowLayout: Shell.WindowPreviewLayout;
+    private _clone?: Clutter.Actor | null;
 
     constructor(metaWindow: Meta.Window) {
         super({
@@ -62,7 +64,8 @@ export default class SuggestedWindowPreview extends Shell.WindowPreview {
         // the initialization of the actor if that layout manager keeps track
         // of its container, so set the layout manager after creating the
         // container
-        this.windowContainer.layout_manager = new Shell.WindowPreviewLayout();
+        this._windowLayout = new Shell.WindowPreviewLayout();
+        this.windowContainer.layout_manager = this._windowLayout;
         this.add_child(this._previewContainer);
         this._previewContainer.add_child(this.windowContainer);
 
@@ -237,7 +240,7 @@ export default class SuggestedWindowPreview extends Shell.WindowPreview {
     }
 
     _addWindow(metaWindow: Meta.Window) {
-        this.clone = this.windowContainer.layout_manager.add_window(metaWindow);
+        this._clone = this._windowLayout.add_window(metaWindow);
         // if (!clone) return;
 
         /* // We expect this to be used for all interaction rather than
@@ -263,7 +266,7 @@ export default class SuggestedWindowPreview extends Shell.WindowPreview {
     }
 
     _hasAttachedDialogs() {
-        return this.windowContainer.layout_manager.get_windows().length > 1;
+        return this._windowLayout.get_windows().length > 1;
     }
 
     _updateAttachedDialogs() {
@@ -317,7 +320,7 @@ export default class SuggestedWindowPreview extends Shell.WindowPreview {
             global.stage.get_grab_actor() === this._closeButton)
             return super.vfunc_leave_event(event);*/
 
-        if (!this['has-pointer']) this.hideOverlay(true);
+        if (!this.hasPointer) this.hideOverlay(true);
         /* if (this._idleHideOverlayId > 0)
             GLib.source_remove(this._idleHideOverlayId);
 

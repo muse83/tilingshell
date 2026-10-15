@@ -377,7 +377,8 @@ export default class WindowBorder extends St.DrawingArea {
         if (!width || !height) return;
 
         const borderWidth = this._scaledBorderWidth;
-        const borderColor = themeNode.get_border_color(null);
+        // all sides share one colour; GNOME 51 returns the same value for a null side
+        const borderColor = themeNode.get_border_color(St.Side.TOP);
         const radius = [0, 0, 0, 0];
         radius[St.Corner.TOPLEFT] = themeNode.get_border_radius(St.Corner.TOPLEFT);
         radius[St.Corner.TOPRIGHT] = themeNode.get_border_radius(St.Corner.TOPRIGHT);
