@@ -166,11 +166,13 @@ export default class TilingLayoutWithSuggestions extends LayoutWidget<Suggestion
             const winActor =
                 nonTiledWin.get_compositor_private() as Meta.WindowActor;
 
-            // a closing window loses its compositor actor; touching the actor
-            // after that makes mutter dereference a null pointer and crash
+            // a closed window is detached from its actor (and the actor is
+            // destroyed); touching the actor after that makes mutter
+            // dereference a null pointer and crash. Compare first: calling a
+            // method on an already disposed actor can itself throw
             const isWindowGone = () =>
-                winActor.is_destroyed() ||
-                nonTiledWin.get_compositor_private() !== winActor;
+                nonTiledWin.get_compositor_private() !== winActor ||
+                winActor.is_destroyed();
 
             // fade out and unscale by 10% the window actor
             winActor.set_pivot_point(0.5, 0.5);
@@ -210,7 +212,8 @@ export default class TilingLayoutWithSuggestions extends LayoutWidget<Suggestion
                     scaleY: 1,
                     mode: Clutter.AnimationMode.EASE_OUT_QUAD,
                     onStopped: () => {
-                        if (!isWindowGone()) winActor.set_pivot_point(0, 0);
+                        if (isWindowGone()) return;
+                        winActor.set_pivot_point(0, 0);
                     },
                 });
             });
