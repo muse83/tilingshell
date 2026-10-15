@@ -166,6 +166,12 @@ export default class TilingLayoutWithSuggestions extends LayoutWidget<Suggestion
             const winActor =
                 nonTiledWin.get_compositor_private() as Meta.WindowActor;
 
+            // a closing window loses its compositor actor; touching the actor
+            // after that makes mutter dereference a null pointer and crash
+            const isWindowGone = () =>
+                winActor.is_destroyed() ||
+                nonTiledWin.get_compositor_private() !== winActor;
+
             // fade out and unscale by 10% the window actor
             winActor.set_pivot_point(0.5, 0.5);
             if (!nonTiledWin.minimized) {
@@ -177,6 +183,7 @@ export default class TilingLayoutWithSuggestions extends LayoutWidget<Suggestion
                     scaleY: 0.9,
                     mode: Clutter.AnimationMode.EASE_OUT_QUAD,
                     onComplete: () => {
+                        if (isWindowGone()) return;
                         winActor.hide();
                         winActor.set_pivot_point(0, 0);
                     },
@@ -185,6 +192,7 @@ export default class TilingLayoutWithSuggestions extends LayoutWidget<Suggestion
 
             // when the clone is destroyed, fade in the window actor
             winClone.connect('destroy', () => {
+                if (isWindowGone()) return;
                 if (nonTiledWin.minimized) {
                     // we don't need to show the actor if the window is minimized
                     winActor.set_pivot_point(0, 0);
@@ -201,7 +209,9 @@ export default class TilingLayoutWithSuggestions extends LayoutWidget<Suggestion
                     scaleX: 1,
                     scaleY: 1,
                     mode: Clutter.AnimationMode.EASE_OUT_QUAD,
-                    onStopped: () => winActor.set_pivot_point(0, 0),
+                    onStopped: () => {
+                        if (!isWindowGone()) winActor.set_pivot_point(0, 0);
+                    },
                 });
             });
 
