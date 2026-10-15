@@ -11,7 +11,9 @@ import { _ } from '../../translations';
 const OUTER_GAPS = 2;
 
 export default class MultipleWindowsIcon extends LayoutWidget<TilePreviewWithWindow> {
-    static { registerGObjectClass(this) }
+    static {
+        registerGObjectClass(this);
+    }
 
     private _label: St.Label;
     private _window: MetaWindowGroup;
@@ -63,7 +65,7 @@ export default class MultipleWindowsIcon extends LayoutWidget<TilePreviewWithWin
         // if the rightmost tiled window doesn't reach the end of the icon
         // let's shrink the width to make it happen
         let rightMostPercentage = 0.0;
-        params.tiles.forEach((t) => {
+        params.tiles.forEach(t => {
             if (t.x + t.width > rightMostPercentage)
                 rightMostPercentage = t.x + t.width;
         });
@@ -75,7 +77,7 @@ export default class MultipleWindowsIcon extends LayoutWidget<TilePreviewWithWin
         parent: Clutter.Actor,
         rect: Mtk.Rectangle,
         gaps: Clutter.Margin,
-        tile: Tile,
+        tile: Tile
     ): TilePreviewWithWindow {
         return new TilePreviewWithWindow({ parent, rect, gaps, tile });
     }

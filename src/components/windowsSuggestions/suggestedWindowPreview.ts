@@ -22,9 +22,11 @@ const ICON_OVERLAP = 0.7;
 This class is heavily based on Gnome Shell's WindowPreview class
 */
 export default class SuggestedWindowPreview extends Shell.WindowPreview {
-    static { registerGObjectClass(this, {
-        GTypeName: 'PopupWindowPreview',
-    })};
+    static {
+        registerGObjectClass(this, {
+            GTypeName: 'PopupWindowPreview',
+        });
+    }
 
     private _overlayShown: boolean;
     private _icon: St.Widget;
@@ -94,14 +96,14 @@ export default class SuggestedWindowPreview extends Shell.WindowPreview {
             new Clutter.BindConstraint({
                 source: this._previewContainer,
                 coordinate: Clutter.BindCoordinate.POSITION,
-            }),
+            })
         );
         this._icon.add_constraint(
             new Clutter.AlignConstraint({
                 source: this._previewContainer,
                 align_axis: Clutter.AlignAxis.X_AXIS,
                 factor: 0.5,
-            }),
+            })
         );
         this._icon.add_constraint(
             new Clutter.AlignConstraint({
@@ -109,7 +111,7 @@ export default class SuggestedWindowPreview extends Shell.WindowPreview {
                 align_axis: Clutter.AlignAxis.Y_AXIS,
                 pivot_point: new Graphene.Point({ x: -1, y: ICON_OVERLAP }),
                 factor: 1,
-            }),
+            })
         );
 
         this._title = new St.Label({
@@ -124,7 +126,7 @@ export default class SuggestedWindowPreview extends Shell.WindowPreview {
                 source: this._previewContainer,
                 align_axis: Clutter.AlignAxis.X_AXIS,
                 factor: 0, // Center horizontally
-            }),
+            })
         );
         this._title.add_constraint(
             new Clutter.AlignConstraint({
@@ -132,14 +134,14 @@ export default class SuggestedWindowPreview extends Shell.WindowPreview {
                 align_axis: Clutter.AlignAxis.Y_AXIS,
                 factor: 0, // Center vertically
                 pivot_point: new Graphene.Point({ x: -1, y: 0 }),
-            }),
+            })
         );
         this._title.clutter_text.ellipsize = Pango.EllipsizeMode.END;
         this.label_actor = this._title;
         this._metaWindow.connectObject(
             'notify::title',
             () => (this._title.text = this._getCaption()),
-            this,
+            this
         );
 
         this._previewContainer.add_child(this._title);
@@ -180,7 +182,7 @@ export default class SuggestedWindowPreview extends Shell.WindowPreview {
         )
             return;
 
-        [this._title].forEach((a) => {
+        [this._title].forEach(a => {
             a.opacity = 0;
             a.show();
             a.ease({
@@ -192,7 +194,7 @@ export default class SuggestedWindowPreview extends Shell.WindowPreview {
 
         const [width, height] = this.windowContainer.get_size();
         const { scaleFactor } = St.ThemeContext.get_for_stage(
-            global.stage as Clutter.Stage,
+            global.stage as Clutter.Stage
         );
         const activeExtraSize = WINDOW_ACTIVE_SIZE_INC * 2 * scaleFactor;
         const origSize = Math.max(width, height);
@@ -221,7 +223,7 @@ export default class SuggestedWindowPreview extends Shell.WindowPreview {
         )
             return;
 
-        [this._title].forEach((a) => {
+        [this._title].forEach(a => {
             a.opacity = 255;
             a.ease({
                 opacity: 0,

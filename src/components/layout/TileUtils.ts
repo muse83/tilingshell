@@ -14,7 +14,7 @@ export default class TileUtils {
 
     static apply_props_relative_to(
         tile: Tile,
-        container: Mtk.Rectangle,
+        container: Mtk.Rectangle
     ): Mtk.Rectangle {
         return buildRectangle({
             x: Math.round(container.width * tile.x),

@@ -1,20 +1,26 @@
 import Layout from '../../components/layout/Layout';
 import LayoutWidget from '../../components/layout/LayoutWidget';
 import { registerGObjectClass } from '../../utils/gjs';
-import { buildMarginOf, buildRectangle, getScalingFactorOf } from '../../utils/ui';
+import {
+    buildMarginOf,
+    buildRectangle,
+    getScalingFactorOf,
+} from '../../utils/ui';
 import { Clutter, Mtk } from '../../gi/ext';
 import SnapAssistTileButton from '../snapassist/snapAssistTileButton';
 import Tile from '../../components/layout/Tile';
 
 export default class LayoutTileButtons extends LayoutWidget<SnapAssistTileButton> {
-    static { registerGObjectClass(this) }
+    static {
+        registerGObjectClass(this);
+    }
 
     constructor(
         parent: Clutter.Actor,
         layout: Layout,
         gapSize: number,
         height: number,
-        width: number,
+        width: number
     ) {
         super({
             parent,
@@ -42,7 +48,7 @@ export default class LayoutTileButtons extends LayoutWidget<SnapAssistTileButton
         parent: Clutter.Actor,
         rect: Mtk.Rectangle,
         gaps: Clutter.Margin,
-        tile: Tile,
+        tile: Tile
     ): SnapAssistTileButton {
         return new SnapAssistTileButton({ parent, rect, gaps, tile });
     }
@@ -54,7 +60,7 @@ export default class LayoutTileButtons extends LayoutWidget<SnapAssistTileButton
     private _fixFloatingPointErrors() {
         const xMap: Map<number, number> = new Map();
         const yMap: Map<number, number> = new Map();
-        this._previews.forEach((prev) => {
+        this._previews.forEach(prev => {
             const tile = prev.tile;
             const newX = xMap.get(tile.x);
             if (!newX) xMap.set(tile.x, prev.rect.x);
@@ -74,12 +80,11 @@ export default class LayoutTileButtons extends LayoutWidget<SnapAssistTileButton
             }
             xMap.set(
                 tile.x + tile.width,
-                xMap.get(tile.x + tile.width) ?? prev.rect.x + prev.rect.width,
+                xMap.get(tile.x + tile.width) ?? prev.rect.x + prev.rect.width
             );
             yMap.set(
                 tile.y + tile.height,
-                yMap.get(tile.y + tile.height) ??
-                    prev.rect.y + prev.rect.height,
+                yMap.get(tile.y + tile.height) ?? prev.rect.y + prev.rect.height
             );
         });
     }

@@ -3,8 +3,10 @@ import { Shell } from '../../gi/ext';
 import TilePreview from './tilePreview';
 
 export default class BlurTilePreview extends TilePreview {
-    static { registerGObjectClass(this) }
-    
+    static {
+        registerGObjectClass(this);
+    }
+
     _init() {
         super._init();
 
@@ -18,7 +20,7 @@ export default class BlurTilePreview extends TilePreview {
                 // radius: sigma * 2,
                 brightness: 1,
                 mode: Shell.BlurMode.BACKGROUND, // blur what is behind the widget
-            }),
+            })
         );
         this.add_style_class_name('blur-tile-preview');
     }

@@ -6,18 +6,20 @@ import { buildBlurEffect } from '../../utils/gnomesupport';
 import Tile from '../../components/layout/Tile';
 
 export default class SelectionTilePreview extends TilePreview {
-    static { registerGObjectClass(this, {
-        GTypeName: 'SelectionTilePreview',
-        Properties: {
-            blur: GObject.ParamSpec.boolean(
-                'blur',
-                'blur',
-                'Enable or disable the blur effect',
-                GObject.ParamFlags.READWRITE,
-                false,
-            ),
-        },
-    })};
+    static {
+        registerGObjectClass(this, {
+            GTypeName: 'SelectionTilePreview',
+            Properties: {
+                blur: GObject.ParamSpec.boolean(
+                    'blur',
+                    'blur',
+                    'Enable or disable the blur effect',
+                    GObject.ParamFlags.READWRITE,
+                    false
+                ),
+            },
+        });
+    }
 
     private _blur: boolean;
 
@@ -35,19 +37,19 @@ export default class SelectionTilePreview extends TilePreview {
             Settings.KEY_ENABLE_BLUR_SELECTED_TILEPREVIEW,
             this,
             'blur',
-            Gio.SettingsBindFlags.GET,
+            Gio.SettingsBindFlags.GET
         );
 
         this._recolor();
         const styleChangedSignalID = St.ThemeContext.get_for_stage(
-            global.get_stage(),
+            global.get_stage()
         ).connect('changed', () => {
             this._recolor();
         });
         this.connect('destroy', () =>
             St.ThemeContext.get_for_stage(global.get_stage()).disconnect(
-                styleChangedSignalID,
-            ),
+                styleChangedSignalID
+            )
         );
         this._rect.width = this.gaps.left + this.gaps.right;
         this._rect.height = this.gaps.top + this.gaps.bottom;
@@ -84,7 +86,7 @@ export default class SelectionTilePreview extends TilePreview {
         // since an alpha value lower than 160 is not so much visible, enforce a minimum value of 160
         const newAlpha = Math.max(
             Math.min(backgroundColor.alpha + 35, 255),
-            160,
+            160
         );
         // The final alpha value is divided by 255 since CSS needs a value from 0 to 1, but ClutterColor expresses alpha from 0 to 255
         this.set_style(`

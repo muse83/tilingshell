@@ -14,8 +14,7 @@ import { registerGObjectClass } from '../../utils/gjs';
 const debug = logger('LayoutWidget');
 
 // export module LayoutWidget {
-export interface LayoutWidgetConstructorProperties
-    extends Partial<St.Widget.ConstructorProps> {
+export interface LayoutWidgetConstructorProperties extends Partial<St.Widget.ConstructorProps> {
     parent?: Clutter.Actor;
     layout: Layout;
     innerGaps: Clutter.Margin;
@@ -26,11 +25,13 @@ export interface LayoutWidgetConstructorProperties
 // }
 
 // A widget to draw a layout
-export default class LayoutWidget<
-    TileType extends TilePreview,
-> extends St.Widget {
-    static { registerGObjectClass(this) }
-    
+export default class LayoutWidget<TileType extends TilePreview>
+    extends St.Widget
+{
+    static {
+        registerGObjectClass(this);
+    }
+
     protected _previews: TileType[];
     protected _containerRect: Mtk.Rectangle;
     protected _layout: Layout;
@@ -85,16 +86,16 @@ export default class LayoutWidget<
                 this._outerGaps.top -
                 this._outerGaps.bottom,
         });
-        this._previews = this._layout.tiles.map((tile) => {
+        this._previews = this._layout.tiles.map(tile => {
             const tileRect = TileUtils.apply_props(
                 tile,
-                containerWithoutOuterGaps,
+                containerWithoutOuterGaps
             );
             const { gaps, isTop, isRight, isBottom, isLeft } = buildTileGaps(
                 tileRect,
                 this._innerGaps,
                 this._outerGaps,
-                containerWithoutOuterGaps,
+                containerWithoutOuterGaps
             );
 
             if (isTop) {
@@ -117,10 +118,10 @@ export default class LayoutWidget<
         _parent: Clutter.Actor,
         _rect: Mtk.Rectangle,
         _margin: Clutter.Margin,
-        _tile: Tile,
+        _tile: Tile
     ): TileType {
         throw new Error(
-            "This class shouldn't be instantiated but it should be extended instead",
+            "This class shouldn't be instantiated but it should be extended instead"
         );
     }
 
@@ -130,7 +131,7 @@ export default class LayoutWidget<
             containerRect: Mtk.Rectangle;
             innerGaps: Clutter.Margin;
             outerGaps: Clutter.Margin;
-        }>,
+        }>
     ): boolean {
         let trigger_relayout = this._previews.length === 0;
         if (params?.layout && this._layout !== params.layout) {
@@ -140,14 +141,14 @@ export default class LayoutWidget<
         if (params?.innerGaps) {
             trigger_relayout ||= !this._areGapsEqual(
                 this._innerGaps,
-                params.innerGaps,
+                params.innerGaps
             );
             this._innerGaps = params.innerGaps.copy();
         }
         if (params?.outerGaps && this._outerGaps !== params.outerGaps) {
             trigger_relayout ||= !this._areGapsEqual(
                 this._outerGaps,
-                params.outerGaps,
+                params.outerGaps
             );
             this._outerGaps = params.outerGaps.copy();
         }
@@ -164,7 +165,7 @@ export default class LayoutWidget<
             return false;
         }
 
-        this._previews?.forEach((preview) => {
+        this._previews?.forEach(preview => {
             if (preview.get_parent() === this) this.remove_child(preview);
 
             preview.destroy();
@@ -174,14 +175,14 @@ export default class LayoutWidget<
             return true;
 
         this.draw_layout();
-        this._previews.forEach((lay) => lay.open());
+        this._previews.forEach(lay => lay.open());
 
         return true;
     }
 
     private _areGapsEqual(
         first: Clutter.Margin,
-        second: Clutter.Margin,
+        second: Clutter.Margin
     ): boolean {
         return (
             first.bottom === second.bottom &&

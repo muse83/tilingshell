@@ -22,7 +22,7 @@ export default class EditingMenu implements CurrentMenu {
         const openMenuBtn = createButton(
             'menu-symbolic',
             _('Menu'),
-            this._indicator.path,
+            this._indicator.path
         );
         openMenuBtn.connect('clicked', () => this._indicator.openMenu(false));
         boxLayout.add_child(openMenuBtn);
@@ -30,7 +30,7 @@ export default class EditingMenu implements CurrentMenu {
         const infoMenuBtn = createButton(
             'info-symbolic',
             _('Info'),
-            this._indicator.path,
+            this._indicator.path
         );
         infoMenuBtn.connect('clicked', () => this._indicator.openMenu(true));
         boxLayout.add_child(infoMenuBtn);
@@ -38,7 +38,7 @@ export default class EditingMenu implements CurrentMenu {
         const saveBtn = createButton(
             'save-symbolic',
             _('Save'),
-            this._indicator.path,
+            this._indicator.path
         );
         saveBtn.connect('clicked', () => {
             this._indicator.menu.toggle();
@@ -49,7 +49,7 @@ export default class EditingMenu implements CurrentMenu {
         const cancelBtn = createButton(
             'cancel-symbolic',
             _('Cancel'),
-            this._indicator.path,
+            this._indicator.path
         );
         cancelBtn.connect('clicked', () => {
             this._indicator.menu.toggle();

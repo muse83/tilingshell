@@ -1,5 +1,5 @@
-@use "constants";
-@use "functions";
+@use 'constants';
+@use 'functions';
 
 .layout-editor {
     background-color: rgba(255, 255, 255, 0.14);
@@ -46,7 +46,8 @@
         font-weight: bold;
         text-align: center;
         font-family: monospace;
-        padding: calc(constants.$base-padding / 3) calc(constants.$base-padding * 2);
+        padding: calc(constants.$base-padding / 3)
+            calc(constants.$base-padding * 2);
         box-shadow: inset 0px -3px 0px 0px rgba(0, 0, 0, 0.2);
     }
 }

@@ -30,17 +30,19 @@ interface WindowWithCachedProps extends Meta.Window {
 }
 
 export default class TilingShellWindowManager extends GObject.Object {
-    static { registerGObjectClass(this, {
-        GTypeName: 'TilingShellWindowManager',
-        Signals: {
-            unmaximized: {
-                param_types: [Meta.Window.$gtype],
+    static {
+        registerGObjectClass(this, {
+            GTypeName: 'TilingShellWindowManager',
+            Signals: {
+                unmaximized: {
+                    param_types: [Meta.Window.$gtype],
+                },
+                maximized: {
+                    param_types: [Meta.Window.$gtype],
+                },
             },
-            maximized: {
-                param_types: [Meta.Window.$gtype],
-            },
-        },
-    })};
+        });
+    }
 
     private static _instance: TilingShellWindowManager | null;
 
@@ -63,7 +65,7 @@ export default class TilingShellWindowManager extends GObject.Object {
         super();
 
         this._signals = new SignalHandling();
-        global.get_window_actors().forEach((winActor) => {
+        global.get_window_actors().forEach(winActor => {
             // the window of an actor is null once the window is gone
             const window = winActor.metaWindow;
             if (!window) return;
@@ -77,7 +79,7 @@ export default class TilingShellWindowManager extends GObject.Object {
             (_, window: Meta.Window) => {
                 (window as WindowWithCachedProps).__ts_cached =
                     new CachedWindowProperties(window, this);
-            },
+            }
         );
         this._signals.connect(
             global.windowManager,
@@ -87,9 +89,9 @@ export default class TilingShellWindowManager extends GObject.Object {
                 if (!window) return;
                 (window as WindowWithCachedProps).__ts_cached?.update(
                     window,
-                    this,
+                    this
                 );
-            },
+            }
         );
         this._signals.connect(
             global.windowManager,
@@ -99,9 +101,9 @@ export default class TilingShellWindowManager extends GObject.Object {
                 if (!window) return;
                 (window as WindowWithCachedProps).__ts_cached?.update(
                     window,
-                    this,
+                    this
                 );
-            },
+            }
         );
         this._signals.connect(
             global.windowManager,
@@ -112,9 +114,9 @@ export default class TilingShellWindowManager extends GObject.Object {
                 if (!window) return;
                 (window as WindowWithCachedProps).__ts_cached?.update(
                     window,
-                    this,
+                    this
                 );
-            },
+            }
         );
     }
 
@@ -174,7 +176,7 @@ export default class TilingShellWindowManager extends GObject.Object {
             params.to.x,
             params.to.y,
             params.to.width,
-            params.to.height,
+            params.to.height
         );
         // while we hide the preview, show the actor to the new position,
         // this has opacity of 0 so it is hidden. Later we immediately swap

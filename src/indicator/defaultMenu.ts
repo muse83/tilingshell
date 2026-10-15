@@ -24,14 +24,16 @@ import { createButton, createIconButton } from './utils';
 const debug = logger('DefaultMenu');
 
 class LayoutsRow extends St.BoxLayout {
-    static { registerGObjectClass(this, {
-        GTypeName: 'LayoutsRow',
-        Signals: {
-            'selected-layout': {
-                param_types: [GObject.TYPE_STRING],
+    static {
+        registerGObjectClass(this, {
+            GTypeName: 'LayoutsRow',
+            Signals: {
+                'selected-layout': {
+                    param_types: [GObject.TYPE_STRING],
+                },
             },
-        },
-    })};
+        });
+    }
 
     private _layoutsBox: St.BoxLayout;
     private _layoutsButtons: LayoutButton[];
@@ -43,7 +45,7 @@ class LayoutsRow extends St.BoxLayout {
         layouts: Layout[],
         selectedId: string,
         showMonitorName: boolean,
-        monitor: Monitor,
+        monitor: Monitor
     ) {
         super({
             xAlign: Clutter.ActorAlign.CENTER,
@@ -71,7 +73,7 @@ class LayoutsRow extends St.BoxLayout {
 
         parent.add_child(this);
 
-        const selectedIndex = layouts.findIndex((lay) => lay.id === selectedId);
+        const selectedIndex = layouts.findIndex(lay => lay.id === selectedId);
         const hasGaps = Settings.get_inner_gaps(1).top > 0;
 
         const layoutHeight: number = 36;
@@ -83,11 +85,11 @@ class LayoutsRow extends St.BoxLayout {
                 lay,
                 hasGaps ? 2 : 0,
                 layoutHeight,
-                layoutWidth,
+                layoutWidth
             );
             btn.connect(
                 'clicked',
-                () => !btn.checked && this.emit('selected-layout', lay.id),
+                () => !btn.checked && this.emit('selected-layout', lay.id)
             );
             if (ind === selectedIndex) btn.set_checked(true);
             return btn;
@@ -96,16 +98,16 @@ class LayoutsRow extends St.BoxLayout {
 
     public selectLayout(selectedId: string) {
         const selectedIndex = GlobalState.get().layouts.findIndex(
-            (lay) => lay.id === selectedId,
+            lay => lay.id === selectedId
         );
         this._layoutsButtons.forEach((btn, ind) =>
-            btn.set_checked(ind === selectedIndex),
+            btn.set_checked(ind === selectedIndex)
         );
     }
 
     public updateMonitorName(
         showMonitorName: boolean,
-        monitorsDetails: { name: string; index: number }[],
+        monitorsDetails: { name: string; index: number }[]
     ) {
         if (!showMonitorName) {
             this._label.hide();
@@ -114,7 +116,7 @@ class LayoutsRow extends St.BoxLayout {
 
         this._label.show();
         const details = monitorsDetails.find(
-            (m) => m.index === this._monitor.index,
+            m => m.index === this._monitor.index
         );
         if (!details) {
             debug(`no name found for monitor ${this._monitor.index}`);
@@ -135,7 +137,11 @@ export default class DefaultMenu implements CurrentMenu {
     private _children: St.Widget[];
     private _openPrefsFn: () => void;
 
-    constructor(indicator: Indicator, enableScalingFactor: boolean, openPrefsFn: () => void) {
+    constructor(
+        indicator: Indicator,
+        enableScalingFactor: boolean,
+        openPrefsFn: () => void
+    ) {
         this._indicator = indicator;
         this._signals = new SignalHandling();
         this._openPrefsFn = openPrefsFn;
@@ -154,15 +160,15 @@ export default class DefaultMenu implements CurrentMenu {
         });
         layoutsPopupMenu.add_child(this._container);
         (this._indicator.menu as PopupMenu.PopupMenu).addMenuItem(
-            layoutsPopupMenu,
+            layoutsPopupMenu
         );
 
         if (enableScalingFactor) {
             const monitor = Main.layoutManager.findMonitorForActor(
-                this._container,
+                this._container
             );
             const scalingFactor = getMonitorScalingFactor(
-                monitor?.index || Main.layoutManager.primaryIndex,
+                monitor?.index || Main.layoutManager.primaryIndex
             );
             enableScalingFactorSupport(this._container, scalingFactor);
         }
@@ -176,7 +182,7 @@ export default class DefaultMenu implements CurrentMenu {
             Settings.KEY_SETTING_LAYOUTS_JSON,
             () => {
                 this._drawLayouts();
-            },
+            }
         );
         this._signals.connect(Settings, Settings.KEY_INNER_GAPS, () => {
             this._drawLayouts();
@@ -201,7 +207,7 @@ export default class DefaultMenu implements CurrentMenu {
                             : GlobalState.get().layouts[0].id;
                     this._layoutsRows[index].selectLayout(selectedId);
                 });
-            },
+            }
         );
 
         this._signals.connect(
@@ -218,17 +224,17 @@ export default class DefaultMenu implements CurrentMenu {
                             : GlobalState.get().layouts[0].id;
                     this._layoutsRows[index].selectLayout(selectedId);
                 });
-            },
+            }
         );
 
         this._signals.connect(Main.layoutManager, 'monitors-changed', () => {
             if (!enableScalingFactor) return;
 
             const monitor = Main.layoutManager.findMonitorForActor(
-                this._container,
+                this._container
             );
             const scalingFactor = getMonitorScalingFactor(
-                monitor?.index || Main.layoutManager.primaryIndex,
+                monitor?.index || Main.layoutManager.primaryIndex
             );
             enableScalingFactorSupport(this._container, scalingFactor);
 
@@ -245,7 +251,7 @@ export default class DefaultMenu implements CurrentMenu {
 
         const buttonsPopupMenu = this._buildEditingButtonsRow();
         (this._indicator.menu as PopupMenu.PopupMenu).addMenuItem(
-            buttonsPopupMenu,
+            buttonsPopupMenu
         );
         this._children.push(buttonsPopupMenu);
     }
@@ -253,13 +259,13 @@ export default class DefaultMenu implements CurrentMenu {
     // show the name of each monitor in the label of its layouts row
     private _computeMonitorsDetails() {
         if (getMonitors().length === 1) {
-            this._layoutsRows.forEach((lr) => lr.updateMonitorName(false, []));
+            this._layoutsRows.forEach(lr => lr.updateMonitorName(false, []));
             return;
         }
 
         const monitorsDetails = this._getMonitorsDetails();
-        this._layoutsRows.forEach((lr) =>
-            lr.updateMonitorName(true, monitorsDetails),
+        this._layoutsRows.forEach(lr =>
+            lr.updateMonitorName(true, monitorsDetails)
         );
     }
 
@@ -267,7 +273,7 @@ export default class DefaultMenu implements CurrentMenu {
         const logicalMonitors =
             global.backend.get_monitor_manager().get_logical_monitors() ?? [];
 
-        return logicalMonitors.flatMap((logicalMonitor) => {
+        return logicalMonitors.flatMap(logicalMonitor => {
             const metaMonitor = logicalMonitor.get_monitors()[0];
             if (!metaMonitor) return [];
             return [
@@ -299,25 +305,25 @@ export default class DefaultMenu implements CurrentMenu {
         const editLayoutsBtn = createButton(
             'edit-symbolic',
             `${_('Edit Layouts')}...`,
-            this._indicator.path,
+            this._indicator.path
         );
         editLayoutsBtn.connect('clicked', () =>
-            this._indicator.openLayoutEditor(),
+            this._indicator.openLayoutEditor()
         );
         buttonsBoxLayout.add_child(editLayoutsBtn);
         const newLayoutBtn = createButton(
             'add-symbolic',
             `${_('New Layout')}...`,
-            this._indicator.path,
+            this._indicator.path
         );
         newLayoutBtn.connect('clicked', () =>
-            this._indicator.newLayoutOnClick(true),
+            this._indicator.newLayoutOnClick(true)
         );
         buttonsBoxLayout.add_child(newLayoutBtn);
 
         const prefsBtn = createIconButton(
             'prefs-symbolic',
-            this._indicator.path,
+            this._indicator.path
         );
         prefsBtn.connect('clicked', () => {
             this._openPrefsFn();
@@ -341,7 +347,7 @@ export default class DefaultMenu implements CurrentMenu {
         const selected_layouts = Settings.get_selected_layouts();
         const ws_index = global.workspaceManager.get_active_workspace_index();
         const monitors = getMonitors();
-        this._layoutsRows = monitors.map((monitor) => {
+        this._layoutsRows = monitors.map(monitor => {
             const ws_selected_layouts =
                 ws_index < selected_layouts.length
                     ? selected_layouts[ws_index]
@@ -355,16 +361,16 @@ export default class DefaultMenu implements CurrentMenu {
                 layouts,
                 selectedId,
                 monitors.length > 1,
-                monitor,
+                monitor
             );
             row.connect(
                 'selected-layout',
                 (r: LayoutsRow, layoutId: string) => {
                     this._indicator.selectLayoutOnClick(
                         monitor.index,
-                        layoutId,
+                        layoutId
                     );
-                },
+                }
             );
             return row;
         });
@@ -372,9 +378,9 @@ export default class DefaultMenu implements CurrentMenu {
 
     public destroy() {
         this._signals.disconnect();
-        this._layoutsRows.forEach((lr) => lr.destroy());
+        this._layoutsRows.forEach(lr => lr.destroy());
         this._layoutsRows = [];
-        this._children.forEach((c) => c.destroy());
+        this._children.forEach(c => c.destroy());
         this._children = [];
     }
 }

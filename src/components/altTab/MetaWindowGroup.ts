@@ -17,7 +17,7 @@ export default class MetaWindowGroup {
         this._unmanagedCounter = 0;
         this._unmanagedEventHandler = null;
 
-        this._windows.forEach((win) =>
+        this._windows.forEach(win =>
             win.connect('unmanaged', () => {
                 this._unmanagedCounter++;
                 if (
@@ -25,7 +25,7 @@ export default class MetaWindowGroup {
                     this._unmanagedCounter === this._windows.length
                 )
                     this._unmanagedEventHandler();
-            }),
+            })
         );
 
         return new Proxy(this, {
@@ -38,9 +38,9 @@ export default class MetaWindowGroup {
                 if (typeof this._windows[0]?.[prop] === 'function') {
                     return (...args: any[]) => {
                         // Execute the method on each window in the group
-                        this._windows.forEach((win) =>
+                        this._windows.forEach(win =>
                             // @ts-expect-error "This is expected"
-                            (win[prop] as Function)(...args),
+                            (win[prop] as Function)(...args)
                         );
                     };
                 }
@@ -58,7 +58,7 @@ export default class MetaWindowGroup {
 
     public activate(time: number) {
         // avoid activating with the same time
-        this._windows.forEach((win) => {
+        this._windows.forEach(win => {
             win.activate(time);
             time = global.get_current_time();
         });

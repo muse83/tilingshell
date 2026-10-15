@@ -7,15 +7,17 @@ import Layout from '../../components/layout/Layout';
 import { buildRectangle } from '../../utils/ui';
 
 export default class SnapAssistLayout extends LayoutWidget<SnapAssistTile> {
-    static { registerGObjectClass(this) }
-    
+    static {
+        registerGObjectClass(this);
+    }
+
     constructor(
         parent: St.Widget,
         layout: Layout,
         innerGaps: Clutter.Margin,
         outerGaps: Clutter.Margin,
         width: number,
-        height: number,
+        height: number
     ) {
         super({
             containerRect: buildRectangle({ x: 0, y: 0, width, height }),
@@ -32,7 +34,7 @@ export default class SnapAssistLayout extends LayoutWidget<SnapAssistTile> {
         parent: Clutter.Actor,
         rect: Mtk.Rectangle,
         gaps: Clutter.Margin,
-        tile: Tile,
+        tile: Tile
     ): SnapAssistTile {
         return new SnapAssistTile({ parent, rect, gaps, tile });
     }

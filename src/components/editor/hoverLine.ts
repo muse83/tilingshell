@@ -4,8 +4,10 @@ import EditableTilePreview from './editableTilePreview';
 import { getScalingFactorOf } from '../../utils/ui';
 
 export default class HoverLine extends St.Widget {
-    static { registerGObjectClass(this) }
-    
+    static {
+        registerGObjectClass(this);
+    }
+
     private readonly _hoverTimer: number;
     private readonly _size: number;
 
@@ -25,7 +27,7 @@ export default class HoverLine extends St.Widget {
         this._hoverTimer = GLib.timeout_add(
             GLib.PRIORITY_DEFAULT_IDLE,
             100,
-            this._handleModifierChange.bind(this),
+            this._handleModifierChange.bind(this)
         );
 
         this.connect('destroy', this._onDestroy.bind(this));
@@ -66,7 +68,7 @@ export default class HoverLine extends St.Widget {
         this._drawLine(
             splitHorizontally,
             x - (this.get_parent()?.x || 0),
-            y - (this.get_parent()?.y || 0),
+            y - (this.get_parent()?.y || 0)
         );
 
         return GLib.SOURCE_CONTINUE;

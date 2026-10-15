@@ -9,8 +9,10 @@ type CachedContainer = Clutter.Actor & {
 const MASONRY_ROW_MIN_HEIGHT_PERCENTAGE = 0.15;
 
 export default class MasonryLayoutManager extends Clutter.LayoutManager {
-    static { registerGObjectClass(this) }
-    
+    static {
+        registerGObjectClass(this);
+    }
+
     private _rowCount: number;
     private _spacing: number;
     private _maxRowHeight: number;
@@ -28,7 +30,7 @@ export default class MasonryLayoutManager extends Clutter.LayoutManager {
         children: Clutter.Actor[],
         availableWidth: number,
         availableHeight: number,
-        rowHeight: number,
+        rowHeight: number
     ): { actor: Clutter.Actor; width: number; height: number }[][] {
         // lets compute the best number of rows and the best height of each row
         // making sure that we don't grow to much and go beyond the available height
@@ -147,7 +149,7 @@ export default class MasonryLayoutManager extends Clutter.LayoutManager {
             box.get_width(),
             container.width,
             box.get_height(),
-            container.height,
+            container.height
         );
 
         const availableWidth = container.width - 2 * this._spacing;
@@ -156,8 +158,8 @@ export default class MasonryLayoutManager extends Clutter.LayoutManager {
         const allocationCache = container._allocationCache || new Map();
         container._allocationCache = allocationCache;
 
-        if (!children.find((ch) => !allocationCache.has(ch))) {
-            children.forEach((ch) => ch.allocate(allocationCache.get(ch)));
+        if (!children.find(ch => !allocationCache.has(ch))) {
+            children.forEach(ch => ch.allocate(allocationCache.get(ch)));
             return;
         }
         allocationCache.clear();
@@ -259,7 +261,7 @@ export default class MasonryLayoutManager extends Clutter.LayoutManager {
             const index = row[1];
             rowsOrdering.set(
                 index,
-                (newIndex + Math.floor(this._rowCount / 2)) % this._rowCount,
+                (newIndex + Math.floor(this._rowCount / 2)) % this._rowCount
             );
         });
         for (const placement of placements)
@@ -312,10 +314,10 @@ export default class MasonryLayoutManager extends Clutter.LayoutManager {
 
     vfunc_get_preferred_width(
         container: Clutter.Actor,
-        _forHeight: number,
+        _forHeight: number
     ): [number, number] {
         let maxX = 0;
-        container.get_children().forEach((ch) => {
+        container.get_children().forEach(ch => {
             maxX = Math.max(maxX, ch.x + ch.width);
         });
         // add this._spacing because we want some right padding
@@ -324,10 +326,10 @@ export default class MasonryLayoutManager extends Clutter.LayoutManager {
 
     vfunc_get_preferred_height(
         container: Clutter.Actor,
-        _forWidth: number,
+        _forWidth: number
     ): [number, number] {
         let maxY = 0;
-        container.get_children().forEach((ch) => {
+        container.get_children().forEach(ch => {
             maxY = Math.max(maxY, ch.y + ch.height);
         });
         // add this._spacing because we want some bottom padding

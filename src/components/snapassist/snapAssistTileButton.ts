@@ -4,8 +4,10 @@ import { St, Clutter, Mtk } from '../../gi/ext';
 import SnapAssistTile from '../../components/snapassist/snapAssistTile';
 
 export default class SnapAssistTileButton extends SnapAssistTile {
-    static { registerGObjectClass(this) }
-    
+    static {
+        registerGObjectClass(this);
+    }
+
     private readonly _btn: St.Button;
 
     constructor(params: {
@@ -25,7 +27,7 @@ export default class SnapAssistTileButton extends SnapAssistTile {
 
         // for some reason this doesn't work: this.bind_property("hover", this._btn, "hover", GObject.BindingFlags.DEFAULT);
         this._btn.connect('notify::hover', () =>
-            this.set_hover(this._btn.hover),
+            this.set_hover(this._btn.hover)
         );
     }
 
@@ -42,7 +44,11 @@ export default class SnapAssistTileButton extends SnapAssistTile {
     }
 
     public connect(_id: string, _callback: (..._args: any[]) => any): number;
-    public connect(_signal: 'clicked', _callback: (_source: this, _clicked_button: number) => void): number;
+    public connect(
+        _signal: 'clicked',
+        _callback: (_source: this, _clicked_button: number) => void
+    ): number;
+
     public connect(signal: string, callback: never): number {
         if (signal === 'clicked') return this._btn.connect(signal, callback);
 

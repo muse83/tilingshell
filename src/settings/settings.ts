@@ -62,7 +62,7 @@ function set_unsigned_number(key: string, val: number): boolean {
 
 function get_activationkey(
     key: string,
-    defaultValue: ActivationKey,
+    defaultValue: ActivationKey
 ): ActivationKey {
     let val = Settings.gioSetting.get_strv(key);
     if (!val || val.length === 0) {
@@ -85,23 +85,33 @@ export default class Settings {
     static KEY_LAST_VERSION_NAME_INSTALLED = 'last-version-name-installed';
     static KEY_OVERRIDDEN_SETTINGS = 'overridden-settings';
     static KEY_WINDOW_BORDER_COLOR = 'window-border-color';
-    static KEY_WINDOW_USE_CUSTOM_BORDER_COLOR = 'window-use-custom-border-color';
+    static KEY_WINDOW_USE_CUSTOM_BORDER_COLOR =
+        'window-use-custom-border-color';
+
     static KEY_TILING_SYSTEM = 'enable-tiling-system';
     static KEY_SNAP_ASSIST = 'enable-snap-assist';
     static KEY_SNAP_ASSIST_SYNC_LAYOUT = 'snap-assist-sync-layout';
     static KEY_SHOW_INDICATOR = 'show-indicator';
     static KEY_TILING_SYSTEM_ACTIVATION_KEY = 'tiling-system-activation-key';
-    static KEY_TILING_SYSTEM_DEACTIVATION_KEY = 'tiling-system-deactivation-key';
-    static KEY_SPAN_MULTIPLE_TILES_ACTIVATION_KEY = 'span-multiple-tiles-activation-key';
+    static KEY_TILING_SYSTEM_DEACTIVATION_KEY =
+        'tiling-system-deactivation-key';
+
+    static KEY_SPAN_MULTIPLE_TILES_ACTIVATION_KEY =
+        'span-multiple-tiles-activation-key';
+
     static KEY_SPAN_MULTIPLE_TILES = 'enable-span-multiple-tiles';
     static KEY_RESTORE_WINDOW_ORIGINAL_SIZE = 'restore-window-original-size';
     static KEY_REMEMBER_WINDOWS = 'remember-windows';
     static KEY_REMEMBERED_WINDOWS = 'remembered-windows';
     static KEY_WRAPAROUND_FOCUS = 'enable-wraparound-focus';
-    static KEY_ENABLE_DIRECTIONAL_FOCUS_TILED_ONLY = 'enable-directional-focus-tiled-only';
+    static KEY_ENABLE_DIRECTIONAL_FOCUS_TILED_ONLY =
+        'enable-directional-focus-tiled-only';
+
     static KEY_RESIZE_COMPLEMENTING_WINDOWS = 'resize-complementing-windows';
     static KEY_ENABLE_BLUR_SNAP_ASSISTANT = 'enable-blur-snap-assistant';
-    static KEY_ENABLE_BLUR_SELECTED_TILEPREVIEW = 'enable-blur-selected-tilepreview';
+    static KEY_ENABLE_BLUR_SELECTED_TILEPREVIEW =
+        'enable-blur-selected-tilepreview';
+
     static KEY_ENABLE_MOVE_KEYBINDINGS = 'enable-move-keybindings';
     static KEY_ENABLE_AUTO_TILING = 'enable-autotiling';
     static KEY_RAISE_TOGETHER = 'raise-together';
@@ -118,12 +128,20 @@ export default class Settings {
     static KEY_SETTING_LAYOUTS_JSON = 'layouts-json';
     static KEY_SETTING_SELECTED_LAYOUTS = 'selected-layouts';
     static KEY_WINDOW_BORDER_WIDTH = 'window-border-width';
-    static KEY_ENABLE_SMART_WINDOW_BORDER_RADIUS = 'enable-smart-window-border-radius';
+    static KEY_ENABLE_SMART_WINDOW_BORDER_RADIUS =
+        'enable-smart-window-border-radius';
+
     static KEY_QUARTER_TILING_THRESHOLD = 'quarter-tiling-threshold';
     static KEY_EDGE_TILING_OFFSET = 'edge-tiling-offset';
-    static KEY_ENABLE_TILING_SYSTEM_WINDOWS_SUGGESTIONS = 'enable-tiling-system-windows-suggestions';
-    static KEY_ENABLE_SNAP_ASSISTANT_WINDOWS_SUGGESTIONS = 'enable-snap-assistant-windows-suggestions';
-    static KEY_ENABLE_SCREEN_EDGES_WINDOWS_SUGGESTIONS = 'enable-screen-edges-windows-suggestions';
+    static KEY_ENABLE_TILING_SYSTEM_WINDOWS_SUGGESTIONS =
+        'enable-tiling-system-windows-suggestions';
+
+    static KEY_ENABLE_SNAP_ASSISTANT_WINDOWS_SUGGESTIONS =
+        'enable-snap-assistant-windows-suggestions';
+
+    static KEY_ENABLE_SCREEN_EDGES_WINDOWS_SUGGESTIONS =
+        'enable-screen-edges-windows-suggestions';
+
     static KEY_EDGE_TILING_MODE = 'edge-tiling-mode';
 
     static SETTING_MOVE_WINDOW_RIGHT = 'move-window-right';
@@ -169,7 +187,7 @@ export default class Settings {
         key: string,
         object: GObject.Object | any,
         property: string,
-        flags: Gio.SettingsBindFlags = Gio.SettingsBindFlags.DEFAULT,
+        flags: Gio.SettingsBindFlags = Gio.SettingsBindFlags.DEFAULT
     ): void {
         this._settings?.bind(key, object, property, flags);
     }
@@ -225,7 +243,7 @@ export default class Settings {
     static get TILING_SYSTEM_ACTIVATION_KEY(): ActivationKey {
         return get_activationkey(
             Settings.KEY_TILING_SYSTEM_ACTIVATION_KEY,
-            ActivationKey.CTRL,
+            ActivationKey.CTRL
         );
     }
 
@@ -236,7 +254,7 @@ export default class Settings {
     static get TILING_SYSTEM_DEACTIVATION_KEY(): ActivationKey {
         return get_activationkey(
             Settings.KEY_TILING_SYSTEM_DEACTIVATION_KEY,
-            ActivationKey.NONE,
+            ActivationKey.NONE
         );
     }
 
@@ -271,7 +289,7 @@ export default class Settings {
     static get SPAN_MULTIPLE_TILES_ACTIVATION_KEY(): ActivationKey {
         return get_activationkey(
             Settings.KEY_SPAN_MULTIPLE_TILES_ACTIVATION_KEY,
-            ActivationKey.ALT,
+            ActivationKey.ALT
         );
     }
 
@@ -481,7 +499,7 @@ export default class Settings {
 
     static get ENABLE_TILING_SYSTEM_WINDOWS_SUGGESTIONS(): boolean {
         return get_boolean(
-            Settings.KEY_ENABLE_TILING_SYSTEM_WINDOWS_SUGGESTIONS,
+            Settings.KEY_ENABLE_TILING_SYSTEM_WINDOWS_SUGGESTIONS
         );
     }
 
@@ -491,20 +509,20 @@ export default class Settings {
 
     static get ENABLE_SNAP_ASSISTANT_WINDOWS_SUGGESTIONS(): boolean {
         return get_boolean(
-            Settings.KEY_ENABLE_SNAP_ASSISTANT_WINDOWS_SUGGESTIONS,
+            Settings.KEY_ENABLE_SNAP_ASSISTANT_WINDOWS_SUGGESTIONS
         );
     }
 
     static set ENABLE_SNAP_ASSISTANT_WINDOWS_SUGGESTIONS(val: boolean) {
         set_boolean(
             Settings.KEY_ENABLE_SNAP_ASSISTANT_WINDOWS_SUGGESTIONS,
-            val,
+            val
         );
     }
 
     static get ENABLE_SCREEN_EDGES_WINDOWS_SUGGESTIONS(): boolean {
         return get_boolean(
-            Settings.KEY_ENABLE_SCREEN_EDGES_WINDOWS_SUGGESTIONS,
+            Settings.KEY_ENABLE_SCREEN_EDGES_WINDOWS_SUGGESTIONS
         );
     }
 
@@ -560,23 +578,23 @@ export default class Settings {
         try {
             const layouts = JSON.parse(
                 this._settings?.get_string(this.KEY_SETTING_LAYOUTS_JSON) ||
-                    '[]',
+                    '[]'
             ) as Layout[];
             if (layouts.length === 0)
                 throw new Error('At least one layout is required');
-            return layouts.filter((layout) => layout.tiles.length > 0);
+            return layouts.filter(layout => layout.tiles.length > 0);
         } catch (_unused) {
             this.reset_layouts_json();
             return JSON.parse(
                 this._settings?.get_string(this.KEY_SETTING_LAYOUTS_JSON) ||
-                    '[]',
+                    '[]'
             ) as Layout[];
         }
     }
 
     static get_selected_layouts(): string[][] {
         const variant = this._settings?.get_value(
-            Settings.KEY_SETTING_SELECTED_LAYOUTS,
+            Settings.KEY_SETTING_SELECTED_LAYOUTS
         );
         if (!variant) return [];
 
@@ -640,7 +658,7 @@ export default class Settings {
                         groups: [3, 4],
                     }), // bottom-right
                 ],
-                'Layout 1',
+                'Layout 1'
             ),
             new Layout(
                 [
@@ -666,7 +684,7 @@ export default class Settings {
                         groups: [2],
                     }),
                 ],
-                'Layout 2',
+                'Layout 2'
             ),
             new Layout(
                 [
@@ -685,7 +703,7 @@ export default class Settings {
                         groups: [1],
                     }),
                 ],
-                'Layout 3',
+                'Layout 3'
             ),
             new Layout(
                 [
@@ -704,7 +722,7 @@ export default class Settings {
                         groups: [1],
                     }),
                 ],
-                'Layout 4',
+                'Layout 4'
             ),
         ]);
     }
@@ -712,7 +730,7 @@ export default class Settings {
     static save_layouts_json(layouts: Layout[]) {
         this._settings?.set_string(
             this.KEY_SETTING_LAYOUTS_JSON,
-            JSON.stringify(layouts),
+            JSON.stringify(layouts)
         );
     }
 
@@ -721,13 +739,13 @@ export default class Settings {
             this._settings?.reset(Settings.KEY_SETTING_SELECTED_LAYOUTS);
             return;
         }
-        const variants = ids.map((monitor_ids) =>
-            GLib.Variant.new_strv(monitor_ids),
+        const variants = ids.map(monitor_ids =>
+            GLib.Variant.new_strv(monitor_ids)
         );
         const result = GLib.Variant.new_array(null, variants);
         this._settings?.set_value(
             Settings.KEY_SETTING_SELECTED_LAYOUTS,
-            result,
+            result
         );
     }
 

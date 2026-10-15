@@ -8,7 +8,7 @@ export default class SettingsOverride {
 
     private constructor() {
         this._overriddenKeys = this._jsonToOverriddenKeys(
-            Settings.OVERRIDDEN_SETTINGS,
+            Settings.OVERRIDDEN_SETTINGS
         );
     }
 
@@ -48,7 +48,7 @@ export default class SettingsOverride {
     }
 
     private _jsonToOverriddenKeys(
-        json: string,
+        json: string
     ): Map<string, Map<string, GLib.Variant>> {
         const result: Map<string, Map<string, GLib.Variant>> = new Map();
         const obj: any = JSON.parse(json);
@@ -61,7 +61,7 @@ export default class SettingsOverride {
             for (const key in overrideObj) {
                 schemaMap.set(
                     key,
-                    GLib.Variant.parse(null, overrideObj[key], null, null),
+                    GLib.Variant.parse(null, overrideObj[key], null, null)
                 );
             }
         }
@@ -72,7 +72,7 @@ export default class SettingsOverride {
     public override(
         giosettings: Gio.Settings,
         keyToOverride: string,
-        newValue: GLib.Variant,
+        newValue: GLib.Variant
     ): GLib.Variant | null {
         const schemaId = giosettings.schemaId;
         const schemaMap = this._overriddenKeys.get(schemaId) || new Map();
@@ -97,7 +97,7 @@ export default class SettingsOverride {
 
     public restoreKey(
         giosettings: Gio.Settings,
-        keyToOverride: string,
+        keyToOverride: string
     ): GLib.Variant | null {
         const overridden = this._overriddenKeys.get(giosettings.schemaId);
         if (!overridden) return null;
@@ -124,7 +124,7 @@ export default class SettingsOverride {
             (map: Map<string, GLib.Variant>, schemaId: string) => {
                 const giosettings = new Gio.Settings({ schemaId });
                 const overridden = this._overriddenKeys.get(
-                    giosettings.schemaId,
+                    giosettings.schemaId
                 );
                 if (!overridden) return;
 
@@ -133,11 +133,11 @@ export default class SettingsOverride {
                     const done = giosettings.set_value(key, oldValue);
                     if (done) toDelete.push(key);
                 });
-                toDelete.forEach((key) => overridden.delete(key));
+                toDelete.forEach(key => overridden.delete(key));
                 if (overridden.size === 0) schemaToDelete.push(schemaId);
-            },
+            }
         );
-        schemaToDelete.forEach((schemaId) => {
+        schemaToDelete.forEach(schemaId => {
             this._overriddenKeys.delete(schemaId);
         });
 

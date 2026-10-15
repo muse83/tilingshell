@@ -16,14 +16,16 @@ import GlobalState from '../../utils/globalState';
 import { KeyBindingsDirection } from '../../keybindings';
 
 class DynamicTilePreview extends TilePreview {
-    static { registerGObjectClass(this) }
+    static {
+        registerGObjectClass(this);
+    }
 
     private _originalRect: Mtk.Rectangle;
     private _canRestore: boolean;
 
     constructor(
         params: Partial<TilePreviewConstructorProperties>,
-        canRestore?: boolean,
+        canRestore?: boolean
     ) {
         super(params);
         this._canRestore = canRestore || false;
@@ -54,7 +56,9 @@ class DynamicTilePreview extends TilePreview {
  * hovered tile.
  */
 export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
-    static { registerGObjectClass(this) }
+    static {
+        registerGObjectClass(this);
+    }
 
     private _showing: boolean;
 
@@ -63,7 +67,7 @@ export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
         innerGaps: Clutter.Margin,
         outerGaps: Clutter.Margin,
         workarea: Mtk.Rectangle,
-        scalingFactor?: number,
+        scalingFactor?: number
     ) {
         super({
             containerRect: workarea,
@@ -86,14 +90,14 @@ export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
         parent: Clutter.Actor,
         rect: Mtk.Rectangle,
         gaps: Clutter.Margin,
-        tile: Tile,
+        tile: Tile
     ): DynamicTilePreview {
         const prev = new DynamicTilePreview({ parent, rect, gaps, tile }, true);
         prev.updateBorderRadius(
             prev.gaps.top > 0,
             prev.gaps.right > 0,
             prev.gaps.bottom > 0,
-            prev.gaps.left > 0,
+            prev.gaps.left > 0
         );
         return prev;
     }
@@ -152,7 +156,7 @@ export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
 
     private _isHovered(
         currPointerPos: { x: number; y: number },
-        preview: Mtk.Rectangle,
+        preview: Mtk.Rectangle
     ): boolean {
         return (
             currPointerPos.x >= preview.x &&
@@ -164,16 +168,16 @@ export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
 
     public getTileBelow(
         currPointerPos: { x: number; y: number },
-        reset: boolean,
+        reset: boolean
     ): Mtk.Rectangle | undefined {
-        let found = this._previews.find((preview) =>
-            this._isHovered(currPointerPos, preview.rect),
+        let found = this._previews.find(preview =>
+            this._isHovered(currPointerPos, preview.rect)
         );
         if (!found || (!found.canRestore && reset)) {
             found = this._previews.find(
-                (preview) =>
+                preview =>
                     preview.canRestore &&
-                    this._isHovered(currPointerPos, preview.originalRect),
+                    this._isHovered(currPointerPos, preview.originalRect)
             );
         }
         if (!found) return undefined;
@@ -184,7 +188,7 @@ export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
 
     public unhoverAllTiles() {
         const newPreviewsArray: DynamicTilePreview[] = [];
-        this._previews.forEach((preview) => {
+        this._previews.forEach(preview => {
             if (preview.restore(true)) {
                 newPreviewsArray.push(preview);
                 preview.open(undefined, true);
@@ -199,10 +203,10 @@ export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
     public hoverTilesInRect(rect: Mtk.Rectangle, reset: boolean) {
         const newPreviewsArray: DynamicTilePreview[] = [];
 
-        this._previews.forEach((preview) => {
+        this._previews.forEach(preview => {
             const [hasIntersection, rectangles] = this._subtractRectangles(
                 preview.rect,
-                rect,
+                rect
             );
             if (hasIntersection) {
                 if (rectangles.length > 0) {
@@ -219,7 +223,7 @@ export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
                             currRect,
                             this._innerGaps,
                             this._outerGaps,
-                            this._containerRect,
+                            this._containerRect
                         ).gaps;
                         const innerPreview = new DynamicTilePreview(
                             {
@@ -228,10 +232,10 @@ export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
                                 gaps,
                                 tile: TileUtils.build_tile(
                                     currRect,
-                                    this._containerRect,
+                                    this._containerRect
                                 ),
                             },
-                            false,
+                            false
                         );
                         innerPreview.open();
                         this.set_child_above_sibling(innerPreview, preview);
@@ -239,7 +243,7 @@ export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
                     }
                     preview.open(
                         rectangles[maxIndex].union(
-                            preview.rect.intersect(rect)[1],
+                            preview.rect.intersect(rect)[1]
                         ),
                         false
                     );
@@ -287,7 +291,7 @@ export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
     */
     private _subtractRectangles(
         sourceRect: Mtk.Rectangle,
-        holeRect: Mtk.Rectangle,
+        holeRect: Mtk.Rectangle
     ): [boolean, Mtk.Rectangle[]] {
         const [hasIntersection, intersection] = sourceRect.intersect(holeRect);
 
@@ -306,7 +310,7 @@ export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
                     y: sourceRect.y,
                     width: sourceRect.width,
                     height: heightA,
-                }),
+                })
             );
         }
 
@@ -319,7 +323,7 @@ export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
                     y: intersection.y,
                     width: widthB,
                     height: intersection.height,
-                }),
+                })
             );
         }
 
@@ -336,7 +340,7 @@ export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
                     y: intersection.y,
                     width: widthC,
                     height: intersection.height,
-                }),
+                })
             );
         }
 
@@ -353,7 +357,7 @@ export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
                     y: intersection.y + intersection.height,
                     width: sourceRect.width,
                     height: heightD,
-                }),
+                })
             );
         }
 
@@ -366,7 +370,7 @@ export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
         source: Mtk.Rectangle,
         direction: KeyBindingsDirection,
         clamp: boolean,
-        enlarge: number,
+        enlarge: number
     ): { rect: Mtk.Rectangle; tile: Tile } | undefined {
         if (direction === KeyBindingsDirection.NODIRECTION) return undefined;
 
@@ -403,12 +407,12 @@ export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
             sourceCoords.x = Math.clamp(
                 sourceCoords.x,
                 this._containerRect.x,
-                this._containerRect.width + this._containerRect.x,
+                this._containerRect.width + this._containerRect.x
             );
             sourceCoords.y = Math.clamp(
                 sourceCoords.y,
                 this._containerRect.y,
-                this._containerRect.height + this._containerRect.y,
+                this._containerRect.height + this._containerRect.y
             );
         }
 
@@ -446,7 +450,7 @@ export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
     }
 
     public findNearestTile(
-        source: Mtk.Rectangle,
+        source: Mtk.Rectangle
     ): { rect: Mtk.Rectangle; tile: Tile } | undefined {
         let previewFound: DynamicTilePreview | undefined;
         let bestDistance = -1;
@@ -466,7 +470,7 @@ export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
 
             const euclideanDistance = squaredEuclideanDistance(
                 previewCenter,
-                sourceCenter,
+                sourceCenter
             );
 
             if (!previewFound || euclideanDistance < bestDistance) {

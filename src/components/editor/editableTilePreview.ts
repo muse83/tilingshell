@@ -7,14 +7,16 @@ import { registerGObjectClass } from '../../utils/gjs';
 import { buildTileGaps } from '../../utils/ui';
 
 export default class EditableTilePreview extends TilePreview {
-    static { registerGObjectClass(this, {
-        Signals: {
-            'size-changed': {
-                param_types: [Mtk.Rectangle.$gtype, Mtk.Rectangle.$gtype], // oldSize, newSize
+    static {
+        registerGObjectClass(this, {
+            Signals: {
+                'size-changed': {
+                    param_types: [Mtk.Rectangle.$gtype, Mtk.Rectangle.$gtype], // oldSize, newSize
+                },
             },
-        },
-        GTypeName: 'EditableTilePreview',
-    })};
+            GTypeName: 'EditableTilePreview',
+        });
+    }
 
     public static MIN_TILE_SIZE: number = 140;
 
@@ -57,7 +59,7 @@ export default class EditableTilePreview extends TilePreview {
             this._gaps.top > 0,
             this._gaps.right > 0,
             this._gaps.bottom > 0,
-            this._gaps.left > 0,
+            this._gaps.left > 0
         );
     }
 
@@ -81,12 +83,12 @@ export default class EditableTilePreview extends TilePreview {
         // add this slider
         this._sliders[side] = slider;
         this._signals[side] = slider.connect('slide', () =>
-            this._onSliderMove(side),
+            this._onSliderMove(side)
         );
 
         // update tile's groups
         this._tile.groups = [];
-        this._sliders.forEach((sl) => sl && this._tile.groups.push(sl.groupId));
+        this._sliders.forEach(sl => sl && this._tile.groups.push(sl.groupId));
     }
 
     public removeSlider(side: St.Side) {
@@ -101,7 +103,7 @@ export default class EditableTilePreview extends TilePreview {
 
         // update tile's groups
         this._tile.groups = [];
-        this._sliders.forEach((sl) => sl && this._tile.groups.push(sl.groupId));
+        this._sliders.forEach(sl => sl && this._tile.groups.push(sl.groupId));
     }
 
     public updateTile({
@@ -130,7 +132,7 @@ export default class EditableTilePreview extends TilePreview {
                 this._rect,
                 innerGaps,
                 outerGaps,
-                this._containerRect,
+                this._containerRect
             ).gaps;
         }
 
@@ -145,9 +147,25 @@ export default class EditableTilePreview extends TilePreview {
     }
 
     public connect(_id: string, _callback: (..._args: any[]) => any): number;
-    public connect(_signal: 'size-changed', _callback: (_source: this, _oldSize: Mtk.Rectangle, _newSize: Mtk.Rectangle) => void): number;
-    public connect(_signal: 'notify::hover', _callback: (_source: this) => void): number;
-    public connect(_signal: 'clicked', _callback: (_source: this, _clicked_button: number) => void): number;
+    public connect(
+        _signal: 'size-changed',
+        _callback: (
+            _source: this,
+            _oldSize: Mtk.Rectangle,
+            _newSize: Mtk.Rectangle
+        ) => void
+    ): number;
+
+    public connect(
+        _signal: 'notify::hover',
+        _callback: (_source: this) => void
+    ): number;
+
+    public connect(
+        _signal: 'clicked',
+        _callback: (_source: this, _clicked_button: number) => void
+    ): number;
+
     public connect(signal: string, callback: never): number {
         if (
             signal === 'clicked' ||
@@ -195,7 +213,7 @@ export default class EditableTilePreview extends TilePreview {
 
     private _onDestroy(): void {
         this._signals.forEach(
-            (id, side) => id && this._sliders[side]?.disconnect(id),
+            (id, side) => id && this._sliders[side]?.disconnect(id)
         );
     }
 }

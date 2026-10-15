@@ -7,8 +7,10 @@ import TilePreview, {
 } from '../../components/tilepreview/tilePreview';
 
 export default class TilePreviewWithWindow extends TilePreview {
-    static { registerGObjectClass(this) }
-    
+    static {
+        registerGObjectClass(this);
+    }
+
     constructor(params: Partial<TilePreviewConstructorProperties>) {
         super(params);
         if (params.parent) params.parent.add_child(this);

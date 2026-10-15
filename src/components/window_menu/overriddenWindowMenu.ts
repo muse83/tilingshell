@@ -28,14 +28,14 @@ export function buildMenuWithLayoutIcon(
     popupMenu: PopupMenu.PopupBaseMenuItem,
     importantTiles: Tile[],
     tiles: Tile[],
-    innerGaps: number,
+    innerGaps: number
 ) {
     popupMenu.add_child(
         new St.Label({
             text: title,
             yAlign: Clutter.ActorAlign.CENTER,
             xExpand: true,
-        }),
+        })
     );
     const layoutIcon = new LayoutIcon(
         popupMenu,
@@ -44,20 +44,22 @@ export function buildMenuWithLayoutIcon(
         buildMarginOf(innerGaps),
         buildMarginOf(4),
         LAYOUT_ICON_WIDTH,
-        LAYOUT_ICON_HEIGHT,
+        LAYOUT_ICON_HEIGHT
     );
     layoutIcon.set_x_align(Clutter.ActorAlign.END);
 }
 
 export default class OverriddenWindowMenu extends GObject.Object {
-    static { registerGObjectClass(this, {
-        GTypeName: 'OverriddenWindowMenu',
-        Signals: {
-            'tile-clicked': {
-                param_types: [Tile.$gtype, Meta.Window.$gtype],
+    static {
+        registerGObjectClass(this, {
+            GTypeName: 'OverriddenWindowMenu',
+            Signals: {
+                'tile-clicked': {
+                    param_types: [Tile.$gtype, Meta.Window.$gtype],
+                },
             },
-        },
-    })};
+        });
+    }
 
     private static _instance: OverriddenWindowMenu | null = null;
     private static _old_buildMenu: ((_window: Meta.Window) => void) | null;
@@ -107,26 +109,26 @@ export default class OverriddenWindowMenu extends GObject.Object {
         if (layouts.length === 0) return;
 
         const workArea = Main.layoutManager.getWorkAreaForMonitor(
-            window.get_monitor(),
+            window.get_monitor()
         );
         const tiledWindows: ExtendedWindow[] = getWindows()
-            .map((otherWindow) => {
+            .map(otherWindow => {
                 return otherWindow &&
                     !otherWindow.minimized &&
                     (otherWindow as ExtendedWindow).assignedTile
                     ? (otherWindow as ExtendedWindow)
                     : undefined;
             })
-            .filter((w) => w !== undefined);
+            .filter(w => w !== undefined);
 
         const tiles = GlobalState.get().getSelectedLayoutOfMonitor(
             window.get_monitor(),
-            global.workspaceManager.get_active_workspace_index(),
+            global.workspaceManager.get_active_workspace_index()
         ).tiles;
-        const vacantTiles = tiles.filter((t) => {
+        const vacantTiles = tiles.filter(t => {
             const tileRect = TileUtils.apply_props(t, workArea);
-            return !tiledWindows.find((win) =>
-                tileRect.overlap(win.get_frame_rect()),
+            return !tiledWindows.find(win =>
+                tileRect.overlap(win.get_frame_rect())
             );
         });
 
@@ -141,11 +143,11 @@ export default class OverriddenWindowMenu extends GObject.Object {
             let bestDistance = Math.abs(
                 0.5 -
                     vacantTiles[bestTileIndex].x +
-                    vacantTiles[bestTileIndex].width / 2,
+                    vacantTiles[bestTileIndex].width / 2
             );
             for (let index = 1; index < vacantTiles.length; index++) {
                 const distance = Math.abs(
-                    0.5 - (vacantTiles[index].x + vacantTiles[index].width / 2),
+                    0.5 - (vacantTiles[index].x + vacantTiles[index].width / 2)
                 );
                 if (bestDistance > distance) {
                     bestTileIndex = index;
@@ -167,13 +169,13 @@ export default class OverriddenWindowMenu extends GObject.Object {
                 vacantPopupMenu,
                 [vacantTiles[bestTileIndex]],
                 tiles,
-                INNER_GAPS,
+                INNER_GAPS
             );
             vacantPopupMenu.connect('activate', () => {
                 OverriddenWindowMenu.get().emit(
                     'tile-clicked',
                     vacantTiles[bestTileIndex],
-                    window,
+                    window
                 );
             });
         }
@@ -189,13 +191,13 @@ export default class OverriddenWindowMenu extends GObject.Object {
                 vacantLeftPopupMenu,
                 [vacantTiles[0]],
                 tiles,
-                INNER_GAPS,
+                INNER_GAPS
             );
             vacantLeftPopupMenu.connect('activate', () => {
                 OverriddenWindowMenu.get().emit(
                     'tile-clicked',
                     vacantTiles[0],
-                    window,
+                    window
                 );
             });
 
@@ -212,13 +214,13 @@ export default class OverriddenWindowMenu extends GObject.Object {
                 vacantRightPopupMenu,
                 [tilesFromRightToLeft[0]],
                 tiles,
-                INNER_GAPS,
+                INNER_GAPS
             );
             vacantRightPopupMenu.connect('activate', () => {
                 OverriddenWindowMenu.get().emit(
                     'tile-clicked',
                     tilesFromRightToLeft[0],
-                    window,
+                    window
                 );
             });
         }
@@ -263,15 +265,15 @@ export default class OverriddenWindowMenu extends GObject.Object {
                 lay,
                 INNER_GAPS,
                 layoutHeight,
-                layoutWidth,
+                layoutWidth
             );
             layoutWidget.set_x_align(Clutter.ActorAlign.END);
-            layoutWidget.buttons.forEach((btn) => {
+            layoutWidget.buttons.forEach(btn => {
                 btn.connect('clicked', () => {
                     OverriddenWindowMenu.get().emit(
                         'tile-clicked',
                         btn.tile,
-                        window,
+                        window
                     );
                     layoutsPopupMenu.activate(Clutter.get_current_event());
                 });

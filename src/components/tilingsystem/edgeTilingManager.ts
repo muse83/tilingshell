@@ -16,29 +16,31 @@ const TOP_EDGE_TILING_OFFSET = 8;
 const QUARTER_PERCENTAGE = 0.5;
 
 export default class EdgeTilingManager extends GObject.Object {
-    static { registerGObjectClass(this, {
-        GTypeName: 'EdgeTilingManager',
-        Properties: {
-            quarterActivationPercentage: GObject.ParamSpec.uint(
-                'quarterActivationPercentage',
-                'quarterActivationPercentage',
-                'Threshold to trigger quarter tiling',
-                GObject.ParamFlags.READWRITE,
-                1,
-                50,
-                40,
-            ),
-            edgeTilingOffset: GObject.ParamSpec.uint(
-                'edgeTilingOffset',
-                'edgeTilingOffset',
-                'Offset to trigger edge tiling',
-                GObject.ParamFlags.READWRITE,
-                1,
-                250,
-                16,
-            ),
-        },
-    })};
+    static {
+        registerGObjectClass(this, {
+            GTypeName: 'EdgeTilingManager',
+            Properties: {
+                quarterActivationPercentage: GObject.ParamSpec.uint(
+                    'quarterActivationPercentage',
+                    'quarterActivationPercentage',
+                    'Threshold to trigger quarter tiling',
+                    GObject.ParamFlags.READWRITE,
+                    1,
+                    50,
+                    40
+                ),
+                edgeTilingOffset: GObject.ParamSpec.uint(
+                    'edgeTilingOffset',
+                    'edgeTilingOffset',
+                    'Offset to trigger edge tiling',
+                    GObject.ParamFlags.READWRITE,
+                    1,
+                    250,
+                    16
+                ),
+            },
+        });
+    }
 
     private _workArea: Mtk.Rectangle;
     private _quarterActivationPercentage: number;
@@ -78,13 +80,13 @@ export default class EdgeTilingManager extends GObject.Object {
         Settings.bind(
             Settings.KEY_QUARTER_TILING_THRESHOLD,
             this,
-            'quarterActivationPercentage',
+            'quarterActivationPercentage'
         );
         this._edgeTilingOffset = Settings.EDGE_TILING_OFFSET;
         Settings.bind(
             Settings.KEY_EDGE_TILING_OFFSET,
             this,
-            'edgeTilingOffset',
+            'edgeTilingOffset'
         );
     }
 
@@ -118,16 +120,16 @@ export default class EdgeTilingManager extends GObject.Object {
     private _updateCurrentLayout() {
         this._currentLayout = GlobalState.get().getSelectedLayoutOfMonitor(
             this._monitorIndex,
-            this._workspaceIndex,
+            this._workspaceIndex
         );
     }
 
     private _updateActivationZones() {
         const width = Math.ceil(
-            this._workArea.width * this._quarterActivationPercentage,
+            this._workArea.width * this._quarterActivationPercentage
         );
         const height = Math.ceil(
-            this._workArea.height * this._quarterActivationPercentage,
+            this._workArea.height * this._quarterActivationPercentage
         );
 
         this._topLeft.x = this._workArea.x;
@@ -236,7 +238,7 @@ export default class EdgeTilingManager extends GObject.Object {
     private _handleDefaultEdgeTiling(
         x: number,
         y: number,
-        previewRect: Mtk.Rectangle,
+        previewRect: Mtk.Rectangle
     ): { changed: boolean; rect: Mtk.Rectangle } {
         // This implements the original edge tiling behavior:
         // - corners snap to quarters
@@ -319,7 +321,7 @@ export default class EdgeTilingManager extends GObject.Object {
     private _handleAdaptiveEdgeTiling(
         x: number,
         y: number,
-        previewRect: Mtk.Rectangle,
+        previewRect: Mtk.Rectangle
     ): { changed: boolean; rect: Mtk.Rectangle } {
         // Adaptive mode: snap to layout tiles by column
         // - corners snap to corner tiles
@@ -337,15 +339,15 @@ export default class EdgeTilingManager extends GObject.Object {
             const leftColumnTiles = this._getLeftColumnTiles();
 
             if (leftColumnTiles.length > 0) {
-                const minX = Math.min(...leftColumnTiles.map((tile) => tile.x));
+                const minX = Math.min(...leftColumnTiles.map(tile => tile.x));
                 const exactLeftColumnTiles = leftColumnTiles.filter(
-                    (tile) => Math.abs(tile.x - minX) < 0.01,
+                    tile => Math.abs(tile.x - minX) < 0.01
                 );
 
                 // Snap to entire column
                 const newRect = this._createRectForColumnTiles(
                     exactLeftColumnTiles,
-                    false,
+                    false
                 );
                 previewRect.x = this._workArea.x + this._workArea.width * minX;
                 previewRect.y = newRect.y;
@@ -361,22 +363,22 @@ export default class EdgeTilingManager extends GObject.Object {
             if (rightColumnTiles.length > 0) {
                 // Find the maximum X coordinate (in case there are multiple right-aligned columns)
                 const maxEndX = Math.max(
-                    ...rightColumnTiles.map((tile) => tile.x + tile.width),
+                    ...rightColumnTiles.map(tile => tile.x + tile.width)
                 );
                 // Find all tiles with this end X coordinate
                 const exactRightColumnTiles = rightColumnTiles.filter(
-                    (tile) => Math.abs(tile.x + tile.width - maxEndX) < 0.01,
+                    tile => Math.abs(tile.x + tile.width - maxEndX) < 0.01
                 );
 
                 // Snap to entire column
                 const newRect = this._createRectForColumnTiles(
                     exactRightColumnTiles,
-                    true,
+                    true
                 );
 
                 // Calculate the starting X position based on the actual tiles
                 const rightMostX = Math.min(
-                    ...exactRightColumnTiles.map((tile) => tile.x),
+                    ...exactRightColumnTiles.map(tile => tile.x)
                 );
                 previewRect.x =
                     this._workArea.x + this._workArea.width * rightMostX;
@@ -491,7 +493,7 @@ export default class EdgeTilingManager extends GObject.Object {
     private _handleGranularEdgeTiling(
         x: number,
         y: number,
-        previewRect: Mtk.Rectangle,
+        previewRect: Mtk.Rectangle
     ): { changed: boolean; rect: Mtk.Rectangle } {
         // Granular mode: snap to exact tile under cursor
         // - corners snap to corner tiles
@@ -635,20 +637,20 @@ export default class EdgeTilingManager extends GObject.Object {
     private _getLeftColumnTiles() {
         if (!this._currentLayout) return [];
         return this._currentLayout.tiles.filter(
-            (tile) => Math.abs(tile.x) < 0.01, // Tiles starting at x=0
+            tile => Math.abs(tile.x) < 0.01 // Tiles starting at x=0
         );
     }
 
     private _getRightColumnTiles() {
         if (!this._currentLayout) return [];
         return this._currentLayout.tiles.filter(
-            (tile) => Math.abs(tile.x + tile.width - 1) < 0.01, // Tiles ending at x=1
+            tile => Math.abs(tile.x + tile.width - 1) < 0.01 // Tiles ending at x=1
         );
     }
 
     private _createRectForColumnTiles(
         tiles: Tile[],
-        isRightSide: boolean = false,
+        isRightSide: boolean = false
     ): Mtk.Rectangle {
         const rect = buildRectangle();
         rect.y = this._workArea.y;
@@ -667,8 +669,8 @@ export default class EdgeTilingManager extends GObject.Object {
 
         // When we have tiles, use their actual dimensions
         // Get the minimum x and maximum width to create a rect that covers all tiles in column
-        const minX = Math.min(...tiles.map((tile) => tile.x));
-        const maxWidth = Math.max(...tiles.map((tile) => tile.width));
+        const minX = Math.min(...tiles.map(tile => tile.x));
+        const maxWidth = Math.max(...tiles.map(tile => tile.width));
 
         rect.width = this._workArea.width * maxWidth;
         rect.height = this._workArea.height;
@@ -678,33 +680,32 @@ export default class EdgeTilingManager extends GObject.Object {
     }
 
     private _findTileAtCorner(
-        corner: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right',
+        corner: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
     ) {
         if (!this._currentLayout) return null;
 
         switch (corner) {
             case 'top-left':
                 return this._currentLayout.tiles.find(
-                    (tile) =>
-                        Math.abs(tile.x) < 0.01 && Math.abs(tile.y) < 0.01,
+                    tile => Math.abs(tile.x) < 0.01 && Math.abs(tile.y) < 0.01
                 );
             case 'top-right':
                 return this._currentLayout.tiles.find(
-                    (tile) =>
+                    tile =>
                         Math.abs(tile.x + tile.width - 1) < 0.01 &&
-                        Math.abs(tile.y) < 0.01,
+                        Math.abs(tile.y) < 0.01
                 );
             case 'bottom-left':
                 return this._currentLayout.tiles.find(
-                    (tile) =>
+                    tile =>
                         Math.abs(tile.x) < 0.01 &&
-                        Math.abs(tile.y + tile.height - 1) < 0.01,
+                        Math.abs(tile.y + tile.height - 1) < 0.01
                 );
             case 'bottom-right':
                 return this._currentLayout.tiles.find(
-                    (tile) =>
+                    tile =>
                         Math.abs(tile.x + tile.width - 1) < 0.01 &&
-                        Math.abs(tile.y + tile.height - 1) < 0.01,
+                        Math.abs(tile.y + tile.height - 1) < 0.01
                 );
         }
 
@@ -725,7 +726,7 @@ export default class EdgeTilingManager extends GObject.Object {
 
     private _findClosestTileToPosition(
         pointerPos: { x: number; y: number },
-        candidateTiles: Tile[],
+        candidateTiles: Tile[]
     ): Tile | null {
         if (!candidateTiles.length) return null;
 
@@ -735,7 +736,7 @@ export default class EdgeTilingManager extends GObject.Object {
 
         // Find the tile whose y-range contains the pointer
         const containingTiles = candidateTiles.filter(
-            (tile) => relativeY >= tile.y && relativeY <= tile.y + tile.height,
+            tile => relativeY >= tile.y && relativeY <= tile.y + tile.height
         );
 
         // If no tile directly contains the point, find the closest
@@ -759,7 +760,7 @@ export default class EdgeTilingManager extends GObject.Object {
 
                     const distance = Math.sqrt(
                         Math.pow(pointerPos.x - tileCenterPx.x, 2) +
-                            Math.pow(pointerPos.y - tileCenterPx.y, 2),
+                            Math.pow(pointerPos.y - tileCenterPx.y, 2)
                     );
 
                     // Return the closest tile
@@ -780,12 +781,12 @@ export default class EdgeTilingManager extends GObject.Object {
 
                     const closestDistance = Math.sqrt(
                         Math.pow(pointerPos.x - closestCenterPx.x, 2) +
-                            Math.pow(pointerPos.y - closestCenterPx.y, 2),
+                            Math.pow(pointerPos.y - closestCenterPx.y, 2)
                     );
 
                     return distance < closestDistance ? tile : closest;
                 },
-                null as Tile | null,
+                null as Tile | null
             );
         }
 
@@ -804,12 +805,12 @@ export default class EdgeTilingManager extends GObject.Object {
                         this._workArea.x +
                         (closest.x + closest.width / 2) * this._workArea.width;
                     const closestDistance = Math.abs(
-                        pointerPos.x - closestCenterX,
+                        pointerPos.x - closestCenterX
                     );
 
                     return distance < closestDistance ? tile : closest;
                 },
-                null as Tile | null,
+                null as Tile | null
             );
         }
 
@@ -839,12 +840,12 @@ export default class EdgeTilingManager extends GObject.Object {
     }
 
     private _findTilesAtEdge(
-        edge: 'left' | 'right' | 'top' | 'bottom',
+        edge: 'left' | 'right' | 'top' | 'bottom'
     ): Tile[] {
         if (!this._currentLayout) return [];
 
         // Find all tiles that touch this edge
-        const tiles = this._currentLayout.tiles.filter((tile) => {
+        const tiles = this._currentLayout.tiles.filter(tile => {
             // Determine if tile is on the specified edge
             switch (edge) {
                 case 'left':
@@ -864,7 +865,7 @@ export default class EdgeTilingManager extends GObject.Object {
 
     private _findExactTileAtEdge(
         edge: 'left' | 'right' | 'top' | 'bottom',
-        pointerPos: { x: number; y: number },
+        pointerPos: { x: number; y: number }
     ): Tile | null {
         const edgeTiles = this._findTilesAtEdge(edge);
         if (edgeTiles.length === 0) return null;

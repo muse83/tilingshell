@@ -3,7 +3,7 @@ import { St, Clutter, Gio } from '../gi/ext';
 export const createButton = (
     iconName: string,
     text: string,
-    path?: string,
+    path?: string
 ): St.Button => {
     const btn = createIconButton(iconName, path, 8);
     btn.set_style('padding-left: 5px !important;'); // bring back the right padding
@@ -13,7 +13,7 @@ export const createButton = (
             marginTop: 4,
             text,
             yAlign: Clutter.ActorAlign.CENTER,
-        }),
+        })
     );
     return btn;
 };
@@ -21,7 +21,7 @@ export const createButton = (
 export const createIconButton = (
     iconName: string,
     path?: string,
-    spacing = 0,
+    spacing = 0
 ): St.Button => {
     const btn = new St.Button({
         styleClass: 'message-list-clear-button button',

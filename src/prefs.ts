@@ -29,7 +29,7 @@ import SettingsExport from './settings/settingsExport';
 import { gettext as _ } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 const debug = logger('prefs');
-const RESOURCES_PREFIX = "/org/gnome/Shell/Extensions/tilingshell"; // must match the prefix in resources.gresources.xml
+const RESOURCES_PREFIX = '/org/gnome/Shell/Extensions/tilingshell'; // must match the prefix in resources.gresources.xml
 
 export default class TilingShellExtensionPreferences extends ExtensionPreferences {
     loadCssAndResources() {
@@ -49,9 +49,9 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         );
 
-        Gtk.IconTheme
-            .get_for_display(display)
-            .add_resource_path(`${RESOURCES_PREFIX}/icons/scalable/actions`);
+        Gtk.IconTheme.get_for_display(display).add_resource_path(
+            `${RESOURCES_PREFIX}/icons/scalable/actions`
+        );
     }
 
     /**
@@ -81,27 +81,27 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         const showIndicatorRow = this._buildSwitchRow(
             Settings.KEY_SHOW_INDICATOR,
             _('Show Indicator'),
-            _('Whether to show the panel indicator'),
+            _('Whether to show the panel indicator')
         );
         appearenceGroup.add(showIndicatorRow);
         const innerGapsRow = this._buildSpinButtonRow(
             Settings.KEY_INNER_GAPS,
             _('Inner gaps'),
-            _('Gaps between windows'),
+            _('Gaps between windows')
         );
         appearenceGroup.add(innerGapsRow);
 
         const outerGapsRow = this._buildSpinButtonRow(
             Settings.KEY_OUTER_GAPS,
             _('Outer gaps'),
-            _('Gaps between a window and the monitor borders'),
+            _('Gaps between a window and the monitor borders')
         );
         appearenceGroup.add(outerGapsRow);
 
         const blurRow = new Adw.ExpanderRow({
             title: _('Blur (experimental feature)'),
             subtitle: _(
-                'Apply blur effect to Snap Assistant and tile previews',
+                'Apply blur effect to Snap Assistant and tile previews'
             ),
         });
         appearenceGroup.add(blurRow);
@@ -110,10 +110,10 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             Settings.KEY_SNAP_ASSISTANT_THRESHOLD,
             _('Snap Assistant threshold'),
             _(
-                'Minimum distance from the Snap Assistant to the pointer to open it',
+                'Minimum distance from the Snap Assistant to the pointer to open it'
             ),
             0,
-            512,
+            512
         );
         appearenceGroup.add(snapAssistantThresholdRow);
 
@@ -121,15 +121,15 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             this._buildSwitchRow(
                 Settings.KEY_ENABLE_BLUR_SNAP_ASSISTANT,
                 _('Snap Assistant'),
-                _('Apply blur effect to Snap Assistant'),
-            ),
+                _('Apply blur effect to Snap Assistant')
+            )
         );
         blurRow.add_row(
             this._buildSwitchRow(
                 Settings.KEY_ENABLE_BLUR_SELECTED_TILEPREVIEW,
                 _('Selected tile preview'),
-                _('Apply blur effect to selected tile preview'),
-            ),
+                _('Apply blur effect to selected tile preview')
+            )
         );
 
         const windowBorderExpanderRow = new Adw.ExpanderRow({
@@ -141,27 +141,27 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             this._buildSwitchRow(
                 Settings.KEY_ENABLE_WINDOW_BORDER,
                 _('Enable'),
-                _('Show a border around focused window'),
-            ),
+                _('Show a border around focused window')
+            )
         );
         windowBorderExpanderRow.add_row(
             this._buildSwitchRow(
                 Settings.KEY_ENABLE_SMART_WINDOW_BORDER_RADIUS,
                 _('Smart border radius'),
-                _("Dynamically adapt to the window's actual border radius"),
-            ),
+                _("Dynamically adapt to the window's actual border radius")
+            )
         );
         windowBorderExpanderRow.add_row(
             this._buildSpinButtonRow(
                 Settings.KEY_WINDOW_BORDER_WIDTH,
                 _('Width'),
                 _('The size of the border'),
-                1,
-            ),
+                1
+            )
         );
         const colorButton = this._buildColorButton(
             this._getRGBAFromString(Settings.WINDOW_BORDER_COLOR),
-            (val: string) => (Settings.WINDOW_BORDER_COLOR = val),
+            (val: string) => (Settings.WINDOW_BORDER_COLOR = val)
         );
         const windowBorderColorRow = new Adw.ActionRow({
             title: _('Border color'),
@@ -174,7 +174,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             (use_custom_color: boolean) => {
                 colorButton.set_visible(use_custom_color);
                 Settings.WINDOW_USE_CUSTOM_BORDER_COLOR = use_custom_color;
-            },
+            }
         );
         windowBorderColorRow.add_suffix(customColorDropDown);
         windowBorderExpanderRow.add_row(windowBorderColorRow);
@@ -190,8 +190,8 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                 _('Snap assistant animation time'),
                 _('The snap assistant animation time in milliseconds'),
                 0,
-                2000,
-            ),
+                2000
+            )
         );
         animationsRow.add_row(
             this._buildSpinButtonRow(
@@ -199,8 +199,8 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                 _('Tiles animation time'),
                 _('The tiles animation time in milliseconds'),
                 0,
-                2000,
-            ),
+                2000
+            )
         );
 
         // Behaviour section
@@ -213,7 +213,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         const snapAssistRow = this._buildSwitchRow(
             Settings.KEY_SNAP_ASSIST,
             _('Enable Snap Assistant'),
-            _('Move the window on top of the screen to snap assist it'),
+            _('Move the window on top of the screen to snap assist it')
         );
         behaviourGroup.add(snapAssistRow);
 
@@ -221,13 +221,13 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             Settings.KEY_SNAP_ASSIST_SYNC_LAYOUT,
             _('Sync layout when tiling with Snap Assistant'),
             _(
-                'Change the active layout to match the layout used when tiling a window with Snap Assistant',
-            ),
+                'Change the active layout to match the layout used when tiling a window with Snap Assistant'
+            )
         );
         Settings.bind(
             Settings.KEY_SNAP_ASSIST,
             snapAssistSyncLayoutRow,
-            'sensitive',
+            'sensitive'
         );
         behaviourGroup.add(snapAssistSyncLayoutRow);
 
@@ -238,19 +238,19 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             this._buildActivationKeysDropDown(
                 Settings.TILING_SYSTEM_ACTIVATION_KEY,
                 (val: ActivationKey) =>
-                    (Settings.TILING_SYSTEM_ACTIVATION_KEY = val),
-            ),
+                    (Settings.TILING_SYSTEM_ACTIVATION_KEY = val)
+            )
         );
         behaviourGroup.add(enableTilingSystemRow);
 
         const tilingSystemDeactivationRow = this._buildDropDownRow(
             _('Tiling System deactivation key'),
             _(
-                'Hold the deactivation key while moving a window to deactivate the tiling system',
+                'Hold the deactivation key while moving a window to deactivate the tiling system'
             ),
             Settings.TILING_SYSTEM_DEACTIVATION_KEY,
             (val: ActivationKey) =>
-                (Settings.TILING_SYSTEM_DEACTIVATION_KEY = val),
+                (Settings.TILING_SYSTEM_DEACTIVATION_KEY = val)
         );
         behaviourGroup.add(tilingSystemDeactivationRow);
 
@@ -261,15 +261,15 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             this._buildActivationKeysDropDown(
                 Settings.SPAN_MULTIPLE_TILES_ACTIVATION_KEY,
                 (val: ActivationKey) =>
-                    (Settings.SPAN_MULTIPLE_TILES_ACTIVATION_KEY = val),
-            ),
+                    (Settings.SPAN_MULTIPLE_TILES_ACTIVATION_KEY = val)
+            )
         );
         behaviourGroup.add(spanMultipleTilesRow);
 
         const autoTilingRow = this._buildSwitchRow(
             Settings.KEY_ENABLE_AUTO_TILING,
             _('Enable Auto Tiling'),
-            _('Automatically tile new windows to the best tile'),
+            _('Automatically tile new windows to the best tile')
         );
         behaviourGroup.add(autoTilingRow);
 
@@ -277,8 +277,8 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             Settings.KEY_RESIZE_COMPLEMENTING_WINDOWS,
             _('Enable auto-resize of the complementing tiled windows'),
             _(
-                'When a tiled window is resized, auto-resize the other tiled windows near it',
-            ),
+                'When a tiled window is resized, auto-resize the other tiled windows near it'
+            )
         );
         behaviourGroup.add(resizeComplementingRow);
 
@@ -286,8 +286,8 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             Settings.KEY_RESTORE_WINDOW_ORIGINAL_SIZE,
             _('Restore window size'),
             _(
-                'Whether to restore the windows to their original size when untiled',
-            ),
+                'Whether to restore the windows to their original size when untiled'
+            )
         );
         behaviourGroup.add(restoreToOriginalSizeRow);
 
@@ -295,8 +295,8 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             Settings.KEY_REMEMBER_WINDOWS,
             _('Remember windows'),
             _(
-                'Reopen the windows of an application with the size, position and tile they had when it was last closed',
-            ),
+                'Reopen the windows of an application with the size, position and tile they had when it was last closed'
+            )
         );
         behaviourGroup.add(rememberWindowsRow);
         behaviourGroup.add(
@@ -307,16 +307,16 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                 () => {
                     Settings.REMEMBERED_WINDOWS = '{}';
                 },
-                'destructive-action',
-            ),
+                'destructive-action'
+            )
         );
 
         const overrideWindowMenuRow = this._buildSwitchRow(
             Settings.KEY_OVERRIDE_WINDOW_MENU,
             _('Add snap assistant and auto-tile buttons to window menu'),
             _(
-                'Add snap assistant and auto-tile buttons in the menu that shows up when you right click on a window title',
-            ),
+                'Add snap assistant and auto-tile buttons in the menu that shows up when you right click on a window title'
+            )
         );
         behaviourGroup.add(overrideWindowMenuRow);
 
@@ -324,8 +324,8 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             Settings.KEY_OVERRIDE_ALT_TAB,
             _('Add tiled windows to ALT+TAB menu'),
             _(
-                'Add the tiled windows to the ALT+TAB menu to open all the tiled windows at once',
-            ),
+                'Add the tiled windows to the ALT+TAB menu to open all the tiled windows at once'
+            )
         );
         behaviourGroup.add(overrideAltTabRow);
 
@@ -333,8 +333,8 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             Settings.KEY_RAISE_TOGETHER,
             _('Raise tiled windows together'),
             _(
-                'When one tiled window is raised, raise all tiled windows into the foreground together',
-            ),
+                'When one tiled window is raised, raise all tiled windows into the foreground together'
+            )
         );
         behaviourGroup.add(raiseTogetherRow);
 
@@ -342,7 +342,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         const activeScreenEdgesGroup = new Adw.PreferencesGroup({
             title: _('Screen Edges'),
             description: _(
-                'Drag windows against the top, left and right screen edges to resize them',
+                'Drag windows against the top, left and right screen edges to resize them'
             ),
             headerSuffix: new Gtk.Switch({
                 vexpand: false,
@@ -352,18 +352,18 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         Settings.bind(
             Settings.KEY_ACTIVE_SCREEN_EDGES,
             activeScreenEdgesGroup.headerSuffix,
-            'active',
+            'active'
         );
 
         const topEdgeMaximize = this._buildSwitchRow(
             Settings.KEY_TOP_EDGE_MAXIMIZE,
             _('Drag against top edge to maximize window'),
-            _('Drag windows against the top edge to maximize them'),
+            _('Drag windows against the top edge to maximize them')
         );
         Settings.bind(
             Settings.KEY_ACTIVE_SCREEN_EDGES,
             topEdgeMaximize,
-            'sensitive',
+            'sensitive'
         );
         activeScreenEdgesGroup.add(topEdgeMaximize);
 
@@ -376,12 +376,12 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             Settings.QUARTER_TILING_THRESHOLD,
             1,
             50,
-            1,
+            1
         );
         Settings.bind(
             Settings.KEY_ACTIVE_SCREEN_EDGES,
             quarterTiling,
-            'sensitive',
+            'sensitive'
         );
         activeScreenEdgesGroup.add(quarterTiling);
 
@@ -394,19 +394,19 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             Settings.EDGE_TILING_OFFSET,
             1,
             250,
-            1,
+            1
         );
         Settings.bind(
             Settings.KEY_ACTIVE_SCREEN_EDGES,
             edgeTilingOffset,
-            'sensitive',
+            'sensitive'
         );
         activeScreenEdgesGroup.add(edgeTilingOffset);
 
         // Create dropdown for edge tiling mode
         const edgeTilingBehaviourRow = this._buildEdgeTilingBehaviourRow(
             Settings.EDGE_TILING_MODE,
-            (newMode: EdgeTilingMode) => Settings.EDGE_TILING_MODE = newMode,
+            (newMode: EdgeTilingMode) => (Settings.EDGE_TILING_MODE = newMode)
         );
         activeScreenEdgesGroup.add(edgeTilingBehaviourRow);
 
@@ -423,8 +423,8 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             Settings.KEY_ENABLE_TILING_SYSTEM_WINDOWS_SUGGESTIONS,
             _('Enable window suggestions for the tiling system'),
             _(
-                'Provides smart suggestions to fill empty tiles when using the tiling system',
-            ),
+                'Provides smart suggestions to fill empty tiles when using the tiling system'
+            )
         );
         windowsSuggestionsGroup.add(tilingSystemWindowSuggestionRow);
 
@@ -432,8 +432,8 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             Settings.KEY_ENABLE_SNAP_ASSISTANT_WINDOWS_SUGGESTIONS,
             _('Enable window suggestions for the snap assistant'),
             _(
-                'Offers suggestions to populate empty tiles when using the snap assistant',
-            ),
+                'Offers suggestions to populate empty tiles when using the snap assistant'
+            )
         );
         windowsSuggestionsGroup.add(snapAssistWindowSuggestionRow);
 
@@ -441,8 +441,8 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             Settings.KEY_ENABLE_SCREEN_EDGES_WINDOWS_SUGGESTIONS,
             _('Enable window suggestions for screen edge tiling'),
             _(
-                'Suggests windows to occupy empty tiles when tiling to screen edges',
-            ),
+                'Suggests windows to occupy empty tiles when tiling to screen edges'
+            )
         );
         windowsSuggestionsGroup.add(screenEdgesWindowSuggestionRow);
 
@@ -459,7 +459,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             _('Edit layouts'),
             _('Edit layouts'),
             _('Open the layouts editor'),
-            () => this._openLayoutEditor(),
+            () => this._openLayoutEditor()
         );
         layoutsGroup.add(editLayoutsBtn);
 
@@ -485,10 +485,10 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                                 if (!file) throw new Error('no file selected');
 
                                 debug(
-                                    `Create file with path ${file.get_path()}`,
+                                    `Create file with path ${file.get_path()}`
                                 );
                                 const content = JSON.stringify(
-                                    Settings.get_layouts_json(),
+                                    Settings.get_layouts_json()
                                 );
                                 file.replace_contents_bytes_async(
                                     new TextEncoder().encode(content),
@@ -499,12 +499,12 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                                     (thisFile, res) => {
                                         try {
                                             thisFile?.replace_contents_finish(
-                                                res,
+                                                res
                                             );
                                         } catch (e) {
                                             debug(e);
                                         }
-                                    },
+                                    }
                                 );
                             }
                         } catch (error: unknown) {
@@ -512,11 +512,11 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                         }
 
                         _source.destroy();
-                    },
+                    }
                 );
                 fc.set_current_name('tilingshell-layouts.json');
                 fc.show();
-            },
+            }
         );
         layoutsGroup.add(exportLayoutsBtn);
 
@@ -548,18 +548,16 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                                     file.load_contents(null);
                                 if (success) {
                                     let importedLayouts = JSON.parse(
-                                        new TextDecoder('utf-8').decode(
-                                            content,
-                                        ),
+                                        new TextDecoder('utf-8').decode(content)
                                     ) as Layout[];
                                     if (importedLayouts.length === 0) {
                                         throw new Error(
-                                            'At least one layout is required',
+                                            'At least one layout is required'
                                         );
                                     }
 
                                     importedLayouts = importedLayouts.filter(
-                                        (layout) => layout.tiles.length > 0,
+                                        layout => layout.tiles.length > 0
                                     );
                                     const newLayouts =
                                         Settings.get_layouts_json();
@@ -574,11 +572,11 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                         }
 
                         _source.destroy();
-                    },
+                    }
                 );
 
                 fc.show();
-            },
+            }
         );
         layoutsGroup.add(importLayoutsBtn);
 
@@ -590,12 +588,12 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                 Settings.reset_layouts_json();
                 const layouts = Settings.get_layouts_json();
                 const newSelectedLayouts = Settings.get_selected_layouts().map(
-                    (monitors_selected) =>
-                        monitors_selected.map(() => layouts[0].id),
+                    monitors_selected =>
+                        monitors_selected.map(() => layouts[0].id)
                 );
                 Settings.save_selected_layouts(newSelectedLayouts);
             },
-            'destructive-action',
+            'destructive-action'
         );
         layoutsGroup.add(resetBtn);
 
@@ -603,7 +601,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         const keybindingsGroup = new Adw.PreferencesGroup({
             title: _('Keybindings'),
             description: _(
-                'Use hotkeys to perform actions on the focused window',
+                'Use hotkeys to perform actions on the focused window'
             ),
             headerSuffix: new Gtk.Switch({
                 vexpand: false,
@@ -613,7 +611,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         Settings.bind(
             Settings.KEY_ENABLE_MOVE_KEYBINDINGS,
             keybindingsGroup.headerSuffix,
-            'active',
+            'active'
         );
         prefsPage.add(keybindingsGroup);
 
@@ -706,7 +704,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                 Settings.SETTING_FOCUS_WINDOW_RIGHT,
                 _('Focus window to the right'),
                 _(
-                    'Focus the window to the right of the current focused window',
+                    'Focus the window to the right of the current focused window'
                 ),
                 false,
                 false,
@@ -750,7 +748,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                 Settings.SETTING_HIGHLIGHT_CURRENT_WINDOW,
                 _('Highlight focused window'),
                 _(
-                    'Minimize all the other windows and show only the focused window',
+                    'Minimize all the other windows and show only the focused window'
                 ),
                 false,
                 false,
@@ -765,7 +763,10 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         ];
 
         const backwardSettingsKey: Map<string, string> = new Map([
-            [Settings.SETTING_CYCLE_LAYOUTS, Settings.SETTING_CYCLE_LAYOUTS_BACKWARD],
+            [
+                Settings.SETTING_CYCLE_LAYOUTS,
+                Settings.SETTING_CYCLE_LAYOUTS_BACKWARD,
+            ],
         ]);
 
         // set if the keybinding was set or not by the user
@@ -784,16 +785,16 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                     backwardSettingsKey.get(settingsKey),
                     gioSettings,
                     title,
-                    subtitle,
+                    subtitle
                 );
 
                 Settings.bind(
                     Settings.KEY_ENABLE_MOVE_KEYBINDINGS,
                     row,
-                    'sensitive',
+                    'sensitive'
                 );
                 keybindingsGroup.add(row);
-            },
+            }
         );
         const openKeybindingsDialogRow = new Adw.ActionRow({
             title: _('View and Customize all the Shortcuts'),
@@ -803,12 +804,12 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             new Gtk.Image({
                 icon_name: 'go-next-symbolic',
                 valign: Gtk.Align.CENTER,
-            }),
+            })
         );
         Settings.bind(
             Settings.KEY_ENABLE_MOVE_KEYBINDINGS,
             openKeybindingsDialogRow,
-            'sensitive',
+            'sensitive'
         );
         keybindingsGroup.add(openKeybindingsDialogRow);
 
@@ -821,7 +822,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             height_request: 320,
         });
         openKeybindingsDialogRow.connect('activated', () =>
-            keybindingsDialog.present(),
+            keybindingsDialog.present()
         );
         const keybindingsPage = new Adw.PreferencesPage({
             name: _('View and Customize Shortcuts'),
@@ -839,13 +840,13 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                 backwardSettingsKey.get(settingsKey),
                 gioSettings,
                 title,
-                subtitle,
+                subtitle
             );
 
             Settings.bind(
                 Settings.KEY_ENABLE_MOVE_KEYBINDINGS,
                 row,
-                'sensitive',
+                'sensitive'
             );
             keybindingsDialogGroup.add(row);
         });
@@ -854,8 +855,8 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             Settings.KEY_WRAPAROUND_FOCUS,
             _('Enable next/previous window focus to wrap around'),
             _(
-                'When focusing next or previous window, wrap around at the window edge',
-            ),
+                'When focusing next or previous window, wrap around at the window edge'
+            )
         );
         keybindingsGroup.add(wrapAroundRow);
 
@@ -863,8 +864,8 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             Settings.KEY_ENABLE_DIRECTIONAL_FOCUS_TILED_ONLY,
             _('Restrict directional focus to tiled windows'),
             _(
-                'When using directional focus navigation, only consider tiled windows',
-            ),
+                'When using directional focus navigation, only consider tiled windows'
+            )
         );
         keybindingsGroup.add(directionalFocusTiledWindows);
 
@@ -872,7 +873,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         const importExportGroup = new Adw.PreferencesGroup({
             title: _('Import, export and reset'),
             description: _(
-                'Import, export and reset the settings of Tiling Shell',
+                'Import, export and reset the settings of Tiling Shell'
             ),
         });
         prefsPage.add(importExportGroup);
@@ -899,10 +900,10 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                                 if (!file) throw new Error('no file selected');
 
                                 debug(
-                                    `Create file with path ${file.get_path()}`,
+                                    `Create file with path ${file.get_path()}`
                                 );
                                 const settingsExport = new SettingsExport(
-                                    this.getSettings(),
+                                    this.getSettings()
                                 );
                                 const content = settingsExport.exportToString();
                                 file.replace_contents_bytes_async(
@@ -914,12 +915,12 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                                     (thisFile, res) => {
                                         try {
                                             thisFile?.replace_contents_finish(
-                                                res,
+                                                res
                                             );
                                         } catch (e) {
                                             debug(e);
                                         }
-                                    },
+                                    }
                                 );
                             }
                         } catch (error: unknown) {
@@ -927,12 +928,12 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                         }
 
                         _source.destroy();
-                    },
+                    }
                 );
 
                 fc.set_current_name('tilingshell-settings.txt');
                 fc.show();
-            },
+            }
         );
         importExportGroup.add(exportSettingsBtn);
 
@@ -964,10 +965,10 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                                     file.load_contents(null);
                                 if (success) {
                                     const imported = new TextDecoder(
-                                        'utf-8',
+                                        'utf-8'
                                     ).decode(content);
                                     const settingsExport = new SettingsExport(
-                                        this.getSettings(),
+                                        this.getSettings()
                                     );
                                     settingsExport.importFromString(imported);
                                 } else {
@@ -979,11 +980,11 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                         }
 
                         _source.destroy();
-                    },
+                    }
                 );
 
                 fc.show();
-            },
+            }
         );
         importExportGroup.add(importSettingsBtn);
 
@@ -992,7 +993,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             _('Reset settings'),
             _('Bring back the default settings'),
             () => new SettingsExport(this.getSettings()).restoreToDefault(),
-            'destructive-action',
+            'destructive-action'
         );
         importExportGroup.add(resetSettingsBtn);
 
@@ -1009,44 +1010,44 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         buttons.append(
             this._buildLinkButton(
                 `♥︎ ${_('Donate on ko-fi')}`,
-                'https://ko-fi.com/domferr',
-            ),
+                'https://ko-fi.com/domferr'
+            )
         );
         buttons.append(
             this._buildLinkButton(
                 _('Report a bug'),
-                'https://github.com/domferr/tilingshell/issues/new?template=bug_report.md',
-            ),
+                'https://github.com/domferr/tilingshell/issues/new?template=bug_report.md'
+            )
         );
         buttons.append(
             this._buildLinkButton(
                 _('Request a feature'),
-                'https://github.com/domferr/tilingshell/issues/new?template=feature_request.md',
-            ),
+                'https://github.com/domferr/tilingshell/issues/new?template=feature_request.md'
+            )
         );
         footerGroup.add(buttons);
 
         footerGroup.add(
             new Gtk.Label({
                 label: _(
-                    'Have issues, you want to suggest a new feature or contribute?',
+                    'Have issues, you want to suggest a new feature or contribute?'
                 ),
                 margin_bottom: 4,
-            }),
+            })
         );
         footerGroup.add(
             new Gtk.Label({
                 label: `${_('Open a new issue on')} <a href="https://github.com/domferr/tilingshell">GitHub</a>!`,
                 useMarkup: true,
                 margin_bottom: 32,
-            }),
+            })
         );
 
         if (this.metadata['version-name']) {
             footerGroup.add(
                 new Gtk.Label({
                     label: `· Tiling Shell v${this.metadata['version-name']} ·`,
-                }),
+                })
             );
         }
 
@@ -1058,7 +1059,11 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         return Promise.resolve();
     }
 
-    _createEdgeTilingBehaviourOption(title: string, subtitle: string, iconName: string) {
+    _createEdgeTilingBehaviourOption(
+        title: string,
+        subtitle: string,
+        iconName: string
+    ) {
         const button = new Gtk.ToggleButton({
             canFocus: true,
             valign: Gtk.Align.FILL,
@@ -1078,7 +1083,9 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         });
 
         const settings = Gtk.Settings.get_default();
-        const iconNameByTheme = settings?.gtk_application_prefer_dark_theme ? iconName : `${iconName}-dark`;
+        const iconNameByTheme = settings?.gtk_application_prefer_dark_theme
+            ? iconName
+            : `${iconName}-dark`;
 
         const image = new Gtk.Image({
             iconName: iconNameByTheme,
@@ -1087,21 +1094,21 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             margin_bottom: distance,
             margin_start: 0,
             margin_end: 0,
-            cssClasses: ['image']
+            cssClasses: ['image'],
         });
 
         const titleLabel = new Gtk.Label({
             label: title,
             wrap: true,
             xalign: 0,
-            css_classes: ['title']
+            css_classes: ['title'],
         });
 
         const subtitleLabel = new Gtk.Label({
             label: subtitle,
             wrap: true,
             xalign: 0,
-            css_classes: ['caption']
+            css_classes: ['caption'],
         });
 
         content.append(image);
@@ -1113,11 +1120,14 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         return button;
     }
 
-    _buildEdgeTilingBehaviourRow(currentMode: EdgeTilingMode, onModeChange: (newMode: EdgeTilingMode) => void) {
+    _buildEdgeTilingBehaviourRow(
+        currentMode: EdgeTilingMode,
+        onModeChange: (newMode: EdgeTilingMode) => void
+    ) {
         const row = new Adw.ActionRow({
             activatable: false,
-            title: _("Choose how windows snap to screen edges"),
-            cssClasses: ['edge-tiling-behaviour']
+            title: _('Choose how windows snap to screen edges'),
+            cssClasses: ['edge-tiling-behaviour'],
         });
         (row.get_child() as Gtk.Box).set_orientation(Gtk.Orientation.VERTICAL);
 
@@ -1135,19 +1145,25 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             _('Follow quarters or screen halves'),
             'edge-default-symbolic'
         );
-        defaultBtn.connect("toggled", () => onModeChange(EdgeTilingMode.DEFAULT));
+        defaultBtn.connect('toggled', () =>
+            onModeChange(EdgeTilingMode.DEFAULT)
+        );
         const adaptiveBtn = this._createEdgeTilingBehaviourOption(
             _('Adaptive'),
             _('Follow corners of selected layout or screen halves'),
             'edge-adaptive-symbolic'
         );
-        adaptiveBtn.connect("toggled", () => onModeChange(EdgeTilingMode.ADAPTIVE));
+        adaptiveBtn.connect('toggled', () =>
+            onModeChange(EdgeTilingMode.ADAPTIVE)
+        );
         const granularBtn = this._createEdgeTilingBehaviourOption(
             _('Granular'),
             _('Follow currently selected layout'),
             'edge-granular-symbolic'
         );
-        granularBtn.connect("toggled", () => onModeChange(EdgeTilingMode.GRANULAR));
+        granularBtn.connect('toggled', () =>
+            onModeChange(EdgeTilingMode.GRANULAR)
+        );
         content.append(defaultBtn);
         content.append(adaptiveBtn);
         content.append(granularBtn);
@@ -1155,8 +1171,10 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         defaultBtn.set_group(adaptiveBtn);
         granularBtn.set_group(adaptiveBtn);
         // set the currently activated one
-        if (currentMode === EdgeTilingMode.ADAPTIVE) adaptiveBtn.set_active(true);
-        else if (currentMode === EdgeTilingMode.GRANULAR) granularBtn.set_active(true);
+        if (currentMode === EdgeTilingMode.ADAPTIVE)
+            adaptiveBtn.set_active(true);
+        else if (currentMode === EdgeTilingMode.GRANULAR)
+            granularBtn.set_active(true);
         else defaultBtn.set_active(true);
         (row.get_child() as Gtk.Box).append(content);
 
@@ -1167,7 +1185,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         settingsKey: string,
         title: string,
         subtitle: string,
-        suffix?: Gtk.Widget,
+        suffix?: Gtk.Widget
     ): Adw.ActionRow {
         const gtkSwitch = new Gtk.Switch({
             vexpand: false,
@@ -1190,12 +1208,12 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         subtitle: string,
         initialValue: ActivationKey,
         onChange: (_: ActivationKey) => void,
-        styleClass?: string,
+        styleClass?: string
     ): Adw.ActionRow {
         const dropDown = this._buildActivationKeysDropDown(
             initialValue,
             onChange,
-            styleClass,
+            styleClass
         );
         dropDown.set_vexpand(false);
         dropDown.set_valign(Gtk.Align.CENTER);
@@ -1214,7 +1232,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         title: string,
         subtitle: string,
         min = 0,
-        max = 32,
+        max = 32
     ) {
         const spinBtn = Gtk.SpinButton.new_with_range(min, max, 1);
         spinBtn.set_vexpand(false);
@@ -1235,7 +1253,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         title: string,
         subtitle: string,
         onClick: () => void,
-        styleClass?: string,
+        styleClass?: string
     ) {
         const btn = Gtk.Button.new_with_label(label);
         if (styleClass) btn.add_css_class(styleClass);
@@ -1263,7 +1281,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                 null,
                 Gio.DBusCallFlags.NONE,
                 -1,
-                null,
+                null
             );
         } catch (e) {
             if (e instanceof Gio.DBusError) Gio.DBusError.strip_remote_error(e);
@@ -1275,7 +1293,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
     _buildActivationKeysDropDown(
         initialValue: ActivationKey,
         onChange: (_: ActivationKey) => void,
-        styleClass?: string,
+        styleClass?: string
     ) {
         const options = new Gtk.StringList();
         const activationKeys = [
@@ -1283,7 +1301,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             ActivationKey.ALT,
             ActivationKey.SUPER,
         ];
-        activationKeys.forEach((k) => options.append(ActivationKey[k]));
+        activationKeys.forEach(k => options.append(ActivationKey[k]));
         options.append('(None)');
         const dropdown = new Gtk.DropDown({
             model: options,
@@ -1320,9 +1338,13 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         gioSettings: Gio.Settings,
         title: string,
         subtitle: string | undefined,
-        styleClass?: string,
+        styleClass?: string
     ) {
-        const btn = new ShortcutSettingButton(settingsKey, gioSettings, backwardKey);
+        const btn = new ShortcutSettingButton(
+            settingsKey,
+            gioSettings,
+            backwardKey
+        );
         if (styleClass) btn.add_css_class(styleClass);
         btn.set_vexpand(false);
         btn.set_valign(Gtk.Align.CENTER);
@@ -1343,14 +1365,14 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         initialValue: number,
         min: number,
         max: number,
-        step: number,
+        step: number
         /* styleClass?: string,*/
     ): Adw.ActionRow {
         const scale = Gtk.Scale.new_with_range(
             Gtk.Orientation.HORIZONTAL,
             min,
             max,
-            step,
+            step
         );
         scale.set_value(initialValue);
         scale.set_vexpand(false);
@@ -1376,7 +1398,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
 
     _buildColorButton(
         rgba: Gdk.RGBA,
-        onChange: (_s: string) => void,
+        onChange: (_s: string) => void
     ): Gtk.ColorButton {
         const colorButton = new Gtk.ColorButton({
             rgba,
@@ -1392,7 +1414,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
     _buildCustomColorDropDown(
         initialValue: boolean,
         onChange: (_: boolean) => void,
-        styleClass?: string,
+        styleClass?: string
     ) {
         const options = new Gtk.StringList();
         options.append(_('Choose custom color')); // true
@@ -1421,8 +1443,8 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         filter: Gtk.FileFilter,
         onResponse: (
             _source: Gtk.FileChooserNative,
-            _response_id: number,
-        ) => void,
+            _response_id: number
+        ) => void
     ): Gtk.FileChooserNative {
         const fc = new Gtk.FileChooserNative({
             title,
@@ -1453,14 +1475,14 @@ const ShortcutSettingButton = class extends Gtk.Button {
                         'shortcut',
                         'The shortcut',
                         GObject.ParamFlags.READWRITE,
-                        '',
+                        ''
                     ),
                 },
                 Signals: {
                     changed: { param_types: [GObject.TYPE_STRING] },
                 },
             },
-            this,
+            this
         );
     }
 
@@ -1471,7 +1493,11 @@ const ShortcutSettingButton = class extends Gtk.Button {
     private _gioSettings: Gio.Settings;
     private _backwardKey: string | undefined;
 
-    constructor(settingsKey: string, gioSettings: Gio.Settings, backwardKey: string | undefined = undefined) {
+    constructor(
+        settingsKey: string,
+        gioSettings: Gio.Settings,
+        backwardKey: string | undefined = undefined
+    ) {
         super({
             halign: Gtk.Align.CENTER,
             hexpand: false,
@@ -1539,7 +1565,7 @@ const ShortcutSettingButton = class extends Gtk.Button {
         _widget: Gtk.Widget,
         keyval: number,
         keycode: number,
-        state: number,
+        state: number
     ) {
         let mask = state & Gtk.accelerator_get_default_mod_mask();
         mask &= ~Gdk.ModifierType.LOCK_MASK;
@@ -1569,7 +1595,7 @@ const ShortcutSettingButton = class extends Gtk.Button {
                 null,
                 keyval,
                 keycode,
-                mask,
+                mask
             );
             this._updateShortcut(val);
         }
@@ -1584,7 +1610,9 @@ const ShortcutSettingButton = class extends Gtk.Button {
         this._gioSettings.set_strv(this._settingsKey, [this.shortcut]);
         if (this._backwardKey) {
             // also update the backward settings key by prepending <Shift>
-            this._gioSettings.set_strv(this._backwardKey, [`<Shift>${this.shortcut}`]);
+            this._gioSettings.set_strv(this._backwardKey, [
+                `<Shift>${this.shortcut}`,
+            ]);
         }
         this.emit('changed', this.shortcut);
     }

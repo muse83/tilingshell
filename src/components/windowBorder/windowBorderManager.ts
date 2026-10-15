@@ -29,7 +29,7 @@ export class WindowBorderManager {
             () => {
                 if (Settings.ENABLE_WINDOW_BORDER) this._turnOn();
                 else this._turnOff();
-            },
+            }
         );
     }
 
@@ -38,21 +38,21 @@ export class WindowBorderManager {
         this._signals.connect(
             global.display,
             'notify::focus-window',
-            this._onWindowFocused.bind(this),
+            this._onWindowFocused.bind(this)
         );
         this._signals.connect(Settings, Settings.KEY_WINDOW_BORDER_COLOR, () =>
-            this._border?.updateStyle(),
+            this._border?.updateStyle()
         );
         this._signals.connect(
             Settings,
             Settings.KEY_WINDOW_USE_CUSTOM_BORDER_COLOR,
-            () => this._border?.updateStyle(),
+            () => this._border?.updateStyle()
         );
         this._interfaceSettings.connect('changed::accent-color', () =>
-            this._border?.updateStyle(),
+            this._border?.updateStyle()
         );
         this._signals.connect(Settings, Settings.KEY_WINDOW_BORDER_WIDTH, () =>
-            this._border?.updateStyle(),
+            this._border?.updateStyle()
         );
     }
 

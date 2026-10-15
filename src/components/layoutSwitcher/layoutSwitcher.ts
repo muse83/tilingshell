@@ -17,7 +17,9 @@ const LAYOUT_WIDTH: number = 128; // 16:9 ratio. -> (16*layoutHeight) / 9 and th
 const GAPS = 3;
 
 class LayoutSwitcherList extends SwitcherPopup.SwitcherList {
-    static { registerGObjectClass(this) }
+    static {
+        registerGObjectClass(this);
+    }
 
     // those are defined in the parent but we lack them in the type definition
     // @esbuild-drop-next-line
@@ -30,7 +32,7 @@ class LayoutSwitcherList extends SwitcherPopup.SwitcherList {
     constructor(
         items: Layout[],
         parent: LayoutSwitcherPopup,
-        monitorScalingFactor?: number,
+        monitorScalingFactor?: number
     ) {
         // @ts-expect-error "Parent can take a boolean"
         super(false); // false since layouts won't be squared
@@ -41,7 +43,7 @@ class LayoutSwitcherList extends SwitcherPopup.SwitcherList {
         // then we can remove this as child
         parent.add_child(this);
         enableScalingFactorSupport(this, monitorScalingFactor);
-        items.forEach((lay) => this._addLayoutItem(lay));
+        items.forEach(lay => this._addLayoutItem(lay));
         parent.remove_child(this);
     }
 
@@ -59,8 +61,8 @@ class LayoutSwitcherList extends SwitcherPopup.SwitcherList {
                 layout,
                 Settings.get_inner_gaps(1).top > 0 ? GAPS : 0,
                 LAYOUT_HEIGHT,
-                LAYOUT_WIDTH,
-            ),
+                LAYOUT_WIDTH
+            )
         );
     }
 
@@ -80,7 +82,9 @@ class LayoutSwitcherList extends SwitcherPopup.SwitcherList {
 }
 
 export class LayoutSwitcherPopup extends SwitcherPopup.SwitcherPopup {
-    static { registerGObjectClass(this) }
+    static {
+        registerGObjectClass(this);
+    }
 
     // those are defined in the parent but we lack them in the type definition
     // @esbuild-drop-next-line
@@ -93,7 +97,11 @@ export class LayoutSwitcherPopup extends SwitcherPopup.SwitcherPopup {
     private _action: number;
     private _backwardAction: number;
 
-    constructor(action: number, backwardAction: number, enableScaling: boolean) {
+    constructor(
+        action: number,
+        backwardAction: number,
+        enableScaling: boolean
+    ) {
         // @ts-expect-error "Parent can take a list"
         super(GlobalState.get().layouts);
 
@@ -106,17 +114,17 @@ export class LayoutSwitcherPopup extends SwitcherPopup.SwitcherPopup {
         this._switcherList = new LayoutSwitcherList(
             this._items,
             this,
-            monitorScalingFactor,
+            monitorScalingFactor
         );
     }
 
     _initialSelection(backward: boolean, _binding: number) {
         const selectedLay = GlobalState.get().getSelectedLayoutOfMonitor(
             this._getCurrentMonitorIndex(),
-            global.workspaceManager.get_active_workspace_index(),
+            global.workspaceManager.get_active_workspace_index()
         );
         this._selectedIndex = GlobalState.get().layouts.findIndex(
-            (lay) => lay.id === selectedLay.id,
+            lay => lay.id === selectedLay.id
         );
         // backward is the one passed to show function
         if (backward) this._select(this._previous());
@@ -127,7 +135,8 @@ export class LayoutSwitcherPopup extends SwitcherPopup.SwitcherPopup {
         if (keysym === Clutter.KEY_Left) this._select(this._previous());
         else if (keysym === Clutter.KEY_Right) this._select(this._next());
         else if (action === this._action) this._select(this._next());
-        else if (action === this._backwardAction) this._select(this._previous());
+        else if (action === this._backwardAction)
+            this._select(this._previous());
         else return Clutter.EVENT_PROPAGATE;
 
         return Clutter.EVENT_STOP;
@@ -143,7 +152,7 @@ export class LayoutSwitcherPopup extends SwitcherPopup.SwitcherPopup {
 
         GlobalState.get().setSelectedLayoutOfMonitor(
             this._items[this._selectedIndex].id,
-            this._getCurrentMonitorIndex(),
+            this._getCurrentMonitorIndex()
         );
     }
 

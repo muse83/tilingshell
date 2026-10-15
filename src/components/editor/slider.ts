@@ -5,14 +5,16 @@ import { getScalingFactorOf } from '../../utils/ui';
 import { getEventCoords } from '../../utils/gnomesupport';
 
 export default class Slider extends St.Button {
-    static { registerGObjectClass(this, {
-        Signals: {
-            slide: {
-                param_types: [GObject.TYPE_INT], // movement
+    static {
+        registerGObjectClass(this, {
+            Signals: {
+                slide: {
+                    param_types: [GObject.TYPE_INT], // movement
+                },
             },
-        },
-        GTypeName: 'Slider',
-    })};
+            GTypeName: 'Slider',
+        });
+    }
 
     private readonly _sliderSize: number = 48;
     private readonly _groupId: number;
@@ -34,7 +36,7 @@ export default class Slider extends St.Button {
         groupId: number,
         x: number,
         y: number,
-        horizontal: boolean,
+        horizontal: boolean
     ) {
         super({
             styleClass: 'layout-editor-slider',
@@ -62,7 +64,7 @@ export default class Slider extends St.Button {
         this._lastEventCoord = null;
         this.set_position(
             Math.round(Math.round(x - this.width / 2)),
-            Math.round(y - this.height / 2),
+            Math.round(y - this.height / 2)
         );
 
         this.connect('notify::hover', () => this._updateCursor());
@@ -128,13 +130,13 @@ export default class Slider extends St.Button {
 
         this._minTileCoord = Math.min(
             this._minTileCoord,
-            this._horizontalDir ? tile.rect.y : tile.rect.x,
+            this._horizontalDir ? tile.rect.y : tile.rect.x
         );
         this._maxTileCoord = Math.max(
             this._maxTileCoord,
             this._horizontalDir
                 ? tile.rect.y + tile.rect.height
-                : tile.rect.x + tile.rect.width,
+                : tile.rect.x + tile.rect.width
         );
 
         this._updatePosition();
@@ -145,7 +147,7 @@ export default class Slider extends St.Button {
     private _onTileSizeChanged(
         tile: EditableTilePreview,
         oldSize: Mtk.Rectangle,
-        newSize: Mtk.Rectangle,
+        newSize: Mtk.Rectangle
     ) {
         if (this._horizontalDir) {
             if (
@@ -196,14 +198,14 @@ export default class Slider extends St.Button {
         // remove all the signals related to the tile
         const sig = this._signals.get(tile);
         if (sig) {
-            sig.forEach((id) => tile.disconnect(id));
+            sig.forEach(id => tile.disconnect(id));
             this._signals.delete(tile);
         }
     }
 
     public onTileSplit(
         tileToRemove: EditableTilePreview,
-        newTiles: EditableTilePreview[],
+        newTiles: EditableTilePreview[]
     ) {
         if (newTiles.length === 0) return;
 
@@ -226,7 +228,7 @@ export default class Slider extends St.Button {
         // remove the signal of the tile to remove
         const sig = this._signals.get(tileToRemove);
         if (sig) {
-            sig.forEach((id) => tileToRemove.disconnect(id));
+            sig.forEach(id => tileToRemove.disconnect(id));
             this._signals.delete(tileToRemove);
         }
 
@@ -251,10 +253,7 @@ export default class Slider extends St.Button {
         this._signals
             .get(tile)
             ?.push(
-                tile.connect(
-                    'size-changed',
-                    this._onTileSizeChanged.bind(this),
-                ),
+                tile.connect('size-changed', this._onTileSizeChanged.bind(this))
             );
         this._signals
             .get(tile)
@@ -264,7 +263,7 @@ export default class Slider extends St.Button {
     public deleteSlider(
         tileToDelete: EditableTilePreview,
         innerGaps: Clutter.Margin,
-        outerGaps: Clutter.Margin,
+        outerGaps: Clutter.Margin
     ): boolean {
         const isNext = this._horizontalDir
             ? this.x <= tileToDelete.rect.x
@@ -284,7 +283,7 @@ export default class Slider extends St.Button {
               : St.Side.TOP;
         // extend the tiles on the opposite side of the tile to be deleted
         const extendTilesArray = isNext ? this._previousTiles : this._nextTiles;
-        extendTilesArray.forEach((tileToExtend) => {
+        extendTilesArray.forEach(tileToExtend => {
             tileToExtend.updateTile({
                 x:
                     !isNext && this._horizontalDir
@@ -396,7 +395,7 @@ export default class Slider extends St.Button {
 
     private _onDestroy(): void {
         this._signals.forEach((ids, tile) =>
-            ids.forEach((id) => tile.disconnect(id)),
+            ids.forEach(id => tile.disconnect(id))
         );
         this._minTileCoord = Number.MAX_VALUE;
         this._maxTileCoord = Number.MIN_VALUE;

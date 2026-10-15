@@ -7,14 +7,16 @@ import { buildMarginOf, buildRectangle, getScalingFactorOf } from '../utils/ui';
 import { registerGObjectClass } from '../utils/gjs';
 
 class LayoutButtonWidget extends LayoutWidget<SnapAssistTile> {
-    static { registerGObjectClass(this) }
+    static {
+        registerGObjectClass(this);
+    }
 
     constructor(
         parent: Clutter.Actor,
         layout: Layout,
         gapSize: number,
         height: number,
-        width: number,
+        width: number
     ) {
         super({
             parent,
@@ -30,21 +32,23 @@ class LayoutButtonWidget extends LayoutWidget<SnapAssistTile> {
         parent: Clutter.Actor,
         rect: Mtk.Rectangle,
         gaps: Clutter.Margin,
-        tile: Tile,
+        tile: Tile
     ): SnapAssistTile {
         return new SnapAssistTile({ parent, rect, gaps, tile });
     }
 }
 
 export default class LayoutButton extends St.Button {
-    static { registerGObjectClass(this) }
+    static {
+        registerGObjectClass(this);
+    }
 
     constructor(
         parent: Clutter.Actor,
         layout: Layout,
         gapSize: number,
         height: number,
-        width: number,
+        width: number
     ) {
         super({
             styleClass: 'layout-button button',
@@ -62,7 +66,7 @@ export default class LayoutButton extends St.Button {
             layout,
             gapSize,
             height * scalingFactor,
-            width * scalingFactor,
+            width * scalingFactor
         );
     }
 }

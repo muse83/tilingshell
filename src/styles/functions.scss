@@ -1,4 +1,4 @@
-@use "sass:math";
+@use 'sass:math';
 // Function to convert px values to em
 // From https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/main/data/theme/gnome-shell-sass/_drawing.scss#L6
 @function to_em($input, $base: 16px) {
@@ -6,8 +6,6 @@
     $em_value: calc($input / $base) * 1.091 * 1000;
     @return calc(math.round($em_value) / 1000) * 1em;
 }
-
-
 
 // From https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/main/data/theme/gnome-shell-sass/_drawing.scss#L66
 // Mixin to convert provided font size in pt to em units

@@ -7,8 +7,10 @@ import { buildRectangle, getScalingFactorOf } from '../../utils/ui';
 import { Clutter, Mtk } from '../../gi/ext';
 
 export default class LayoutIcon extends LayoutWidget<SnapAssistTile> {
-    static { registerGObjectClass(this) }
-    
+    static {
+        registerGObjectClass(this);
+    }
+
     constructor(
         parent: Clutter.Actor,
         importantTiles: Tile[],
@@ -16,7 +18,7 @@ export default class LayoutIcon extends LayoutWidget<SnapAssistTile> {
         innerGaps: Clutter.Margin,
         outerGaps: Clutter.Margin,
         width: number,
-        height: number,
+        height: number
     ) {
         super({
             parent,
@@ -38,9 +40,9 @@ export default class LayoutIcon extends LayoutWidget<SnapAssistTile> {
         this.set_x_expand(false);
         this.set_y_expand(false);
 
-        importantTiles.forEach((t) => {
+        importantTiles.forEach(t => {
             const preview = this._previews.find(
-                (snap) => snap.tile.x === t.x && snap.tile.y === t.y,
+                snap => snap.tile.x === t.x && snap.tile.y === t.y
             );
             if (preview) preview.add_style_class_name('important');
         });
@@ -50,7 +52,7 @@ export default class LayoutIcon extends LayoutWidget<SnapAssistTile> {
         parent: Clutter.Actor,
         rect: Mtk.Rectangle,
         gaps: Clutter.Margin,
-        tile: Tile,
+        tile: Tile
     ): SnapAssistTile {
         return new SnapAssistTile({ parent, rect, gaps, tile });
     }

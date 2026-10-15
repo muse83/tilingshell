@@ -21,8 +21,10 @@ const MIN_RADIUS = 2;
  * - Listens for theme changes and updates styles dynamically.
  */
 export default class SnapAssistTile extends TilePreview {
-    static { registerGObjectClass(this) }
-    
+    static {
+        registerGObjectClass(this);
+    }
+
     private _styleChangedSignalID: number | undefined;
 
     constructor(params: {
@@ -96,7 +98,7 @@ export default class SnapAssistTile extends TilePreview {
 
         this._applyStyle();
         this._styleChangedSignalID = St.ThemeContext.get_for_stage(
-            global.get_stage(),
+            global.get_stage()
         ).connect('changed', () => {
             this._applyStyle();
         });
@@ -126,7 +128,7 @@ export default class SnapAssistTile extends TilePreview {
     onDestroy(): void {
         if (this._styleChangedSignalID) {
             St.ThemeContext.get_for_stage(global.get_stage()).disconnect(
-                this._styleChangedSignalID,
+                this._styleChangedSignalID
             );
             this._styleChangedSignalID = undefined;
         }

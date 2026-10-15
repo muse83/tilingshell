@@ -10,7 +10,7 @@ export default class TouchEventHelper {
 
     convertPanToScroll(
         event: Clutter.Event,
-        scrollView: St.ScrollView,
+        scrollView: St.ScrollView
     ): boolean {
         if (!scrollView.vadjustment) return Clutter.EVENT_PROPAGATE;
 
@@ -34,8 +34,8 @@ export default class TouchEventHelper {
                     0,
                     Math.min(
                         newScrollYValue,
-                        adjustment.upper - adjustment.page_size,
-                    ),
+                        adjustment.upper - adjustment.page_size
+                    )
                 );
                 adjustment.set_value(clampedValue);
 

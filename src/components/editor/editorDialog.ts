@@ -16,7 +16,9 @@ import { _ } from '../../translations';
 import { widgetOrientation } from '../../utils/gnomesupport';
 
 export default class EditorDialog extends ModalDialog.ModalDialog {
-    static { registerGObjectClass(this) }
+    static {
+        registerGObjectClass(this);
+    }
 
     private readonly _layoutHeight: number = 72;
     private readonly _layoutWidth: number = 128; // 16:9 ratio. -> (16*layoutHeight) / 9 and then rounded to int
@@ -42,7 +44,7 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
         if (params.enableScaling) {
             const monitor = Main.layoutManager.findMonitorForActor(this);
             const scalingFactor = getMonitorScalingFactor(
-                monitor?.index || Main.layoutManager.primaryIndex,
+                monitor?.index || Main.layoutManager.primaryIndex
             );
             enableScalingFactorSupport(this, scalingFactor);
         }
@@ -53,7 +55,7 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
                 xAlign: Clutter.ActorAlign.CENTER,
                 xExpand: true,
                 styleClass: 'editor-dialog-title',
-            }),
+            })
         );
 
         this._layoutsBoxLayout = new St.BoxLayout({
@@ -98,7 +100,7 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
                 styleClass: 'button kbd',
                 xExpand: false,
                 pseudoClass: 'active',
-            }),
+            })
         );
         suggestion1.add_child(
             new St.Label({
@@ -107,7 +109,7 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
                 yAlign: Clutter.ActorAlign.CENTER,
                 styleClass: '',
                 xExpand: false,
-            }),
+            })
         );
 
         const suggestion2 = new St.BoxLayout();
@@ -120,7 +122,7 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
                 styleClass: 'button kbd',
                 xExpand: false,
                 pseudoClass: 'active',
-            }),
+            })
         );
         suggestion2.add_child(
             new St.Label({
@@ -129,7 +131,7 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
                 yAlign: Clutter.ActorAlign.CENTER,
                 styleClass: '',
                 xExpand: false,
-            }),
+            })
         );
         suggestion2.add_child(
             new St.Label({
@@ -139,7 +141,7 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
                 styleClass: 'button kbd',
                 xExpand: false,
                 pseudoClass: 'active',
-            }),
+            })
         );
         suggestion2.add_child(
             new St.Label({
@@ -148,7 +150,7 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
                 yAlign: Clutter.ActorAlign.CENTER,
                 styleClass: '',
                 xExpand: false,
-            }),
+            })
         );
 
         const suggestion3 = new St.BoxLayout();
@@ -161,7 +163,7 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
                 styleClass: 'button kbd',
                 xExpand: false,
                 pseudoClass: 'active',
-            }),
+            })
         );
         suggestion3.add_child(
             new St.Label({
@@ -170,7 +172,7 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
                 yAlign: Clutter.ActorAlign.CENTER,
                 styleClass: '',
                 xExpand: false,
-            }),
+            })
         );
 
         const suggestion4 = new St.BoxLayout({
@@ -183,11 +185,11 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
                 iconSize: 16,
                 yAlign: Clutter.ActorAlign.CENTER,
                 gicon: Gio.icon_new_for_string(
-                    `${params.path}/icons/indicator-symbolic.svg`,
+                    `${params.path}/icons/indicator-symbolic.svg`
                 ),
                 styleClass: 'button kbd',
                 pseudoClass: 'active',
-            }),
+            })
         );
         suggestion4.add_child(
             new St.Label({
@@ -196,7 +198,7 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
                 yAlign: Clutter.ActorAlign.CENTER,
                 styleClass: '',
                 xExpand: false,
-            }),
+            })
         );
 
         const legend = new St.BoxLayout({
@@ -215,7 +217,7 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
                 xAlign: Clutter.ActorAlign.CENTER,
                 xExpand: true,
                 styleClass: 'editor-dialog-title',
-            }),
+            })
         );
         this.contentLayout.add_child(legend);
 
@@ -252,7 +254,7 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
                 lay,
                 gaps,
                 this._layoutHeight,
-                this._layoutWidth,
+                this._layoutWidth
             );
             const moveAndDeleteButtonsBox = new St.BoxLayout({
                 xAlign: Clutter.ActorAlign.CENTER,
@@ -271,12 +273,12 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
                     });
                     moveLeftBtn.child = new St.Icon({
                         gicon: Gio.icon_new_for_string(
-                            `${params.path}/icons/chevron-left-symbolic.svg`,
+                            `${params.path}/icons/chevron-left-symbolic.svg`
                         ),
                         iconSize: 16,
                     });
                     moveLeftBtn.connect('clicked', () => {
-                        params.onReorderLayout(btnInd, btnInd-1);
+                        params.onReorderLayout(btnInd, btnInd - 1);
                         this._drawLayouts({
                             ...params,
                             layouts: GlobalState.get().layouts,
@@ -293,7 +295,7 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
                 });
                 deleteBtn.child = new St.Icon({
                     gicon: Gio.icon_new_for_string(
-                        `${params.path}/icons/delete-symbolic.svg`,
+                        `${params.path}/icons/delete-symbolic.svg`
                     ),
                     iconSize: 16,
                 });
@@ -315,12 +317,12 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
                     });
                     moveRightBtn.child = new St.Icon({
                         gicon: Gio.icon_new_for_string(
-                            `${params.path}/icons/chevron-right-symbolic.svg`,
+                            `${params.path}/icons/chevron-right-symbolic.svg`
                         ),
                         iconSize: 16,
                     });
                     moveRightBtn.connect('clicked', () => {
-                        params.onReorderLayout(btnInd, btnInd+1);
+                        params.onReorderLayout(btnInd, btnInd + 1);
                         this._drawLayouts({
                             ...params,
                             layouts: GlobalState.get().layouts,
@@ -349,15 +351,15 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
             box,
             new Layout(
                 [new Tile({ x: 0, y: 0, width: 1, height: 1, groups: [] })],
-                'New Layout',
+                'New Layout'
             ),
             gaps,
             this._layoutHeight,
-            this._layoutWidth,
+            this._layoutWidth
         );
         const icon = new St.Icon({
             gicon: Gio.icon_new_for_string(
-                `${params.path}/icons/add-symbolic.svg`,
+                `${params.path}/icons/add-symbolic.svg`
             ),
             iconSize: 32,
         });

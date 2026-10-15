@@ -1,4 +1,3 @@
-
 /*!
  * Tiling Shell: advanced and modern window management for GNOME
  *
@@ -82,7 +81,9 @@ export default class TilingShellExtension extends Extension {
         this._indicator = new Indicator(this.path, this.uuid);
         this._indicator.enableScaling = !this._logicalScaling;
         this._indicator.enable();
-        this._signals?.connect(this._indicator, 'open-preferences', () => this.openPreferences());
+        this._signals?.connect(this._indicator, 'open-preferences', () =>
+            this.openPreferences()
+        );
     }
 
     private _validateSettings() {
@@ -98,9 +99,12 @@ export default class TilingShellExtension extends Extension {
             debug('apply compatibility changes for 17.3');
 
             // if users used cycle layouts keybinding, enable the backwards one
-            Settings.gioSetting.set_strv(Settings.SETTING_CYCLE_LAYOUTS_BACKWARD, [
-                `<Shift>${Settings.gioSetting.get_strv(Settings.SETTING_CYCLE_LAYOUTS)}`
-            ]);
+            Settings.gioSetting.set_strv(
+                Settings.SETTING_CYCLE_LAYOUTS_BACKWARD,
+                [
+                    `<Shift>${Settings.gioSetting.get_strv(Settings.SETTING_CYCLE_LAYOUTS)}`,
+                ]
+            );
         }
     }
 
@@ -132,7 +136,7 @@ export default class TilingShellExtension extends Extension {
             SettingsOverride.get().override(
                 new Gio.Settings({ schemaId: 'org.gnome.mutter' }),
                 'edge-tiling',
-                new GLib.Variant('b', false),
+                new GLib.Variant('b', false)
             );
         }
 
@@ -143,7 +147,7 @@ export default class TilingShellExtension extends Extension {
                 () => {
                     this._createTilingManagers();
                     this._setupSignals();
-                },
+                }
             );
         } else {
             this._createTilingManagers();
@@ -155,7 +159,7 @@ export default class TilingShellExtension extends Extension {
 
         if (this._windowBorderManager) this._windowBorderManager.destroy();
         this._windowBorderManager = new WindowBorderManager(
-            !this._logicalScaling,
+            !this._logicalScaling
         );
         this._windowBorderManager.enable();
 
@@ -164,7 +168,7 @@ export default class TilingShellExtension extends Extension {
 
         this._windowMemory?.destroy();
         this._windowMemory = new WindowMemory((window, tile, monitorIndex) =>
-            this._tilingManagers[monitorIndex]?.restoreTile(tile, window),
+            this._tilingManagers[monitorIndex]?.restoreTile(tile, window)
         );
         this._windowMemory.enable();
 
@@ -186,12 +190,11 @@ export default class TilingShellExtension extends Extension {
 
     private _createTilingManagers() {
         debug('building a tiling manager for each monitor');
-        this._tilingManagers.forEach((tm) => tm.destroy());
+        this._tilingManagers.forEach(tm => tm.destroy());
         this._tilingManagers = getMonitors().map(
-            (monitor) =>
-                new TilingManager(monitor, !this._logicalScaling),
+            monitor => new TilingManager(monitor, !this._logicalScaling)
         );
-        this._tilingManagers.forEach((tm) => tm.enable());
+        this._tilingManagers.forEach(tm => tm.enable());
     }
 
     private _setupSignals() {
@@ -224,16 +227,15 @@ export default class TilingShellExtension extends Extension {
                 this._logicalScaling = logicalScaling;
                 this._createTilingManagers();
                 if (this._indicator) {
-                    this._indicator.enableScaling =
-                        !this._logicalScaling;
+                    this._indicator.enableScaling = !this._logicalScaling;
                 }
                 if (this._windowBorderManager)
                     this._windowBorderManager.destroy();
                 this._windowBorderManager = new WindowBorderManager(
-                    !this._logicalScaling,
+                    !this._logicalScaling
                 );
                 this._windowBorderManager.enable();
-            },
+            }
         );
 
         if (this._keybindings) {
@@ -243,10 +245,10 @@ export default class TilingShellExtension extends Extension {
                 (
                     kb: KeyBindings,
                     dp: Meta.Display,
-                    dir: KeyBindingsDirection,
+                    dir: KeyBindingsDirection
                 ) => {
                     this._onKeyboardMoveWin(dp, dir, false);
-                },
+                }
             );
             this._signals.connect(
                 this._keybindings,
@@ -254,10 +256,10 @@ export default class TilingShellExtension extends Extension {
                 (
                     kb: KeyBindings,
                     dp: Meta.Display,
-                    dir: KeyBindingsDirection,
+                    dir: KeyBindingsDirection
                 ) => {
                     this._onKeyboardMoveWin(dp, dir, true);
-                },
+                }
             );
             this._signals.connect(
                 this._keybindings,
@@ -267,12 +269,12 @@ export default class TilingShellExtension extends Extension {
                     const monitorIndex = window.get_monitor();
                     const manager = this._tilingManagers[monitorIndex];
                     if (manager) manager.onSpanAllTiles(window);
-                },
+                }
             );
             this._signals.connect(
                 this._keybindings,
                 'untile-window',
-                this._onKeyboardUntileWindow.bind(this),
+                this._onKeyboardUntileWindow.bind(this)
             );
             this._signals.connect(
                 this._keybindings,
@@ -281,9 +283,9 @@ export default class TilingShellExtension extends Extension {
                     this._onKeyboardMoveWin(
                         dp,
                         KeyBindingsDirection.NODIRECTION,
-                        false,
+                        false
                     );
-                },
+                }
             );
             this._signals.connect(
                 this._keybindings,
@@ -291,10 +293,10 @@ export default class TilingShellExtension extends Extension {
                 (
                     kb: KeyBindings,
                     dp: Meta.Display,
-                    dir: FocusSwitchDirection,
+                    dir: FocusSwitchDirection
                 ) => {
                     this._onKeyboardFocusWin(dp, dir);
-                },
+                }
             );
             this._signals.connect(
                 this._keybindings,
@@ -302,10 +304,10 @@ export default class TilingShellExtension extends Extension {
                 (
                     kb: KeyBindings,
                     dp: Meta.Display,
-                    dir: KeyBindingsDirection,
+                    dir: KeyBindingsDirection
                 ) => {
                     this._onKeyboardFocusWinDirection(dp, dir);
-                },
+                }
             );
             this._signals.connect(
                 this._keybindings,
@@ -313,16 +315,16 @@ export default class TilingShellExtension extends Extension {
                 (kb: KeyBindings, dp: Meta.Display) => {
                     const focus_window = dp.get_focus_window();
                     getWindows(
-                        global.workspaceManager.get_active_workspace(),
-                    ).forEach((win) => {
+                        global.workspaceManager.get_active_workspace()
+                    ).forEach(win => {
                         if (win !== focus_window && win.can_minimize())
                             win.minimize();
                     });
                     Main.activateWindow(
                         focus_window,
-                        global.get_current_time(),
+                        global.get_current_time()
                     );
-                },
+                }
             );
             this._signals.connect(
                 this._keybindings,
@@ -337,11 +339,18 @@ export default class TilingShellExtension extends Extension {
                     const switcher = new LayoutSwitcherPopup(
                         kb.cycleLayoutsAction!,
                         backwardAction!,
-                        !this._logicalScaling,
+                        !this._logicalScaling
                     );
 
-                    if (!switcher.show(currentAction === backwardAction, '', mask)) switcher.destroy();
-                },
+                    if (
+                        !switcher.show(
+                            currentAction === backwardAction,
+                            '',
+                            mask
+                        )
+                    )
+                        switcher.destroy();
+                }
             );
         }
 
@@ -360,17 +369,17 @@ export default class TilingShellExtension extends Extension {
                     SettingsOverride.get().override(
                         gioSettings,
                         'edge-tiling',
-                        new GLib.Variant('b', false),
+                        new GLib.Variant('b', false)
                     );
                 } else {
                     // bring back the value of native edge tiling
                     debug('bring back native edge tiling');
                     SettingsOverride.get().restoreKey(
                         gioSettings,
-                        'edge-tiling',
+                        'edge-tiling'
                     );
                 }
-            },
+            }
         );
 
         // enable/disable window menu from preferences
@@ -381,7 +390,7 @@ export default class TilingShellExtension extends Extension {
                 if (Settings.OVERRIDE_WINDOW_MENU)
                     OverriddenWindowMenu.enable();
                 else OverriddenWindowMenu.disable();
-            },
+            }
         );
 
         // tile a window when a tile or a button is clicked from the window menu
@@ -392,7 +401,7 @@ export default class TilingShellExtension extends Extension {
                 const monitorIndex = window.get_monitor();
                 const manager = this._tilingManagers[monitorIndex];
                 if (manager) manager.onTileFromWindowMenu(tile, window);
-            },
+            }
         );
 
         // enable/disable addition of tiled windows at the end of ALT+TAB from preferences
@@ -492,7 +501,7 @@ export default class TilingShellExtension extends Extension {
     private _onKeyboardMoveWin(
         display: Meta.Display,
         direction: KeyBindingsDirection,
-        spanFlag: boolean,
+        spanFlag: boolean
     ) {
         const focus_window = display.get_focus_window();
         if (
@@ -549,7 +558,7 @@ export default class TilingShellExtension extends Extension {
         }
         const neighborMonitorIndex = display.get_monitor_neighbor_index(
             focus_window.get_monitor(),
-            displayDirection,
+            displayDirection
         );
 
         const success = monitorTilingManager.onKeyboardMoveWindow(
@@ -557,7 +566,7 @@ export default class TilingShellExtension extends Extension {
             direction,
             false,
             spanFlag,
-            neighborMonitorIndex === -1, // clamp if there is NOT a monitor in this direction
+            neighborMonitorIndex === -1 // clamp if there is NOT a monitor in this direction
         );
 
         if (
@@ -587,13 +596,13 @@ export default class TilingShellExtension extends Extension {
             direction,
             true,
             spanFlag,
-            false,
+            false
         );
     }
 
     private _onKeyboardFocusWinDirection(
         display: Meta.Display,
-        direction: KeyBindingsDirection | FocusSwitchDirection,
+        direction: KeyBindingsDirection | FocusSwitchDirection
     ) {
         const focus_window = display.get_focus_window();
 
@@ -615,12 +624,12 @@ export default class TilingShellExtension extends Extension {
         };
 
         const windowList = filterUnfocusableWindows(
-            focus_window.get_workspace().list_windows(),
+            focus_window.get_workspace().list_windows()
         );
         const onlyTiledWindows = Settings.ENABLE_DIRECTIONAL_FOCUS_TILED_ONLY;
 
         windowList
-            .filter((win) => {
+            .filter(win => {
                 if (win === focus_window || win.minimized) return false;
                 if (
                     onlyTiledWindows &&
@@ -641,7 +650,7 @@ export default class TilingShellExtension extends Extension {
                 }
                 return false;
             })
-            .forEach((win) => {
+            .forEach(win => {
                 const winRect = win.get_frame_rect();
                 const winCenter = {
                     x: winRect.x + winRect.width / 2,
@@ -650,7 +659,7 @@ export default class TilingShellExtension extends Extension {
 
                 const euclideanDistance = squaredEuclideanDistance(
                     winCenter,
-                    focusWindowCenter,
+                    focusWindowCenter
                 );
 
                 if (
@@ -671,7 +680,7 @@ export default class TilingShellExtension extends Extension {
 
     private _onKeyboardFocusWin(
         display: Meta.Display,
-        direction: FocusSwitchDirection,
+        direction: FocusSwitchDirection
     ) {
         const focus_window = display.get_focus_window();
 
@@ -684,10 +693,10 @@ export default class TilingShellExtension extends Extension {
             return;
 
         const windowList = filterUnfocusableWindows(
-            focus_window.get_workspace().list_windows(),
+            focus_window.get_workspace().list_windows()
         );
         const focusParent = focus_window.get_transient_for() || focus_window;
-        const focusedIdx = windowList.findIndex((win) => {
+        const focusedIdx = windowList.findIndex(win => {
             // in case we are iterating over a modal dialog for our focused window
             return win === focusParent;
         });
@@ -697,11 +706,11 @@ export default class TilingShellExtension extends Extension {
             case FocusSwitchDirection.PREV:
                 if (focusedIdx === 0 && Settings.WRAPAROUND_FOCUS) {
                     windowList[windowList.length - 1].activate(
-                        global.get_current_time(),
+                        global.get_current_time()
                     );
                 } else {
                     windowList[focusedIdx - 1].activate(
-                        global.get_current_time(),
+                        global.get_current_time()
                     );
                 }
                 break;
@@ -746,9 +755,7 @@ export default class TilingShellExtension extends Extension {
      * the scale. At scale 1 both modes are identical, so logical (the default) is reported.
      */
     private _isLogicalScaling(): boolean {
-        return (
-            St.ThemeContext.get_for_stage(global.stage).scaleFactor === 1
-        );
+        return St.ThemeContext.get_for_stage(global.stage).scaleFactor === 1;
     }
 
     disable(): void {
@@ -765,7 +772,7 @@ export default class TilingShellExtension extends Extension {
         this._indicator = null;
 
         // destroy tiling managers
-        this._tilingManagers.forEach((tm) => tm.destroy());
+        this._tilingManagers.forEach(tm => tm.destroy());
         this._tilingManagers = [];
 
         this._resizingManager?.destroy();

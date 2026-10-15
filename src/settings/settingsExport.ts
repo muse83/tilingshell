@@ -26,7 +26,7 @@ export default class SettingsExport {
 
         const proc = Gio.Subprocess.new(
             ['dconf', 'load', dconfPath],
-            Gio.SubprocessFlags.STDIN_PIPE,
+            Gio.SubprocessFlags.STDIN_PIPE
         );
 
         proc.communicate_utf8(content, null);
@@ -35,7 +35,7 @@ export default class SettingsExport {
             this.restoreToDefault();
 
             throw new Error(
-                'Failed to import dconf dump file. Restoring to default...',
+                'Failed to import dconf dump file. Restoring to default...'
             );
         }
     }
@@ -46,14 +46,14 @@ export default class SettingsExport {
         SettingsOverride.get().restoreAll();
         this._gioSettings
             .list_keys()
-            .filter((key) => key.length > 0 && !excludedKeys.includes(key))
-            .forEach((key) => this._gioSettings.reset(key));
+            .filter(key => key.length > 0 && !excludedKeys.includes(key))
+            .forEach(key => this._gioSettings.reset(key));
     }
 
     private _dumpDconf(): string {
         const proc = Gio.Subprocess.new(
             ['dconf', 'dump', dconfPath],
-            Gio.SubprocessFlags.STDOUT_PIPE,
+            Gio.SubprocessFlags.STDOUT_PIPE
         );
 
         const [, dump] = proc.communicate_utf8(null, null);
@@ -73,7 +73,7 @@ export default class SettingsExport {
 
         const [key_list] = keyFile.get_keys('/');
 
-        key_list.forEach((key) => {
+        key_list.forEach(key => {
             if (excludedKeys.includes(key)) keyFile.remove_key('/', key);
         });
 

@@ -15,7 +15,9 @@ export interface TilePreviewConstructorProperties
 // }
 
 export default class TilePreview extends St.Widget {
-    static { registerGObjectClass(this) }
+    static {
+        registerGObjectClass(this);
+    }
 
     protected _rect: Mtk.Rectangle;
     protected _showing: boolean;
@@ -47,7 +49,7 @@ export default class TilePreview extends St.Widget {
         hasNeighborTop: boolean,
         hasNeighborRight: boolean,
         hasNeighborBottom: boolean,
-        hasNeighborLeft: boolean,
+        hasNeighborLeft: boolean
     ) {
         this.remove_style_class_name('top-left-border-radius');
         this.remove_style_class_name('top-right-border-radius');
@@ -105,7 +107,10 @@ export default class TilePreview extends St.Widget {
         return this._showing;
     }
 
-    public open(position: Mtk.Rectangle | undefined = undefined, ease: boolean = false) {
+    public open(
+        position: Mtk.Rectangle | undefined = undefined,
+        ease: boolean = false
+    ) {
         if (position) this._rect = position;
 
         const fadeInMove = this._showing;
@@ -135,7 +140,7 @@ export default class TilePreview extends St.Widget {
     public openBelow(
         window: Meta.Window,
         position?: Mtk.Rectangle,
-        ease: boolean = false,
+        ease: boolean = false
     ) {
         if (this.get_parent() === global.windowGroup) {
             const windowActor =
@@ -150,7 +155,7 @@ export default class TilePreview extends St.Widget {
     public openAbove(
         window: Meta.Window,
         position?: Mtk.Rectangle,
-        ease: boolean = false,
+        ease: boolean = false
     ) {
         if (this.get_parent() === global.windowGroup) {
             /* const windowActor =

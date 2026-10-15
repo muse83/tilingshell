@@ -6,7 +6,7 @@ export const getMonitors = (): Monitor[] => Main.layoutManager.monitors;
 
 export const isPointInsideRect = (
     point: { x: number; y: number },
-    rect: Mtk.Rectangle,
+    rect: Mtk.Rectangle
 ): boolean => {
     return (
         point.x >= rect.x &&
@@ -18,7 +18,7 @@ export const isPointInsideRect = (
 
 export const clampPointInsideRect = (
     point: { x: number; y: number },
-    rect: Mtk.Rectangle,
+    rect: Mtk.Rectangle
 ): { x: number; y: number } => {
     const clamp = (n: number, min: number, max: number) =>
         Math.min(Math.max(n, min), max);
@@ -30,7 +30,7 @@ export const clampPointInsideRect = (
 
 export const isTileOnContainerBorder = (
     tilePos: Mtk.Rectangle,
-    container: Mtk.Rectangle,
+    container: Mtk.Rectangle
 ): {
     isTop: boolean;
     isRight: boolean;
@@ -44,11 +44,11 @@ export const isTileOnContainerBorder = (
     const isTop = almostEqual(tilePos.y, container.y);
     const isRight = almostEqual(
         tilePos.x + tilePos.width,
-        container.x + container.width,
+        container.x + container.width
     );
     const isBottom = almostEqual(
         tilePos.y + tilePos.height,
-        container.y + container.height,
+        container.y + container.height
     );
     return {
         isTop,
@@ -71,11 +71,11 @@ export const buildTileGaps = (
     innerGaps: Clutter.Margin,
     outerGaps: Clutter.Margin,
     container: Mtk.Rectangle,
-    scalingFactor: number = 1,
+    scalingFactor: number = 1
 ): TileGapsInfo => {
     const { isTop, isRight, isBottom, isLeft } = isTileOnContainerBorder(
         tilePos,
-        container,
+        container
     );
     const margin = new Clutter.Margin();
     margin.top = (isTop ? outerGaps.top : innerGaps.top / 2) * scalingFactor;
@@ -97,7 +97,7 @@ export const buildTileGaps = (
 
 export const getMonitorScalingFactor = (monitorIndex: number) => {
     const scalingFactor = St.ThemeContext.get_for_stage(
-        global.get_stage(),
+        global.get_stage()
     ).get_scale_factor();
     if (scalingFactor === 1)
         return global.display.get_monitor_scale(monitorIndex);
@@ -122,7 +122,7 @@ export const getScalingFactorOf = (widget: St.Widget): [boolean, number] => {
 
 export const enableScalingFactorSupport = (
     widget: St.Widget,
-    monitorScalingFactor?: number,
+    monitorScalingFactor?: number
 ) => {
     if (!monitorScalingFactor) return;
     widget.set_style(`${getScalingFactorSupportString(monitorScalingFactor)};`);
@@ -156,7 +156,7 @@ export function buildMargin(params: {
 }
 
 export function buildRectangle(
-    params: { x?: number; y?: number; width?: number; height?: number } = {},
+    params: { x?: number; y?: number; width?: number; height?: number } = {}
 ): Mtk.Rectangle {
     return new Mtk.Rectangle({
         x: params.x || 0,
@@ -174,7 +174,7 @@ function getTransientOrParent(window: Meta.Window): Meta.Window {
 }
 
 export function filterUnfocusableWindows(
-    windows: Meta.Window[],
+    windows: Meta.Window[]
 ): Meta.Window[] {
     // we want to filter out
     // - top-level windows which are precluded by dialogs
@@ -197,7 +197,7 @@ export function getWindows(workspace?: Meta.Workspace): Meta.Window[] {
     // than the parent; so start with the complete list ...
     // ... map windows to their parent where appropriate ...
     return filterUnfocusableWindows(
-        global.display.get_tab_list(Meta.TabList.NORMAL_ALL, workspace),
+        global.display.get_tab_list(Meta.TabList.NORMAL_ALL, workspace)
     );
 }
 
@@ -206,15 +206,15 @@ export function getWindowsOfMonitor(monitor: Monitor): Meta.Window[] {
         .get_active_workspace()
         .list_windows()
         .filter(
-            (win) =>
+            win =>
                 win.get_window_type() === Meta.WindowType.NORMAL &&
-                Main.layoutManager.monitors[win.get_monitor()] === monitor,
+                Main.layoutManager.monitors[win.get_monitor()] === monitor
         );
 }
 
 export function squaredEuclideanDistance(
     pointA: { x: number; y: number },
-    pointB: { x: number; y: number },
+    pointB: { x: number; y: number }
 ) {
     return (
         (pointA.x - pointB.x) * (pointA.x - pointB.x) +

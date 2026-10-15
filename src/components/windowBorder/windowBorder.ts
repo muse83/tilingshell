@@ -25,7 +25,7 @@ const PromisifiedScreenshot = Shell.Screenshot as unknown as {
         cursorX: number,
         cursorY: number,
         cursorScale: number,
-        stream: Gio.OutputStream,
+        stream: Gio.OutputStream
     ): Promise<{ get_pixels(): Uint8Array }>;
 };
 
@@ -37,7 +37,9 @@ interface WindowWithCachedRadius extends Meta.Window {
 }
 
 export default class WindowBorder extends St.DrawingArea {
-    static { registerGObjectClass(this) }
+    static {
+        registerGObjectClass(this);
+    }
 
     private readonly _signals: SignalHandling;
 
@@ -52,7 +54,7 @@ export default class WindowBorder extends St.DrawingArea {
 
     constructor(win: Meta.Window, enableScaling: boolean) {
         super({
-            style_class: 'window-border'
+            style_class: 'window-border',
         });
         this._signals = new SignalHandling();
         this._bindings = [];
@@ -73,7 +75,7 @@ export default class WindowBorder extends St.DrawingArea {
         global.windowGroup.add_child(this);
         this.trackWindow(win, true);
         this.connect('destroy', () => {
-            this._bindings.forEach((b) => b.unbind());
+            this._bindings.forEach(b => b.unbind());
             this._bindings = [];
             this._signals.disconnect();
             if (this._timeout) clearTimeout(this._timeout);
@@ -84,7 +86,7 @@ export default class WindowBorder extends St.DrawingArea {
     public trackWindow(win: Meta.Window, force: boolean = false) {
         if (!force && this._window === win) return;
 
-        this._bindings.forEach((b) => b.unbind());
+        this._bindings.forEach(b => b.unbind());
         this._bindings = [];
         this._signals.disconnect();
         this._window = win;
@@ -98,13 +100,13 @@ export default class WindowBorder extends St.DrawingArea {
             'scale-y',
             'translation_x',
             'translation_y',
-        ].map((prop) =>
+        ].map(prop =>
             winActor.bind_property(
                 prop,
                 this,
                 prop,
-                GObject.BindingFlags.DEFAULT, // if winActor changes, this will change
-            ),
+                GObject.BindingFlags.DEFAULT // if winActor changes, this will change
+            )
         );
 
         if (Settings.ENABLE_SMART_WINDOW_BORDER_RADIUS) {
@@ -125,11 +127,11 @@ export default class WindowBorder extends St.DrawingArea {
         const winRect = this._window.get_frame_rect();
         this.set_position(
             winRect.x - this._scaledBorderWidth,
-            winRect.y - this._scaledBorderWidth,
+            winRect.y - this._scaledBorderWidth
         );
         this.set_size(
-            winRect.width + (2 * this._scaledBorderWidth),
-            winRect.height + (2 * this._scaledBorderWidth),
+            winRect.width + 2 * this._scaledBorderWidth,
+            winRect.height + 2 * this._scaledBorderWidth
         );
 
         const isMaximized =
@@ -172,7 +174,7 @@ export default class WindowBorder extends St.DrawingArea {
             const rect = this._window.get_frame_rect();
             this.set_position(
                 rect.x - this._scaledBorderWidth,
-                rect.y - this._scaledBorderWidth,
+                rect.y - this._scaledBorderWidth
             );
             // if the window changes monitor, we may have a different scaling factor
             if (this._windowMonitor !== win.get_monitor()) {
@@ -204,8 +206,8 @@ export default class WindowBorder extends St.DrawingArea {
 
             const rect = this._window.get_frame_rect();
             this.set_size(
-                rect.width + (2 * this._scaledBorderWidth),
-                rect.height + (2 * this._scaledBorderWidth),
+                rect.width + 2 * this._scaledBorderWidth,
+                rect.height + 2 * this._scaledBorderWidth
             );
             // if the window changes monitor, we may have a different scaling factor
             if (this._windowMonitor !== win.get_monitor()) {
@@ -258,7 +260,7 @@ export default class WindowBorder extends St.DrawingArea {
                 y: frameRect.y,
                 height,
                 width,
-            }),
+            })
         );
         if (!content) return;
 
@@ -292,7 +294,7 @@ export default class WindowBorder extends St.DrawingArea {
             0,
             0,
             1,
-            stream,
+            stream
         );
         const pixels = pixbuf.get_pixels();
 
@@ -307,7 +309,11 @@ export default class WindowBorder extends St.DrawingArea {
             }
         }
         // iterate pixels from bottom to top
-        for (let i = height - 1; i >= height - this._borderRadiusValue[St.Corner.TOPLEFT] - 2; i--) {
+        for (
+            let i = height - 1;
+            i >= height - this._borderRadiusValue[St.Corner.TOPLEFT] - 2;
+            i--
+        ) {
             if (pixels[i * width * 4 + 3] > alphaThreshold) {
                 this._borderRadiusValue[St.Corner.BOTTOMLEFT] = height - i - 1;
                 this._borderRadiusValue[St.Corner.BOTTOMRIGHT] =
@@ -353,8 +359,8 @@ export default class WindowBorder extends St.DrawingArea {
         const borderColor = Settings.WINDOW_USE_CUSTOM_BORDER_COLOR
             ? Settings.WINDOW_BORDER_COLOR
             : '-st-accent-color';
-        const radius = this._borderRadiusValue.map((val) => {
-            const valWithBorder = val === 0 ? val : (val + borderWidth);
+        const radius = this._borderRadiusValue.map(val => {
+            const valWithBorder = val === 0 ? val : val + borderWidth;
             return (
                 (alreadyScaled ? 1 : scalingFactor) *
                 (valWithBorder / (alreadyScaled ? scalingFactor : 1))
@@ -365,7 +371,7 @@ export default class WindowBorder extends St.DrawingArea {
             ? `${getScalingFactorSupportString(monitorScalingFactor)};`
             : '';
         this.set_style(
-            `border-color: ${borderColor}; border-radius: ${radius[St.Corner.TOPLEFT]}px ${radius[St.Corner.TOPRIGHT]}px ${radius[St.Corner.BOTTOMRIGHT]}px ${radius[St.Corner.BOTTOMLEFT]}px; ${scalingFactorSupportString}`,
+            `border-color: ${borderColor}; border-radius: ${radius[St.Corner.TOPLEFT]}px ${radius[St.Corner.TOPRIGHT]}px ${radius[St.Corner.BOTTOMRIGHT]}px ${radius[St.Corner.BOTTOMLEFT]}px; ${scalingFactorSupportString}`
         );
         // not setting border-width: ${borderWidth}px since we will draw the border manually in vfunc_repaint
     }
@@ -380,28 +386,65 @@ export default class WindowBorder extends St.DrawingArea {
         // all sides share one colour; GNOME 51 returns the same value for a null side
         const borderColor = themeNode.get_border_color(St.Side.TOP);
         const radius = [0, 0, 0, 0];
-        radius[St.Corner.TOPLEFT] = themeNode.get_border_radius(St.Corner.TOPLEFT);
-        radius[St.Corner.TOPRIGHT] = themeNode.get_border_radius(St.Corner.TOPRIGHT);
-        radius[St.Corner.BOTTOMLEFT] = themeNode.get_border_radius(St.Corner.BOTTOMLEFT);
-        radius[St.Corner.BOTTOMRIGHT] = themeNode.get_border_radius(St.Corner.BOTTOMRIGHT);
+        radius[St.Corner.TOPLEFT] = themeNode.get_border_radius(
+            St.Corner.TOPLEFT
+        );
+        radius[St.Corner.TOPRIGHT] = themeNode.get_border_radius(
+            St.Corner.TOPRIGHT
+        );
+        radius[St.Corner.BOTTOMLEFT] = themeNode.get_border_radius(
+            St.Corner.BOTTOMLEFT
+        );
+        radius[St.Corner.BOTTOMRIGHT] = themeNode.get_border_radius(
+            St.Corner.BOTTOMRIGHT
+        );
 
         const x = borderWidth / 2;
         const y = borderWidth / 2;
         const w = width - borderWidth;
         const h = height - borderWidth;
 
-        cr.setSourceRGBA(borderColor.red/255, borderColor.green/255, borderColor.blue/255, borderColor.alpha/255);
+        cr.setSourceRGBA(
+            borderColor.red / 255,
+            borderColor.green / 255,
+            borderColor.blue / 255,
+            borderColor.alpha / 255
+        );
         cr.setLineWidth(borderWidth);
 
         cr.newPath();
 
-        cr.arc(x + radius[St.Corner.TOPLEFT], y + radius[St.Corner.TOPLEFT], radius[St.Corner.TOPLEFT], Math.PI, Math.PI * 1.5);
+        cr.arc(
+            x + radius[St.Corner.TOPLEFT],
+            y + radius[St.Corner.TOPLEFT],
+            radius[St.Corner.TOPLEFT],
+            Math.PI,
+            Math.PI * 1.5
+        );
         cr.lineTo(x + w - radius[St.Corner.TOPRIGHT], y);
-        cr.arc(x + w - radius[St.Corner.TOPRIGHT], y + radius[St.Corner.TOPRIGHT], radius[St.Corner.TOPRIGHT], Math.PI * 1.5, 0);
+        cr.arc(
+            x + w - radius[St.Corner.TOPRIGHT],
+            y + radius[St.Corner.TOPRIGHT],
+            radius[St.Corner.TOPRIGHT],
+            Math.PI * 1.5,
+            0
+        );
         cr.lineTo(x + w, y + h - radius[St.Corner.BOTTOMRIGHT]);
-        cr.arc(x + w - radius[St.Corner.BOTTOMRIGHT], y + h - radius[St.Corner.BOTTOMRIGHT], radius[St.Corner.BOTTOMRIGHT], 0, Math.PI * 0.5);
+        cr.arc(
+            x + w - radius[St.Corner.BOTTOMRIGHT],
+            y + h - radius[St.Corner.BOTTOMRIGHT],
+            radius[St.Corner.BOTTOMRIGHT],
+            0,
+            Math.PI * 0.5
+        );
         cr.lineTo(x + radius[St.Corner.BOTTOMLEFT], y + h);
-        cr.arc(x + radius[St.Corner.BOTTOMLEFT], y + h - radius[St.Corner.BOTTOMLEFT], radius[St.Corner.BOTTOMLEFT], Math.PI * 0.5, Math.PI);
+        cr.arc(
+            x + radius[St.Corner.BOTTOMLEFT],
+            y + h - radius[St.Corner.BOTTOMLEFT],
+            radius[St.Corner.BOTTOMLEFT],
+            Math.PI * 0.5,
+            Math.PI
+        );
         cr.closePath();
         cr.stroke();
 
@@ -440,7 +483,12 @@ export default class WindowBorder extends St.DrawingArea {
             const transientHeight = transientRect.height;
 
             // Clip with this rectangle
-            cr.rectangle(transientX, transientY, transientWidth, transientHeight);
+            cr.rectangle(
+                transientX,
+                transientY,
+                transientWidth,
+                transientHeight
+            );
 
             return true; // true to continue
         });

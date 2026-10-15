@@ -21,7 +21,7 @@ export class ResizingManager {
             (
                 _display: Meta.Display,
                 window: Meta.Window,
-                grabOp: Meta.GrabOp,
+                grabOp: Meta.GrabOp
             ) => {
                 const moving =
                     grabOp === Meta.GrabOp.KEYBOARD_MOVING ||
@@ -29,7 +29,7 @@ export class ResizingManager {
                 if (moving || !Settings.RESIZE_COMPLEMENTING_WINDOWS) return;
 
                 this._onWindowResizingBegin(window, grabOp & ~1024);
-            },
+            }
         );
 
         this._signals.connect(
@@ -38,7 +38,7 @@ export class ResizingManager {
             (
                 _display: Meta.Display,
                 window: Meta.Window,
-                grabOp: Meta.GrabOp,
+                grabOp: Meta.GrabOp
             ) => {
                 const moving =
                     grabOp === Meta.GrabOp.KEYBOARD_MOVING ||
@@ -46,7 +46,7 @@ export class ResizingManager {
                 if (moving) return;
 
                 this._onWindowResizingEnd(window);
-            },
+            }
         );
     }
 
@@ -107,11 +107,11 @@ export class ResizingManager {
         if (!verticalSide[0] && !horizontalSide[0]) return;
 
         const otherTiledWindows = getWindows().filter(
-            (otherWindow) =>
+            otherWindow =>
                 otherWindow &&
                 (otherWindow as ExtendedWindow).assignedTile &&
                 otherWindow !== window &&
-                !otherWindow.minimized,
+                !otherWindow.minimized
         );
         if (otherTiledWindows.length === 0) return;
 
@@ -119,14 +119,14 @@ export class ResizingManager {
             ? this._findAdjacent(
                   window,
                   verticalSide[1],
-                  new Set(otherTiledWindows),
+                  new Set(otherTiledWindows)
               )
             : [];
         const horizontalAdjacentWindows = horizontalSide[0]
             ? this._findAdjacent(
                   window,
                   horizontalSide[1],
-                  new Set(otherTiledWindows),
+                  new Set(otherTiledWindows)
               )
             : [];
 
@@ -169,8 +169,8 @@ export class ResizingManager {
                 window.get_frame_rect().copy(),
                 verticalSide[1],
                 horizontalSide[1],
-                windowsToResize,
-            ),
+                windowsToResize
+            )
         );
     }
 
@@ -191,7 +191,7 @@ export class ResizingManager {
     private _findAdjacent(
         window: Meta.Window,
         side: St.Side,
-        remainingWindows: Set<Meta.Window>,
+        remainingWindows: Set<Meta.Window>
     ): [Meta.Window, St.Side][] {
         const result: [Meta.Window, St.Side][] = [];
         const adjacentWindows: Meta.Window[] = [];
@@ -230,7 +230,7 @@ export class ResizingManager {
 
         const oppositeSide = this._oppositeSide(side);
         const newRemainingWindows: Set<Meta.Window> = new Set();
-        remainingWindows.forEach((otherWin) => {
+        remainingWindows.forEach(otherWin => {
             const otherWinRect = otherWin.get_frame_rect();
 
             let [hasIntersection, intersection] = otherWin
@@ -263,12 +263,12 @@ export class ResizingManager {
             }
         });
 
-        adjacentWindows.forEach((otherWin) => {
+        adjacentWindows.forEach(otherWin => {
             this._findAdjacent(
                 otherWin,
                 oppositeSide,
-                newRemainingWindows,
-            ).forEach((recursionResult) => {
+                newRemainingWindows
+            ).forEach(recursionResult => {
                 result.push(recursionResult);
                 newRemainingWindows.delete(recursionResult[0]);
             });
@@ -285,7 +285,7 @@ export class ResizingManager {
         startingRect: Mtk.Rectangle,
         resizeVerticalSide: number,
         resizeHorizontalSide: number,
-        windowsToResize: [Meta.Window, Mtk.Rectangle, number, number][],
+        windowsToResize: [Meta.Window, Mtk.Rectangle, number, number][]
     ) {
         const currentRect = window.get_frame_rect();
 
@@ -357,9 +357,9 @@ export class ResizingManager {
                     Math.max(0, rect[0]),
                     Math.max(0, rect[1]),
                     Math.max(0, rect[2]),
-                    Math.max(0, rect[3]),
+                    Math.max(0, rect[3])
                 );
-            },
+            }
         );
     }
 }

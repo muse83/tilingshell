@@ -21,14 +21,16 @@ enum IndicatorState {
 }
 
 export default class Indicator extends PanelMenu.Button {
-    static { registerGObjectClass(this, {
-        Signals: {
-            'open-preferences': {
-                param_types: [],
+    static {
+        registerGObjectClass(this, {
+            Signals: {
+                'open-preferences': {
+                    param_types: [],
+                },
             },
-        },
-        GTypeName: 'Indicator',
-    }) }
+            GTypeName: 'Indicator',
+        });
+    }
 
     private _layoutEditor: LayoutEditor | null;
     private _editorDialog: EditorDialog | null;
@@ -47,12 +49,12 @@ export default class Indicator extends PanelMenu.Button {
             Settings.KEY_SHOW_INDICATOR,
             this,
             'visible',
-            Gio.SettingsBindFlags.GET,
+            Gio.SettingsBindFlags.GET
         );
 
         const icon = new St.Icon({
             gicon: Gio.icon_new_for_string(
-                `${path}/icons/indicator-symbolic.svg`,
+                `${path}/icons/indicator-symbolic.svg`
             ),
             styleClass: 'system-status-icon indicator-icon',
         });
@@ -79,19 +81,27 @@ export default class Indicator extends PanelMenu.Button {
 
         if (this._currentMenu && this._state === IndicatorState.DEFAULT) {
             this._currentMenu.destroy();
-            this._currentMenu = new DefaultMenu(this, this._enableScaling, this._openPreferences.bind(this));
+            this._currentMenu = new DefaultMenu(
+                this,
+                this._enableScaling,
+                this._openPreferences.bind(this)
+            );
         }
     }
 
     public enable() {
         (this.menu as PopupMenu.PopupMenu).removeAll();
-        this._currentMenu = new DefaultMenu(this, this._enableScaling, this._openPreferences.bind(this));
+        this._currentMenu = new DefaultMenu(
+            this,
+            this._enableScaling,
+            this._openPreferences.bind(this)
+        );
     }
 
     public selectLayoutOnClick(monitorIndex: number, layoutToSelectId: string) {
         GlobalState.get().setSelectedLayoutOfMonitor(
             layoutToSelectId,
-            monitorIndex,
+            monitorIndex
         );
         this.menu.toggle();
     }
@@ -105,7 +115,7 @@ export default class Indicator extends PanelMenu.Button {
                 new Tile({ x: 0, y: 0, width: 0.3, height: 1, groups: [1] }),
                 new Tile({ x: 0.3, y: 0, width: 0.7, height: 1, groups: [1] }),
             ],
-            `${Shell.Global.get().get_current_time()}`,
+            `${Shell.Global.get().get_current_time()}`
         );
 
         if (this._layoutEditor) {
@@ -114,7 +124,7 @@ export default class Indicator extends PanelMenu.Button {
             this._layoutEditor = new LayoutEditor(
                 newLayout,
                 Main.layoutManager.monitors[Main.layoutManager.primaryIndex],
-                this._enableScaling,
+                this._enableScaling
             );
         }
         this._setState(IndicatorState.CREATE_NEW);
@@ -141,16 +151,16 @@ export default class Indicator extends PanelMenu.Button {
             onSelectLayout: (ind: number, lay: Layout) => {
                 const layCopy = new Layout(
                     lay.tiles.map(
-                        (t) =>
+                        t =>
                             new Tile({
                                 x: t.x,
                                 y: t.y,
                                 width: t.width,
                                 height: t.height,
                                 groups: [...t.groups],
-                            }),
+                            })
                     ),
-                    lay.id,
+                    lay.id
                 );
 
                 if (this._layoutEditor) {
@@ -161,7 +171,7 @@ export default class Indicator extends PanelMenu.Button {
                         Main.layoutManager.monitors[
                             Main.layoutManager.primaryIndex
                         ],
-                        this._enableScaling,
+                        this._enableScaling
                     );
                 }
 
@@ -221,7 +231,7 @@ export default class Indicator extends PanelMenu.Button {
 
     private _openPreferences() {
         this.emit('open-preferences');
-    };
+    }
 
     private _setState(newState: IndicatorState) {
         if (this._state === newState) return;
@@ -229,7 +239,11 @@ export default class Indicator extends PanelMenu.Button {
         this._currentMenu?.destroy();
         switch (newState) {
             case IndicatorState.DEFAULT:
-                this._currentMenu = new DefaultMenu(this, this._enableScaling, this._openPreferences.bind(this));
+                this._currentMenu = new DefaultMenu(
+                    this,
+                    this._enableScaling,
+                    this._openPreferences.bind(this)
+                );
                 if (!Settings.SHOW_INDICATOR) this.hide();
                 if (this._keyPressEvent) {
                     global.stage.disconnect(this._keyPressEvent);
@@ -248,7 +262,7 @@ export default class Indicator extends PanelMenu.Button {
                             this.cancelLayoutOnClick();
 
                         return Clutter.EVENT_PROPAGATE;
-                    },
+                    }
                 );
                 this._currentMenu = new EditingMenu(this);
                 this.show();
