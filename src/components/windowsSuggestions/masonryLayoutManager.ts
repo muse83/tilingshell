@@ -1,6 +1,11 @@
 import { registerGObjectClass } from '../../utils/gjs';
 import { Clutter } from '../../gi/ext';
 
+// the container actor carries our allocation cache as an extra property
+type CachedContainer = Clutter.Actor & {
+    _allocationCache?: Map<Clutter.Actor, Clutter.ActorBox>;
+};
+
 const MASONRY_ROW_MIN_HEIGHT_PERCENTAGE = 0.15;
 
 export default class MasonryLayoutManager extends Clutter.LayoutManager {
@@ -135,7 +140,7 @@ export default class MasonryLayoutManager extends Clutter.LayoutManager {
         return result;
     }
 
-    vfunc_allocate(container: Clutter.Actor, box: Clutter.ActorBox) {
+    vfunc_allocate(container: CachedContainer, box: Clutter.ActorBox) {
         const children = container.get_children();
         if (children.length === 0) return;
         console.log(

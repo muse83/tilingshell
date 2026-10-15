@@ -283,7 +283,11 @@ export default class KeyBindings extends GObject.Object {
     }
 
     private _onCycleLayouts(display: Meta.Display, event: Clutter.Event, binding: Meta.KeyBinding, action: number) {
-        const mask = event.get_mask ? event.get_mask() : binding.get_mask();
+        // the typings do not know `get_mask` on events, fall back to the binding's mask
+        const eventWithMask = event as { get_mask?: () => number };
+        const mask = eventWithMask.get_mask
+            ? eventWithMask.get_mask()
+            : binding.get_mask();
         this.emit('cycle-layouts', display, action, mask);
     }
 

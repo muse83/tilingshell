@@ -18,10 +18,12 @@ export function buildBlurEffect(sigma: number): Shell.BlurEffect {
     return effect;
 }
 
-export function getEventCoords(event: {
-    get_coords(): number[];
-}): number[] {
-    return event.get_coords();
+// Motion and button events are Clutter.Event instances at runtime, but the typings
+// declare them as separate classes without `get_coords`.
+export function getEventCoords(
+    event: Clutter.Event | Clutter.MotionEvent | Clutter.ButtonEvent,
+): number[] {
+    return (event as Clutter.Event).get_coords();
 }
 
 export function maximizeWindow(window: Meta.Window): void {

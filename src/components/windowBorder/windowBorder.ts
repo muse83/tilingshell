@@ -12,6 +12,23 @@ import {
 
 Gio._promisify(Shell.Screenshot, 'composite_to_stream');
 
+// _promisify replaces the callback form with a promise-returning one the typings do not know
+const PromisifiedScreenshot = Shell.Screenshot as unknown as {
+    composite_to_stream(
+        texture: unknown,
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        scale: number,
+        cursor: unknown,
+        cursorX: number,
+        cursorY: number,
+        cursorScale: number,
+        stream: Gio.OutputStream,
+    ): Promise<{ get_pixels(): Uint8Array }>;
+};
+
 const DEFAULT_BORDER_RADIUS = 11;
 const SMART_BORDER_RADIUS_FIRST_FRAME_DELAY = 240;
 
@@ -260,7 +277,7 @@ export default class WindowBorder extends St.DrawingArea {
         const stream = Gio.MemoryOutputStream.new_resizable();
         const x = 0;
         const y = 0;
-        const pixbuf = await Shell.Screenshot.composite_to_stream(
+        const pixbuf = await PromisifiedScreenshot.composite_to_stream(
             texture,
             x,
             y,
@@ -273,7 +290,6 @@ export default class WindowBorder extends St.DrawingArea {
             1,
             stream,
         );
-        // @ts-expect-error "pixbuf has get_pixels() method"
         const pixels = pixbuf.get_pixels();
 
         const alphaThreshold = 240; // 255 would be the best value, however, some windows may still have a bit of transparency

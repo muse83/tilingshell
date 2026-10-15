@@ -36,7 +36,6 @@ import WindowMemory from './components/windowMemory/windowMemory';
 import SignalHandling from './utils/signalHandling';
 import GlobalState from './utils/globalState';
 import Indicator from './indicator/indicator';
-import { ExtensionMetadata } from 'resource:///org/gnome/shell/extensions/extension.js';
 import DBus from './dbus';
 import { KeyBindingsDirection, FocusSwitchDirection } from './keybindings';
 import KeyBindings from './keybindings';
@@ -66,7 +65,7 @@ export default class TilingShellExtension extends Extension {
     private _windowBorderManager: WindowBorderManager | null;
     private _raiseTogetherManager: RaiseTogetherManager | null;
 
-    constructor(metadata: ExtensionMetadata) {
+    constructor(metadata: ConstructorParameters<typeof Extension>[0]) {
         super(metadata);
         this._signals = null;
         this._logicalScaling = false;
