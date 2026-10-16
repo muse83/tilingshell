@@ -26,6 +26,12 @@ No candidate contradicts ADR 0001 or 0002.
 Recommended order: 16, then 17, then 18; 19, 20, 21 independent. Details and file references
 are in the GitHub issues of muse83/tilingshell (#16-#21, with verification comments).
 
+## Status
+- Candidate 1 (issue #16) done: `src/components/windowLifetime/windowLifetime.ts` with tests in
+  `tests/windowLifetime.test.ts`; crash scenario `dev-stack/scenario-close-with-suggestions.sh`
+  reports "shell survived" on the final state. The tile-state casts (`ExtendedWindow`) were left
+  for candidate 3 (issue #18).
+
 ## Not found
 No leftover legacy-version shims in the files read. `prefs.ts` (1726 lines, the largest file)
 was not read in depth. The number of remaining type errors was not re-checked.
