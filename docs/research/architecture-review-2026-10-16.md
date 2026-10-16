@@ -14,17 +14,17 @@ No `CONTEXT.md` exists yet; terms like tile, layout, remembered frame are only d
 No candidate contradicts ADR 0001 or 0002.
 
 ## Candidates and tickets
-| # | Candidate | Strength | Ticket |
+| # | Candidate | Strength | Issue |
 |---|-----------|----------|--------|
-| 1 | One module for window lifetime ("is it still alive?") | Strong | `.scratch/gnome51-port/16-deepen-window-lifetime-guard.md` |
-| 2 | One module decides placement of a new window (memory vs auto-tiling) | Strong | `17-deepen-window-placement-memory-vs-auto-tiling.md` |
-| 3 | One owner for a window's tile state; shrink TilingManager | Worth exploring | `18-deepen-window-tile-state.md` |
-| 4 | One module for display scale | Worth exploring | `19-deepen-display-scale.md` |
-| 5 | Edge tiling geometry as a pure module | Speculative | `20-extract-edge-tiling-geometry.md` |
-| 6 | Seam at settings storage | Speculative | `21-deepen-settings-seam.md` |
+| 1 | One module for window lifetime ("is it still alive?") | Strong | issue #16 |
+| 2 | One module decides placement of a new window (memory vs auto-tiling) | Strong | issue #17 |
+| 3 | One owner for a window's tile state; shrink TilingManager | Worth exploring | issue #18 |
+| 4 | One module for display scale | Worth exploring | issue #19 |
+| 5 | Edge tiling geometry as a pure module | Speculative | issue #20 |
+| 6 | Seam at settings storage | Speculative | issue #21 |
 
 Recommended order: 16, then 17, then 18; 19, 20, 21 independent. Details and file references
-are in the tickets.
+are in the GitHub issues of muse83/tilingshell (#16-#21, with verification comments).
 
 ## Not found
 No leftover legacy-version shims in the files read. `prefs.ts` (1726 lines, the largest file)
