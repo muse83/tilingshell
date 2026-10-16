@@ -23,6 +23,8 @@ async function preprocess(files) {
         text = text.replace(
             /import\s+([\s\S]*?)\s+from\s+['"]([^'"]+)['"]/g,
             (_match, imports, importPath) => {
+                // modules the node tests load are imported with ".ts"; the build emits ".js"
+                importPath = importPath.replace(/\.ts$/, '.js');
                 if (!importPath.endsWith('.js') && !importPath.startsWith('gi://')) {
                     importPath += '.js';
                 }

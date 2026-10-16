@@ -31,6 +31,16 @@ are in the GitHub issues of muse83/tilingshell (#16-#21, with verification comme
   `tests/windowLifetime.test.ts`; crash scenario `dev-stack/scenario-close-with-suggestions.sh`
   reports "shell survived" on the final state. The tile-state casts (`ExtendedWindow`) were left
   for candidate 3 (issue #18).
+- Candidate 2 (issue #17) done: `src/components/windowPlacement/` (decision in
+  `placementDecision.ts`, tests in `tests/placementDecision.test.ts`; GNOME glue in
+  `windowPlacement.ts`). Decisions in ADR 0003. Measured before and after with
+  `dev-stack/measure-placement.sh`: before, a new window was visible for one sample at the
+  application's own position in every case; after, never (20 runs), and it is at its final
+  frame after 20-28 ms (before: 21-28 ms). The very first window after the shell started takes
+  ~200 ms with and without the change (app start-up), so the scenario warms up first. `dev-stack/scenario-window-placement.sh` covers
+  both modes, cascading, a taken tile, the second monitor and the shutdown save. The suspected
+  monitor-index mismatch is not real: the shell's monitor list is ordered by monitor index and
+  the tile on the second monitor lands there (issue #19 keeps the rest of its scope).
 
 ## Not found
 No leftover legacy-version shims in the files read. `prefs.ts` (1726 lines, the largest file)

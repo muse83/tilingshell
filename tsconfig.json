@@ -5,6 +5,8 @@
     "outDir": "./dist",
     "sourceMap": false,
     "strict": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
     "target": "ES2022",
     "lib": [
       "ES2022"

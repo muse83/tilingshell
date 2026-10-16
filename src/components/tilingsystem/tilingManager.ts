@@ -1,7 +1,6 @@
 import { Clutter, Mtk, Meta, GLib } from '../../gi/ext';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { logger } from '../../utils/logger';
-import WindowMemory from '../windowMemory/windowMemory';
 import {
     buildMargin,
     buildRectangle,
@@ -31,10 +30,8 @@ import { KeyBindingsDirection } from '../../keybindings';
 import TilingShellWindowManager from '../../components/windowManager/tilingShellWindowManager';
 import TilingLayoutWithSuggestions from '../windowsSuggestions/tilingLayoutWithSuggestions';
 import { maximizeWindow, unmaximizeWindow } from '../../utils/gnomesupport';
-import {
-    connectOnceIfAlive,
-    liveActor,
-} from '../windowLifetime/windowLifetime';
+import { liveActor } from '../windowLifetime/windowLifetime';
+import { isNormalTopLevel } from '../windowPlacement/windowFacts';
 
 const MINIMUM_DISTANCE_TO_RESTORE_ORIGINAL_SIZE = 90;
 
@@ -298,19 +295,10 @@ export class TilingManager {
         );
 
         this._signals.connect(
-            global.display,
-            'window-created',
-            (_display: Meta.Display, window: Meta.Window) => {
-                // a remembered window comes back by itself where it was
-                if (WindowMemory.hasEntryFor(window)) return;
-                if (Settings.ENABLE_AUTO_TILING) this._autoTile(window, true);
-            }
-        );
-        this._signals.connect(
             TilingShellWindowManager.get(),
             'unmaximized',
             (_, window: Meta.Window) => {
-                if (Settings.ENABLE_AUTO_TILING) this._autoTile(window, false);
+                if (Settings.ENABLE_AUTO_TILING) this.autoTile(window);
             }
         );
 
@@ -1164,14 +1152,21 @@ export class TilingManager {
         this.openSelectionTilePreview(edgeTile, false, true, window);
     }
 
-    private _easeWindowRectFromTile(
+    /** The frame (gaps included) a window gets in the tile, null without layout or room. */
+    public tileDestinationOf(
         tile: Tile,
-        window: Meta.Window,
-        skipAnimation: boolean = false
-    ) {
+        window: Meta.Window
+    ): Mtk.Rectangle | null {
+        return this._tileGeometry(tile, window)?.destinationRect ?? null;
+    }
+
+    private _tileGeometry(
+        tile: Tile,
+        window: Meta.Window
+    ): { scaledRect: Mtk.Rectangle; destinationRect: Mtk.Rectangle } | null {
         const currentWs = window.get_workspace();
         const tilingLayout = this._workspaceTilingLayout.get(currentWs);
-        if (!tilingLayout) return;
+        if (!tilingLayout) return null;
 
         // We apply the proportions to get tile size and position relative to the work area
         const scaledRect = TileUtils.apply_props(tile, this._workArea);
@@ -1216,7 +1211,19 @@ export class TilingManager {
         });
 
         // abort if there is an invalid selection
-        if (destinationRect.width <= 0 || destinationRect.height <= 0) return;
+        if (destinationRect.width <= 0 || destinationRect.height <= 0)
+            return null;
+        return { scaledRect, destinationRect };
+    }
+
+    private _easeWindowRectFromTile(
+        tile: Tile,
+        window: Meta.Window,
+        skipAnimation: boolean = false
+    ): Mtk.Rectangle | null {
+        const geometry = this._tileGeometry(tile, window);
+        if (!geometry) return null;
+        const { scaledRect, destinationRect } = geometry;
 
         const isMaximized =
             window.maximizedHorizontally || window.maximizedVertically;
@@ -1248,15 +1255,19 @@ export class TilingManager {
         } else {
             this._easeWindowRect(window, destinationRect);
         }
+        return destinationRect;
     }
 
     public onTileFromWindowMenu(tile: Tile, window: Meta.Window) {
         this._easeWindowRectFromTile(tile, window);
     }
 
-    /** Tile a window right away, without animation, e.g. when its app is reopened. */
-    public restoreTile(tile: Tile, window: Meta.Window) {
-        this._easeWindowRectFromTile(tile, window, true);
+    /**
+     * Tile a window right away, without animation, e.g. when its app is reopened.
+     * @returns the frame the window is moved to, null when it could not be tiled
+     */
+    public restoreTile(tile: Tile, window: Meta.Window): Mtk.Rectangle | null {
+        return this._easeWindowRectFromTile(tile, window, true);
     }
 
     public onSpanAllTiles(window: Meta.Window) {
@@ -1272,45 +1283,29 @@ export class TilingManager {
         );
     }
 
-    private _autoTile(window: Meta.Window, windowCreated: boolean) {
+    /**
+     * Put the window into a vacant tile, right away and without animation.
+     * @returns the frame the window is moved to, null when it was left alone
+     */
+    public autoTile(window: Meta.Window): Mtk.Rectangle | null {
+        if (window === null) return null;
         // do not handle windows in monitors not managed by this manager
-        if (window.get_monitor() !== this._monitor.index) return;
+        if (window.get_monitor() !== this._monitor.index) return null;
 
+        // also called when a window is unmaximized, not only for new windows
         if (
-            window === null ||
-            window.windowType !== Meta.WindowType.NORMAL ||
-            window.get_transient_for() !== null ||
-            window.is_attached_dialog() ||
+            !isNormalTopLevel(window) ||
             window.minimized ||
             window.maximizedHorizontally ||
             window.maximizedVertically
         )
-            return;
+            return null;
 
         (window as ExtendedWindow).assignedTile = undefined;
         const vacantTile = this._findEmptyTile(window);
-        if (!vacantTile) return;
+        if (!vacantTile) return null;
 
-        if (windowCreated) {
-            connectOnceIfAlive(window, 'first-frame', () => {
-                // while we restore the opacity, making the window visible
-                // again, we perform easing of movement too
-                // if the window is no longer a good candidate for
-                // autotiling, immediately restore its opacity
-                // the application is only known by now, so ask the memory again
-                if (
-                    !window.minimized &&
-                    !window.maximizedHorizontally &&
-                    !window.maximizedVertically &&
-                    window.get_transient_for() === null &&
-                    !window.is_attached_dialog() &&
-                    !WindowMemory.hasEntryFor(window)
-                )
-                    this._easeWindowRectFromTile(vacantTile, window, true);
-            });
-        } else {
-            this._easeWindowRectFromTile(vacantTile, window, true);
-        }
+        return this._easeWindowRectFromTile(vacantTile, window, true);
     }
 
     private _findEmptyTile(window: Meta.Window): Tile | undefined {
