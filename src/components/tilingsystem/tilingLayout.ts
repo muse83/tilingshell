@@ -14,6 +14,7 @@ import {
 import TileUtils from '../../components/layout/TileUtils';
 import GlobalState from '../../utils/globalState';
 import { KeyBindingsDirection } from '../../keybindings';
+import { liveActor } from '../windowLifetime/windowLifetime';
 
 class DynamicTilePreview extends TilePreview {
     static {
@@ -109,7 +110,7 @@ export default class TilingLayout extends LayoutWidget<DynamicTilePreview> {
     public openBelow(window: Meta.Window) {
         if (this._showing) return;
 
-        const windowActor = window.get_compositor_private() as Clutter.Actor;
+        const windowActor = liveActor<Clutter.Actor>(window);
         if (!windowActor) return;
 
         global.windowGroup.set_child_below_sibling(this, windowActor);

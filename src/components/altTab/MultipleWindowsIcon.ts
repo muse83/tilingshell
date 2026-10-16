@@ -7,6 +7,7 @@ import { buildMarginOf, buildRectangle } from '../../utils/ui';
 import TilePreviewWithWindow from './tilePreviewWithWindow';
 import MetaWindowGroup from './MetaWindowGroup';
 import { _ } from '../../translations';
+import { liveActor } from '../windowLifetime/windowLifetime';
 
 const OUTER_GAPS = 2;
 
@@ -48,8 +49,15 @@ export default class MultipleWindowsIcon extends LayoutWidget<TilePreviewWithWin
                 return;
             }
 
+            const windowActor = liveActor<Clutter.Actor>(window);
+            if (!windowActor) {
+                // the window was closed in the meantime
+                preview.hide();
+                return;
+            }
+
             const winClone = new Clutter.Clone({
-                source: window.get_compositor_private(),
+                source: windowActor,
                 width: preview.innerWidth,
                 height: preview.innerHeight,
             });

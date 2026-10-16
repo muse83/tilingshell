@@ -1,6 +1,7 @@
 import { registerGObjectClass } from '../../utils/gjs';
 import SignalHandling from '../../utils/signalHandling';
 import { GObject, Meta, Mtk, Clutter, Graphene } from '../../gi/ext';
+import { liveActor } from '../windowLifetime/windowLifetime';
 
 class CachedWindowProperties {
     private _is_initialized: boolean = false;
@@ -127,8 +128,7 @@ export default class TilingShellWindowManager extends GObject.Object {
         duration: number;
         monitorIndex?: number;
     }): void {
-        const winActor =
-            params.window.get_compositor_private() as Meta.WindowActor;
+        const winActor = liveActor<Meta.WindowActor>(params.window);
         if (!winActor) return;
 
         // create a clone and hide the window actor

@@ -3,6 +3,7 @@ import { buildRectangle, getScalingFactorOf } from '../../utils/ui';
 import GlobalState from '../../utils/globalState';
 import Tile from '../../components/layout/Tile';
 import { registerGObjectClass } from '../../utils/gjs';
+import { liveActor } from '../windowLifetime/windowLifetime';
 
 // export module TilePreview {
 export interface TilePreviewConstructorProperties
@@ -143,8 +144,7 @@ export default class TilePreview extends St.Widget {
         ease: boolean = false
     ) {
         if (this.get_parent() === global.windowGroup) {
-            const windowActor =
-                window.get_compositor_private() as Clutter.Actor;
+            const windowActor = liveActor<Clutter.Actor>(window);
             if (!windowActor) return;
             global.windowGroup.set_child_below_sibling(this, windowActor);
         }

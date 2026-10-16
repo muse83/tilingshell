@@ -9,6 +9,7 @@ import {
     getScalingFactorOf,
     getScalingFactorSupportString,
 } from '../../utils/ui';
+import { liveActor } from '../windowLifetime/windowLifetime';
 
 Gio._promisify(Shell.Screenshot, 'composite_to_stream');
 
@@ -91,8 +92,8 @@ export default class WindowBorder extends St.DrawingArea {
         this._signals.disconnect();
         this._window = win;
         this.close();
-        const winActor =
-            this._window.get_compositor_private() as Meta.WindowActor;
+        const winActor = liveActor<Meta.WindowActor>(this._window);
+        if (!winActor) return; // the window is already gone, nothing to follow
 
         // scale and translate like the window actor
         this._bindings = [

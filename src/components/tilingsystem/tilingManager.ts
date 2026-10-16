@@ -31,6 +31,10 @@ import { KeyBindingsDirection } from '../../keybindings';
 import TilingShellWindowManager from '../../components/windowManager/tilingShellWindowManager';
 import TilingLayoutWithSuggestions from '../windowsSuggestions/tilingLayoutWithSuggestions';
 import { maximizeWindow, unmaximizeWindow } from '../../utils/gnomesupport';
+import {
+    connectOnceIfAlive,
+    liveActor,
+} from '../windowLifetime/windowLifetime';
 
 const MINIMUM_DISTANCE_TO_RESTORE_ORIGINAL_SIZE = 90;
 
@@ -972,7 +976,8 @@ export class TilingManager {
         user_op: boolean = false,
         force: boolean = false
     ) {
-        const windowActor = window.get_compositor_private() as Clutter.Actor;
+        const windowActor = liveActor<Clutter.Actor>(window);
+        if (!windowActor) return;
 
         const beforeRect = window.get_frame_rect();
         // do not animate the window if it will not move or scale
@@ -1287,9 +1292,7 @@ export class TilingManager {
         if (!vacantTile) return;
 
         if (windowCreated) {
-            const windowActor =
-                window.get_compositor_private() as Meta.WindowActor;
-            const id = windowActor.connect('first-frame', () => {
+            connectOnceIfAlive(window, 'first-frame', () => {
                 // while we restore the opacity, making the window visible
                 // again, we perform easing of movement too
                 // if the window is no longer a good candidate for
@@ -1304,8 +1307,6 @@ export class TilingManager {
                     !WindowMemory.hasEntryFor(window)
                 )
                     this._easeWindowRectFromTile(vacantTile, window, true);
-
-                windowActor.disconnect(id);
             });
         } else {
             this._easeWindowRectFromTile(vacantTile, window, true);

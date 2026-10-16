@@ -14,6 +14,7 @@ import {
     getScalingFactorOf,
 } from '../../utils/ui';
 import { buildBlurEffect } from '../../utils/gnomesupport';
+import { liveActor } from '../windowLifetime/windowLifetime';
 
 export const SNAP_ASSIST_SIGNAL = 'snap-assist';
 
@@ -305,8 +306,7 @@ class SnapAssistContent extends St.BoxLayout {
     ) {
         if (!this._showing) {
             if (this.get_parent() === global.windowGroup) {
-                const windowActor =
-                    window.get_compositor_private() as Clutter.Actor;
+                const windowActor = liveActor<Clutter.Actor>(window);
                 if (!windowActor) return;
                 global.windowGroup.set_child_above_sibling(this, windowActor);
             }

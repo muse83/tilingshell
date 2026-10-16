@@ -9,6 +9,7 @@ import SuggestedWindowPreview from './suggestedWindowPreview';
 import Tile from '../../components/layout/Tile';
 import LayoutWidget from '../../components/layout/LayoutWidget';
 import SignalHandling from '../../utils/signalHandling';
+import { liveActor, stillAlive } from '../windowLifetime/windowLifetime';
 import SuggestionsTilePreview from '../../components/windowsSuggestions/suggestionsTilePreview';
 import TilingShellWindowManager from '../../components/windowManager/tilingShellWindowManager';
 import { getEventCoords, unmaximizeWindow } from '../../utils/gnomesupport';
@@ -161,18 +162,14 @@ export default class TilingLayoutWithSuggestions extends LayoutWidget<Suggestion
             if (prev.x < preview.x) preview = prev;
         });
 
-        const clones = nontiledWindows.map(nonTiledWin => {
+        const clones = nontiledWindows.flatMap(nonTiledWin => {
+            const winActor = liveActor<Meta.WindowActor>(nonTiledWin);
+            // a window closed while the suggestions were built gets no preview
+            if (!winActor) return [];
             const winClone = new SuggestedWindowPreview(nonTiledWin);
-            const winActor =
-                nonTiledWin.get_compositor_private() as Meta.WindowActor;
 
-            // a closed window is detached from its actor (and the actor is
-            // destroyed); touching the actor after that makes mutter
-            // dereference a null pointer and crash. Compare first: calling a
-            // method on an already disposed actor can itself throw
-            const isWindowGone = () =>
-                nonTiledWin.get_compositor_private() !== winActor ||
-                winActor.is_destroyed();
+            // callbacks run later, when the window may be closed already
+            const isWindowGone = () => !stillAlive(nonTiledWin, winActor);
 
             // fade out and unscale by 10% the window actor
             winActor.set_pivot_point(0.5, 0.5);
@@ -250,7 +247,7 @@ export default class TilingLayoutWithSuggestions extends LayoutWidget<Suggestion
                 }
             );
 
-            return winClone;
+            return [winClone];
         });
 
         preview.addWindows(

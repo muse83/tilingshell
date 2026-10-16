@@ -49,6 +49,7 @@ import OverriddenAltTab from './components/altTab/overriddenAltTab';
 import { LayoutSwitcherPopup } from './components/layoutSwitcher/layoutSwitcher';
 import { unmaximizeWindow } from './utils/gnomesupport';
 import { RaiseTogetherManager } from './components/raiseTogether/raiseTogetherManager';
+import { liveActor } from './components/windowLifetime/windowLifetime';
 
 const debug = logger('extension');
 
@@ -582,7 +583,8 @@ export default class TilingShellExtension extends Extension {
                 focus_window.maximizedVertically) &&
             direction === KeyBindingsDirection.UP
         ) {
-            Main.wm.skipNextEffect(focus_window.get_compositor_private());
+            const focusActor = liveActor<Meta.WindowActor>(focus_window);
+            if (focusActor) Main.wm.skipNextEffect(focusActor);
             unmaximizeWindow(focus_window);
             (focus_window as ExtendedWindow).assignedTile = undefined;
         }

@@ -9,6 +9,7 @@ import {
     Pango,
     GLib,
 } from '../../gi/ext';
+import { liveActor } from '../windowLifetime/windowLifetime';
 
 const WINDOW_OVERLAY_FADE_TIME = 200;
 
@@ -51,7 +52,10 @@ export default class SuggestedWindowPreview extends Shell.WindowPreview {
             }),
         });
         this._metaWindow = metaWindow;
-        this._windowActor = metaWindow.get_compositor_private();
+        const windowActor = liveActor<Meta.WindowActor>(metaWindow);
+        // callers only create a preview for a window that is still alive
+        if (!windowActor) throw new Error('window is already gone');
+        this._windowActor = windowActor;
         this._destroyed = false;
         this._idleHideOverlayId = 0;
 
@@ -273,7 +277,7 @@ export default class SuggestedWindowPreview extends Shell.WindowPreview {
 
     _updateAttachedDialogs() {
         const iter = (win: Meta.Window) => {
-            const actor = win.get_compositor_private();
+            const actor = liveActor(win);
 
             if (!actor) return false;
             if (!win.is_attached_dialog()) return false;
