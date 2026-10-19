@@ -17,6 +17,9 @@ import {
     occupyingFrames,
     leftToRight,
     bestVacantTile,
+    maximizeAsTile,
+    windowMaximized,
+    windowUnmaximized,
 } from '../src/components/tileState/tileState.ts';
 
 const win = (extra: object = {}) => ({ ...extra });
@@ -162,7 +165,6 @@ const framed = (
 const view = {
     frameOf: (w: { frame: ReturnType<typeof rect> }) => w.frame,
     isMinimized: (w: { minimized: boolean }) => w.minimized,
-    isMaximized: (w: { maximized: boolean }) => w.maximized,
 };
 const overlap = (a: ReturnType<typeof rect>, b: ReturnType<typeof rect>) =>
     a.x < b.x + b.width &&
@@ -170,7 +172,7 @@ const overlap = (a: ReturnType<typeof rect>, b: ReturnType<typeof rect>) =>
     a.y < b.y + b.height &&
     b.y < a.y + a.height;
 
-test('occupyingFrames skips untiled, minimised and maximised windows', () => {
+test('occupyingFrames skips untiled and minimised windows, a tiled maximised one occupies', () => {
     const plain = {
         frame: rect(0, 0, 1, 1),
         minimized: false,
@@ -182,7 +184,10 @@ test('occupyingFrames skips untiled, minimised and maximised windows', () => {
         framed(rect(40, 0, 10, 10), { maximized: true }),
         plain,
     ];
-    assert.deepEqual(occupyingFrames(list, view), [rect(0, 0, 10, 10)]);
+    assert.deepEqual(occupyingFrames(list, view), [
+        rect(0, 0, 10, 10),
+        rect(40, 0, 10, 10),
+    ]);
 });
 
 test('occupyingFrames uses the wanted frame for the dragged window', () => {
@@ -235,4 +240,74 @@ test('bestVacantTile of nothing is undefined, of one tile that tile', () => {
     assert.equal(bestVacantTile([]), undefined);
     const only = tile(0.5, 0);
     assert.equal(bestVacantTile([only]), only);
+});
+
+// ---- maximising ----
+
+test('maximising by the window button forgets the tile', () => {
+    const w = win();
+    assignTile(w, tile(0, 0));
+    windowMaximized(w);
+    assert.equal(isTiled(w), false);
+});
+
+test('maximising by edge or keyboard makes the window tiled in the whole-screen tile', () => {
+    const w = win();
+    maximizeAsTile(w);
+    windowMaximized(w);
+    assert.equal(isTiled(w), true);
+    assert.deepEqual(tileOf(w), tile(0, 0, 1, 1));
+});
+
+test('the wish to keep the tile counts for one maximise only', () => {
+    const w = win();
+    maximizeAsTile(w);
+    windowMaximized(w);
+    windowUnmaximized(w);
+    windowMaximized(w);
+    assert.equal(isTiled(w), false);
+});
+
+test('unmaximising brings back the tile the window had before', () => {
+    const w = win();
+    assignTile(w, tile(0.5, 0));
+    maximizeAsTile(w);
+    windowMaximized(w);
+    windowUnmaximized(w);
+    assert.deepEqual(tileOf(w), tile(0.5, 0));
+});
+
+test('unmaximising a window that had no tile before leaves it untiled', () => {
+    const w = win();
+    maximizeAsTile(w);
+    windowMaximized(w);
+    windowUnmaximized(w);
+    assert.equal(isTiled(w), false);
+});
+
+test('a tile given while maximised wins over the one from before', () => {
+    const w = win();
+    assignTile(w, tile(0, 0));
+    maximizeAsTile(w);
+    windowMaximized(w);
+    assignTile(w, tile(0.5, 0));
+    windowUnmaximized(w);
+    assert.deepEqual(tileOf(w), tile(0.5, 0));
+});
+
+test('forgetting the tile while maximised is not undone by unmaximising', () => {
+    const w = win();
+    assignTile(w, tile(0, 0));
+    maximizeAsTile(w);
+    windowMaximized(w);
+    forgetTile(w);
+    windowUnmaximized(w);
+    assert.equal(isTiled(w), false);
+});
+
+test('unmaximising a window maximised by the window button changes nothing', () => {
+    const w = win();
+    windowMaximized(w);
+    windowUnmaximized(w);
+    assert.equal(isTiled(w), false);
 });

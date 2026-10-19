@@ -6,7 +6,7 @@ import { logger } from '../../utils/logger';
 import { buildRectangle } from '../../utils/ui';
 import { maximizeWindow } from '../../utils/gnomesupport';
 import Tile from '../layout/Tile';
-import { setSizeBeforeTile } from '../tileState/tileState';
+import { maximizeAsTile, setSizeBeforeTile } from '../tileState/tileState';
 import { TilingManager } from '../tilingsystem/tilingManager';
 import WindowMemory from '../windowMemory/windowMemory';
 import { liveActor } from '../windowLifetime/windowLifetime';
@@ -121,8 +121,7 @@ export default class WindowPlacement {
         const target = this._carryOut(window, decision);
         // maximising has no known frame, the client's answer ends the wait; in any other case
         // without a target nothing was moved (e.g. no vacant tile), so there is nothing to wait for
-        const maximizing =
-            decision.kind === 'restore' && !decision.tile && decision.maximized;
+        const maximizing = decision.kind === 'restore' && decision.maximized;
         if (!target && !maximizing) this._revealAndDrop(window);
         else this._revealWhenPlaced(window, target);
     }
@@ -163,6 +162,15 @@ export default class WindowPlacement {
                 frame.width,
                 frame.height
             );
+
+        if (tile && decision.maximized) {
+            // maximised by edge or keyboard: the size is the one to come back to
+            if (frame) setSizeBeforeTile(window, buildRectangle(frame));
+            if (!window.maximizedHorizontally && !window.maximizedVertically)
+                maximizeAsTile(window);
+            maximizeWindow(window);
+            return null;
+        }
 
         if (tile) {
             // the move above is asynchronous: name the monitor instead of asking the window

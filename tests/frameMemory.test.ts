@@ -102,6 +102,21 @@ test('a maximised window keeps the size it had before', () => {
     });
 });
 
+test('a window maximised by edge or keyboard remembers the whole-screen tile too', () => {
+    const whole = { x: 0, y: 0, width: 1, height: 1, groups: [] };
+    const closing = {
+        ...free,
+        frame: workArea,
+        maximized: true,
+        tile: whole,
+        sizeBeforeTile: frame,
+    };
+
+    assert.deepEqual(rememberClosing({}, 'app', closing), {
+        app: { frame, maximized: true, tile: whole },
+    });
+});
+
 test('the least recently used apps are dropped beyond 200', () => {
     let entries = {};
     for (let i = 0; i < 201; i++)

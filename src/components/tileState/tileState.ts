@@ -10,6 +10,12 @@ const MINIMUM_DISTANCE_TO_RESTORE_SIZE = 90;
 interface TileStateOfWindow {
     tile?: Tile;
     sizeBeforeTile?: Mtk.Rectangle;
+    // the next maximise comes from the edge or the keyboard and keeps the window tiled
+    maximizeKeepsTile?: boolean;
+    // the tile is the whole-screen tile of such a maximise; `tileBeforeMaximize` comes back
+    // when the window is unmaximised (undefined: the window had no tile)
+    tiledByMaximize?: boolean;
+    tileBeforeMaximize?: Tile;
 }
 
 // Keyed by the window object, so the state disappears together with the window.
@@ -72,7 +78,9 @@ export function rememberSizeBeforeTile(
 
 /** Put the window into the tile (a copy of it is stored). */
 export function assignTile(window: object, tile: Tile): void {
-    stateOf(window).tile = { ...tile, groups: [...tile.groups] };
+    const state = stateOf(window);
+    state.tile = { ...tile, groups: [...tile.groups] };
+    endMaximizeTile(state);
 }
 
 /** Tile the window and remember the size it had, see `rememberSizeBeforeTile`. */
@@ -89,7 +97,52 @@ export function tileWindow(
 /** The window is not in a tile any more. The size from before tiling is kept. */
 export function forgetTile(window: object): void {
     const state = _states.get(window);
-    if (state) state.tile = undefined;
+    if (!state) return;
+    state.tile = undefined;
+    endMaximizeTile(state);
+}
+
+function endMaximizeTile(state: TileStateOfWindow): void {
+    state.tiledByMaximize = false;
+    state.tileBeforeMaximize = undefined;
+}
+
+// ---- maximising ----
+// Maximising by the window button leaves the window not tiled. Maximising by the top edge or
+// by the keyboard keeps it tiled, in the whole-screen tile. The shell reports a maximise only
+// afterwards, so the caller announces the wish first.
+
+const WHOLE_SCREEN_TILE: Tile = { x: 0, y: 0, width: 1, height: 1, groups: [] };
+
+/** Call right before maximising by edge or keyboard: this maximise keeps the window tiled. */
+export function maximizeAsTile(window: object): void {
+    stateOf(window).maximizeKeepsTile = true;
+}
+
+/** The window got maximised, however it came about. */
+export function windowMaximized(window: object): void {
+    const state = stateOf(window);
+    if (!state.maximizeKeepsTile) {
+        forgetTile(window);
+        return;
+    }
+    state.maximizeKeepsTile = false;
+    state.tileBeforeMaximize = state.tile;
+    state.tile = { ...WHOLE_SCREEN_TILE, groups: [] };
+    state.tiledByMaximize = true;
+}
+
+/**
+ * The window is not maximised any more: it sits in the tile it had before the maximise,
+ * unless its tile was changed or forgotten in the meantime.
+ */
+export function windowUnmaximized(window: object): void {
+    const state = _states.get(window);
+    if (!state) return;
+    state.maximizeKeepsTile = false;
+    if (!state.tiledByMaximize) return;
+    state.tile = state.tileBeforeMaximize;
+    endMaximizeTile(state);
 }
 
 /** Overwrite the size to give back when the window leaves its tile. */
@@ -132,12 +185,12 @@ export function releaseOnDrag(
 interface WindowView<W> {
     frameOf(window: W): Mtk.Rectangle;
     isMinimized(window: W): boolean;
-    isMaximized(window: W): boolean;
 }
 
 /**
- * The frames that keep tiles occupied: tiled windows that are neither minimised nor
- * maximised. For the window that is being dragged `moving.frame` counts instead of its frame.
+ * The frames that keep tiles occupied: tiled windows that are not minimised. A window
+ * maximised by edge or keyboard is tiled and covers the whole screen; one maximised with the
+ * window button is not tiled. For the window that is being dragged `moving.frame` counts instead of its frame.
  */
 export function occupyingFrames<W extends object>(
     windows: W[],
@@ -145,7 +198,7 @@ export function occupyingFrames<W extends object>(
     moving?: { window: W; frame: Mtk.Rectangle }
 ): Mtk.Rectangle[] {
     return tiledWindows(windows)
-        .filter(w => !view.isMinimized(w) && !view.isMaximized(w))
+        .filter(w => !view.isMinimized(w))
         .map(w =>
             moving && w === moving.window ? moving.frame : view.frameOf(w)
         );

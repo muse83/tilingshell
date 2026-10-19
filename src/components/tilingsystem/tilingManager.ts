@@ -29,6 +29,7 @@ import {
     forgetTile,
     isInTile,
     isTiled,
+    maximizeAsTile,
     releaseFromTile,
     releaseOnDrag,
     rememberSizeBeforeTile,
@@ -309,16 +310,9 @@ export class TilingManager {
             TilingShellWindowManager.get(),
             'unmaximized',
             (_, window: Meta.Window) => {
-                if (Settings.ENABLE_AUTO_TILING) this.autoTile(window);
-            }
-        );
-
-        // forget assigned tile when window is maximized
-        this._signals.connect(
-            TilingShellWindowManager.get(),
-            'maximized',
-            (_, window: Meta.Window) => {
-                forgetTile(window);
+                // a window that got its tile back from before the maximise stays there
+                if (Settings.ENABLE_AUTO_TILING && !isTiled(window))
+                    this.autoTile(window);
             }
         );
     }
@@ -362,7 +356,12 @@ export class TilingManager {
         }
 
         // maximize the window using keybindings
-        if (direction === KeyBindingsDirection.UP && tileOf(window)?.y === 0) {
+        if (
+            direction === KeyBindingsDirection.UP &&
+            tileOf(window)?.y === 0 &&
+            window.can_maximize()
+        ) {
+            maximizeAsTile(window);
             maximizeWindow(window);
             return true;
         }
@@ -423,6 +422,7 @@ export class TilingManager {
                 direction === KeyBindingsDirection.UP &&
                 window.can_maximize()
             ) {
+                maximizeAsTile(window);
                 maximizeWindow(window);
                 return true;
             }
@@ -799,16 +799,22 @@ export class TilingManager {
         // disable snap assistance
         this._snapAssistingInfo.update(undefined);
 
-        if (
+        const maximizedByEdge =
             this._edgeTilingManager.isPerformingEdgeTiling() &&
             this._edgeTilingManager.needMaximize() &&
-            window.can_maximize()
-        )
+            window.can_maximize();
+        if (maximizedByEdge) {
+            maximizeAsTile(window);
             maximizeWindow(window);
+        }
 
         // disable edge-tiling
         const wasEdgeTiling = this._edgeTilingManager.isPerformingEdgeTiling();
         this._edgeTilingManager.abortEdgeTiling();
+
+        // the maximise is reported later and gives the window its whole-screen tile; do not
+        // give it another tile or move it meanwhile
+        if (maximizedByEdge) return;
 
         const canShowTilingSuggestions =
             (wasSnapAssistingLayout &&

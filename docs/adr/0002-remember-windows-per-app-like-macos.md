@@ -31,3 +31,11 @@ whether a given window was restored by Mutter.
 - Tiling Shell always applies its remembered frame after the window is shown, also for apps
   that Mutter restored natively. If the two ever disagree, the extension wins.
 - Per-window memory (several windows of one app, each with its own place) is not supported.
+
+## Amendment (2026-10-19, maintainer decision in a grilling session)
+A window maximised by dragging to the top edge or by keyboard "up" counts as tiled (whole-screen
+tile, see ADR 0004); one maximised with the window button does not. For memory this means: a
+window closed maximised by edge or keyboard stores the whole-screen tile together with the
+maximised flag and comes back maximised and tiled. A window maximised with the window button
+stores only the maximised flag, as before. Entries written before this change have only the flag
+and keep working.

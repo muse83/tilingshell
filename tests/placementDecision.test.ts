@@ -210,3 +210,22 @@ test('a remembered maximised window is restored maximised', () => {
         { kind: 'restore', frame, monitorIndex: 0, maximized: true }
     );
 });
+
+test('a remembered window maximised as tile is restored maximised and tiled', () => {
+    const whole = { x: 0, y: 0, width: 1, height: 1, groups: [] };
+    assert.deepEqual(
+        decidePlacement(
+            window,
+            context({
+                entries: remembered({ frame, tile: whole, maximized: true }),
+            })
+        ),
+        {
+            kind: 'restore',
+            frame,
+            monitorIndex: 0,
+            tile: whole,
+            maximized: true,
+        }
+    );
+});

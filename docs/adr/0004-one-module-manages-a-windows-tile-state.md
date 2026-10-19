@@ -35,3 +35,11 @@ runs without GNOME, so none of it is tested.
   (not tiled). That change is user-visible (alt-tab, directional focus, raise together,
   suggestions, window memory) and gets its own ticket and an amendment to ADR 0002.
 - Slimming the long drag and release functions of the tiling manager is a separate ticket.
+
+## Amendment (2026-10-19, maintainer decision in a grilling session)
+Maximising is no longer carried over 1:1. Edge and keyboard maximise keep the window tiled in
+the whole-screen tile and remember the tile from before; unmaximising brings that tile back.
+The window button still forgets the tile. Tiled windows maximised this way take part in
+alt-tab, directional focus and raise together, and occupy the whole screen in the vacant-tiles
+calculation (suggestions, auto-tiling). In that calculation only minimised windows occupy
+nothing now.

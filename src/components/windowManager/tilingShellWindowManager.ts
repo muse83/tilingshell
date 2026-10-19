@@ -2,6 +2,7 @@ import { registerGObjectClass } from '../../utils/gjs';
 import SignalHandling from '../../utils/signalHandling';
 import { GObject, Meta, Mtk, Clutter, Graphene } from '../../gi/ext';
 import { liveActor } from '../windowLifetime/windowLifetime';
+import { windowMaximized, windowUnmaximized } from '../tileState/tileState';
 
 class CachedWindowProperties {
     private _is_initialized: boolean = false;
@@ -16,10 +17,14 @@ class CachedWindowProperties {
         const newMaximized =
             window.maximizedVertically && window.maximizedHorizontally;
         if (this._is_initialized) {
-            if (this.maximized && !newMaximized)
+            // the tile state is updated once here, not by every tiling manager listening
+            if (this.maximized && !newMaximized) {
+                windowUnmaximized(window);
                 manager.emit('unmaximized', window);
-            else if (!this.maximized && newMaximized)
+            } else if (!this.maximized && newMaximized) {
+                windowMaximized(window);
                 manager.emit('maximized', window);
+            }
         }
 
         this.maximized = newMaximized;

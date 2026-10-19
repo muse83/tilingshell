@@ -7,8 +7,6 @@ import { leftToRight, occupyingFrames, vacant } from './tileState';
 export const windowView = {
     frameOf: (window: Meta.Window): Mtk.Rectangle => window.get_frame_rect(),
     isMinimized: (window: Meta.Window): boolean => window.minimized,
-    isMaximized: (window: Meta.Window): boolean =>
-        window.maximizedHorizontally || window.maximizedVertically,
 };
 
 /**

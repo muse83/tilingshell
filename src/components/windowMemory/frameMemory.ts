@@ -109,7 +109,8 @@ export function rememberClosing(
     const entry: RememberedFrame = {};
     if (frame) entry.frame = copyRect(frame);
     if (closing.maximized) entry.maximized = true;
-    else if (closing.tile)
+    // a maximised window has a tile only when maximised by edge or keyboard (whole screen)
+    if (closing.tile)
         entry.tile = {
             ...copyRect(closing.tile),
             groups: [...closing.tile.groups],

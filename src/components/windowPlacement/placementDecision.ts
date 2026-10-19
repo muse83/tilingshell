@@ -81,6 +81,17 @@ function restore(
         monitorIndex = placed.monitorIndex;
     }
 
+    if (entry.tile && entry.maximized) {
+        // maximised by edge or keyboard: tiled in the whole-screen tile
+        return {
+            kind: 'restore',
+            ...(frame ? { frame } : {}),
+            monitorIndex,
+            tile: entry.tile,
+            maximized: true,
+        };
+    }
+
     if (entry.tile) {
         // a tile cannot be offset: when a window of the same app already fills it, the new
         // window gets the size of the tile, cascaded and untiled
