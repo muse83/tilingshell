@@ -20,7 +20,7 @@
  */
 
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
-import { Gio, GLib, Meta, St } from './gi/ext';
+import { Gio, GLib, Meta } from './gi/ext';
 import { logger } from './utils/logger';
 import {
     filterUnfocusableWindows,
@@ -31,6 +31,11 @@ import {
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { TilingManager } from './components/tilingsystem/tilingManager';
 import Settings from './settings/settings';
+import {
+    displayScale,
+    enableDisplayScale,
+    disableDisplayScale,
+} from './components/displayScale/gnomeDisplayScale';
 import WindowMemory from './components/windowMemory/windowMemory';
 import WindowPlacement from './components/windowPlacement/windowPlacement';
 import SignalHandling from './utils/signalHandling';
@@ -57,7 +62,7 @@ const debug = logger('extension');
 export default class TilingShellExtension extends Extension {
     private _indicator: Indicator | null;
     private _tilingManagers: TilingManager[];
-    private _logicalScaling: boolean;
+    private _unsubscribeScale: (() => void) | null = null;
     private _windowMemory: WindowMemory | null = null;
     private _windowPlacement: WindowPlacement | null = null;
     private _dbus: DBus | null;
@@ -70,7 +75,6 @@ export default class TilingShellExtension extends Extension {
     constructor(metadata: ConstructorParameters<typeof Extension>[0]) {
         super(metadata);
         this._signals = null;
-        this._logicalScaling = false;
         this._tilingManagers = [];
         this._indicator = null;
         this._dbus = null;
@@ -82,7 +86,6 @@ export default class TilingShellExtension extends Extension {
 
     createIndicator() {
         this._indicator = new Indicator(this.path, this.uuid);
-        this._indicator.enableScaling = !this._logicalScaling;
         this._indicator.enable();
         this._signals?.connect(this._indicator, 'open-preferences', () =>
             this.openPreferences()
@@ -129,7 +132,7 @@ export default class TilingShellExtension extends Extension {
         // force initialization and tracking of windows
         TilingShellWindowManager.get();
 
-        this._logicalScaling = this._isLogicalScaling();
+        enableDisplayScale();
 
         if (this._keybindings) this._keybindings.destroy();
         this._keybindings = new KeyBindings(this.getSettings());
@@ -161,9 +164,7 @@ export default class TilingShellExtension extends Extension {
         this._resizingManager.enable();
 
         if (this._windowBorderManager) this._windowBorderManager.destroy();
-        this._windowBorderManager = new WindowBorderManager(
-            !this._logicalScaling
-        );
+        this._windowBorderManager = new WindowBorderManager();
         this._windowBorderManager.enable();
 
         this._raiseTogetherManager = new RaiseTogetherManager();
@@ -199,13 +200,19 @@ export default class TilingShellExtension extends Extension {
         debug('building a tiling manager for each monitor');
         this._tilingManagers.forEach(tm => tm.destroy());
         this._tilingManagers = getMonitors().map(
-            monitor => new TilingManager(monitor, !this._logicalScaling)
+            monitor => new TilingManager(monitor)
         );
         this._tilingManagers.forEach(tm => tm.enable());
     }
 
     private _setupSignals() {
         if (!this._signals) return;
+
+        this._unsubscribeScale?.();
+        // tiling managers are built with the scale, so rebuild them when it changes
+        this._unsubscribeScale = displayScale().subscribe(() =>
+            this._createTilingManagers()
+        );
 
         this._signals.connect(global.display, 'workareas-changed', () => {
             const allMonitors = getMonitors();
@@ -222,28 +229,6 @@ export default class TilingShellExtension extends Extension {
                 });
             }
         });
-
-        // scaling mode can change when the display configuration changes
-        this._signals.connect(
-            St.ThemeContext.get_for_stage(global.stage),
-            'notify::scale-factor',
-            () => {
-                const logicalScaling = this._isLogicalScaling();
-                if (this._logicalScaling === logicalScaling) return;
-
-                this._logicalScaling = logicalScaling;
-                this._createTilingManagers();
-                if (this._indicator) {
-                    this._indicator.enableScaling = !this._logicalScaling;
-                }
-                if (this._windowBorderManager)
-                    this._windowBorderManager.destroy();
-                this._windowBorderManager = new WindowBorderManager(
-                    !this._logicalScaling
-                );
-                this._windowBorderManager.enable();
-            }
-        );
 
         if (this._keybindings) {
             this._signals.connect(
@@ -345,8 +330,7 @@ export default class TilingShellExtension extends Extension {
                     const backwardAction = kb.cycleLayoutsBackwardAction;
                     const switcher = new LayoutSwitcherPopup(
                         kb.cycleLayoutsAction!,
-                        backwardAction!,
-                        !this._logicalScaling
+                        backwardAction!
                     );
 
                     if (
@@ -751,17 +735,6 @@ export default class TilingShellExtension extends Extension {
         monitorTilingManager.onUntileWindow(focus_window, true);
     }
 
-    /**
-     * GNOME 50 and newer lay out monitors in logical pixels by default (Mutter dropped the
-     * experimental flag): monitor and window sizes are already divided by the scale and the
-     * shell's theme scale factor stays 1. Only if the user explicitly selected the physical
-     * layout mode, the monitors keep their pixel size and the theme scale factor carries
-     * the scale. At scale 1 both modes are identical, so logical (the default) is reported.
-     */
-    private _isLogicalScaling(): boolean {
-        return St.ThemeContext.get_for_stage(global.stage).scaleFactor === 1;
-    }
-
     disable(): void {
         // disconnect signals first, while the objects they belong to are alive
         this._signals?.disconnect();
@@ -797,7 +770,9 @@ export default class TilingShellExtension extends Extension {
         this._dbus?.disable();
         this._dbus = null;
 
-        this._logicalScaling = false;
+        this._unsubscribeScale?.();
+        this._unsubscribeScale = null;
+        disableDisplayScale();
 
         OverriddenWindowMenu.destroy();
         OverriddenAltTab.destroy();

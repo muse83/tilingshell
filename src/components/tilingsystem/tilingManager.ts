@@ -5,7 +5,6 @@ import {
     buildMargin,
     buildRectangle,
     buildTileGaps,
-    getMonitorScalingFactor,
     getScalingFactorOf,
     getWindows,
     isPointInsideRect,
@@ -46,6 +45,7 @@ import TilingLayoutWithSuggestions from '../windowsSuggestions/tilingLayoutWithS
 import { maximizeWindow, unmaximizeWindow } from '../../utils/gnomesupport';
 import { liveActor } from '../windowLifetime/windowLifetime';
 import { isNormalTopLevel } from '../windowPlacement/windowFacts';
+import { displayScale } from '../displayScale/gnomeDisplayScale';
 
 class SnapAssistingInfo {
     private _snapAssistantLayoutId: string | undefined;
@@ -78,7 +78,6 @@ export class TilingManager {
     private _tilingSuggestionsLayout: TilingLayoutWithSuggestions;
 
     private _workArea: Mtk.Rectangle;
-    private _enableScaling: boolean;
 
     private _isGrabbingWindow: boolean;
     private _movingWindowTimerDuration: number = 15;
@@ -97,12 +96,11 @@ export class TilingManager {
      * Constructs a new TilingManager instance.
      * @param monitor The monitor to manage tiling for.
      */
-    constructor(monitor: Monitor, enableScaling: boolean) {
+    constructor(monitor: Monitor) {
         this._isGrabbingWindow = false;
         this._wasSpanMultipleTilesActivated = false;
         this._wasTilingSystemActivated = false;
         this._snapAssistingInfo = new SnapAssistingInfo();
-        this._enableScaling = enableScaling;
         this._monitor = monitor;
         this._signals = new SignalHandling();
 
@@ -119,9 +117,7 @@ export class TilingManager {
         this._edgeTilingManager.monitorIndex = this._monitor.index;
 
         // handle scale factor of the monitor
-        const monitorScalingFactor = this._enableScaling
-            ? getMonitorScalingFactor(monitor.index)
-            : undefined;
+        const monitorScalingFactor = displayScale().styleScaleOf(monitor.index);
 
         // build a tiling layout for each workspace
         this._workspaceTilingLayout = new Map();
@@ -255,9 +251,9 @@ export class TilingManager {
                 const ws = global.workspaceManager.get_active_workspace();
                 if (this._workspaceTilingLayout.has(ws)) return;
 
-                const monitorScalingFactor = this._enableScaling
-                    ? getMonitorScalingFactor(this._monitor.index)
-                    : undefined;
+                const monitorScalingFactor = displayScale().styleScaleOf(
+                    this._monitor.index
+                );
                 const layout: Layout =
                     GlobalState.get().getSelectedLayoutOfMonitor(
                         this._monitor.index,
@@ -1052,7 +1048,7 @@ export class TilingManager {
             tilingLayout.innerGaps,
             tilingLayout.outerGaps,
             this._workArea,
-            this._enableScaling
+            displayScale().isScaled
                 ? getScalingFactorOf(tilingLayout)[1]
                 : undefined
         ).gaps;
@@ -1123,7 +1119,7 @@ export class TilingManager {
             tilingLayout.innerGaps,
             tilingLayout.outerGaps,
             this._workArea,
-            this._enableScaling
+            displayScale().isScaled
                 ? getScalingFactorOf(tilingLayout)[1]
                 : undefined
         ).gaps;
@@ -1191,7 +1187,7 @@ export class TilingManager {
             tilingLayout.innerGaps,
             tilingLayout.outerGaps,
             this._workArea,
-            this._enableScaling
+            displayScale().isScaled
                 ? getScalingFactorOf(tilingLayout)[1]
                 : undefined
         ).gaps;

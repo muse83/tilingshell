@@ -6,6 +6,7 @@ import Layout from '../components/layout/Layout';
 import Tile from '../components/layout/Tile';
 import LayoutEditor from '../components/editor/layoutEditor';
 import DefaultMenu from './defaultMenu';
+import { displayScale } from '../components/displayScale/gnomeDisplayScale';
 import GlobalState from '../utils/globalState';
 import EditingMenu from './editingMenu';
 import EditorDialog from '../components/editor/editorDialog';
@@ -36,7 +37,7 @@ export default class Indicator extends PanelMenu.Button {
     private _editorDialog: EditorDialog | null;
     private _currentMenu: CurrentMenu | null;
     private _state: IndicatorState;
-    private _enableScaling: boolean;
+    private _unsubscribeScale: (() => void) | null;
     private _path: string;
     private _keyPressEvent: number | null;
 
@@ -65,7 +66,7 @@ export default class Indicator extends PanelMenu.Button {
         this._currentMenu = null;
         this._state = IndicatorState.DEFAULT;
         this._keyPressEvent = null;
-        this._enableScaling = false;
+        this._unsubscribeScale = null;
         this._path = path;
 
         this.connect('destroy', this._onDestroy.bind(this));
@@ -75,27 +76,24 @@ export default class Indicator extends PanelMenu.Button {
         return this._path;
     }
 
-    public set enableScaling(value: boolean) {
-        if (this._enableScaling === value) return;
-        this._enableScaling = value;
-
-        if (this._currentMenu && this._state === IndicatorState.DEFAULT) {
-            this._currentMenu.destroy();
-            this._currentMenu = new DefaultMenu(
-                this,
-                this._enableScaling,
-                this._openPreferences.bind(this)
-            );
-        }
-    }
-
     public enable() {
         (this.menu as PopupMenu.PopupMenu).removeAll();
         this._currentMenu = new DefaultMenu(
             this,
-            this._enableScaling,
             this._openPreferences.bind(this)
         );
+
+        // the menu is scaled when built, so build it again when the scale changes
+        this._unsubscribeScale?.();
+        this._unsubscribeScale = displayScale().subscribe(() => {
+            if (!this._currentMenu || this._state !== IndicatorState.DEFAULT)
+                return;
+            this._currentMenu.destroy();
+            this._currentMenu = new DefaultMenu(
+                this,
+                this._openPreferences.bind(this)
+            );
+        });
     }
 
     public selectLayoutOnClick(monitorIndex: number, layoutToSelectId: string) {
@@ -123,8 +121,7 @@ export default class Indicator extends PanelMenu.Button {
         } else {
             this._layoutEditor = new LayoutEditor(
                 newLayout,
-                Main.layoutManager.monitors[Main.layoutManager.primaryIndex],
-                this._enableScaling
+                Main.layoutManager.monitors[Main.layoutManager.primaryIndex]
             );
         }
         this._setState(IndicatorState.CREATE_NEW);
@@ -135,7 +132,6 @@ export default class Indicator extends PanelMenu.Button {
         if (this._editorDialog) return;
 
         this._editorDialog = new EditorDialog({
-            enableScaling: this._enableScaling,
             onNewLayout: () => {
                 this.newLayoutOnClick(false);
             },
@@ -170,8 +166,7 @@ export default class Indicator extends PanelMenu.Button {
                         layCopy,
                         Main.layoutManager.monitors[
                             Main.layoutManager.primaryIndex
-                        ],
-                        this._enableScaling
+                        ]
                     );
                 }
 
@@ -241,7 +236,6 @@ export default class Indicator extends PanelMenu.Button {
             case IndicatorState.DEFAULT:
                 this._currentMenu = new DefaultMenu(
                     this,
-                    this._enableScaling,
                     this._openPreferences.bind(this)
                 );
                 if (!Settings.SHOW_INDICATOR) this.hide();
@@ -271,6 +265,8 @@ export default class Indicator extends PanelMenu.Button {
     }
 
     private _onDestroy() {
+        this._unsubscribeScale?.();
+        this._unsubscribeScale = null;
         this._editorDialog?.destroy();
         this._editorDialog = null;
         this._layoutEditor?.destroy();

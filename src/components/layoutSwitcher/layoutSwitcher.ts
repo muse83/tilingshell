@@ -3,14 +3,12 @@ import LayoutButton from '../../indicator/layoutButton';
 import GlobalState from '../../utils/globalState';
 import Settings from '../../settings/settings';
 import { St, Clutter } from '../../gi/ext';
-import {
-    enableScalingFactorSupport,
-    getMonitorScalingFactor,
-} from '../../utils/ui';
+import { enableScalingFactorSupport } from '../../utils/ui';
 import * as SwitcherPopup from 'resource:///org/gnome/shell/ui/switcherPopup.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { registerGObjectClass } from '../../utils/gjs';
 import { widgetOrientation } from '../../utils/gnomesupport';
+import { displayScale } from '../displayScale/gnomeDisplayScale';
 
 const LAYOUT_HEIGHT: number = 72;
 const LAYOUT_WIDTH: number = 128; // 16:9 ratio. -> (16*layoutHeight) / 9 and then rounded to int
@@ -97,20 +95,16 @@ export class LayoutSwitcherPopup extends SwitcherPopup.SwitcherPopup {
     private _action: number;
     private _backwardAction: number;
 
-    constructor(
-        action: number,
-        backwardAction: number,
-        enableScaling: boolean
-    ) {
+    constructor(action: number, backwardAction: number) {
         // @ts-expect-error "Parent can take a list"
         super(GlobalState.get().layouts);
 
         this._action = action;
         this._backwardAction = backwardAction;
         // handle scale factor of the monitor
-        const monitorScalingFactor = enableScaling
-            ? getMonitorScalingFactor(this._getCurrentMonitorIndex())
-            : undefined;
+        const monitorScalingFactor = displayScale().styleScaleOf(
+            this._getCurrentMonitorIndex()
+        );
         this._switcherList = new LayoutSwitcherList(
             this._items,
             this,

@@ -5,7 +5,6 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {
     enableScalingFactorSupport,
     getMonitors,
-    getMonitorScalingFactor,
     getScalingFactorOf,
 } from '../utils/ui';
 import Settings from '../settings/settings';
@@ -20,6 +19,7 @@ import Layout from '../components/layout/Layout';
 import { _ } from '../translations';
 import { widgetOrientation } from '../utils/gnomesupport';
 import { createButton, createIconButton } from './utils';
+import { displayScale } from '../components/displayScale/gnomeDisplayScale';
 
 const debug = logger('DefaultMenu');
 
@@ -137,11 +137,7 @@ export default class DefaultMenu implements CurrentMenu {
     private _children: St.Widget[];
     private _openPrefsFn: () => void;
 
-    constructor(
-        indicator: Indicator,
-        enableScalingFactor: boolean,
-        openPrefsFn: () => void
-    ) {
+    constructor(indicator: Indicator, openPrefsFn: () => void) {
         this._indicator = indicator;
         this._signals = new SignalHandling();
         this._openPrefsFn = openPrefsFn;
@@ -163,14 +159,16 @@ export default class DefaultMenu implements CurrentMenu {
             layoutsPopupMenu
         );
 
-        if (enableScalingFactor) {
+        if (displayScale().isScaled) {
             const monitor = Main.layoutManager.findMonitorForActor(
                 this._container
             );
-            const scalingFactor = getMonitorScalingFactor(
-                monitor?.index || Main.layoutManager.primaryIndex
+            enableScalingFactorSupport(
+                this._container,
+                displayScale().styleScaleOf(
+                    monitor?.index || Main.layoutManager.primaryIndex
+                )
             );
-            enableScalingFactorSupport(this._container, scalingFactor);
         }
         this._scalingFactor = getScalingFactorOf(this._container)[1];
 
@@ -228,15 +226,17 @@ export default class DefaultMenu implements CurrentMenu {
         );
 
         this._signals.connect(Main.layoutManager, 'monitors-changed', () => {
-            if (!enableScalingFactor) return;
+            if (!displayScale().isScaled) return;
 
             const monitor = Main.layoutManager.findMonitorForActor(
                 this._container
             );
-            const scalingFactor = getMonitorScalingFactor(
-                monitor?.index || Main.layoutManager.primaryIndex
+            enableScalingFactorSupport(
+                this._container,
+                displayScale().styleScaleOf(
+                    monitor?.index || Main.layoutManager.primaryIndex
+                )
             );
-            enableScalingFactorSupport(this._container, scalingFactor);
 
             this._updateScaling();
             if (this._layoutsRows.length !== getMonitors().length)

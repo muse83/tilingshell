@@ -2,24 +2,33 @@ import { Gio } from '../../gi/ext';
 import WindowBorder from './windowBorder';
 import SignalHandling from '../../utils/signalHandling';
 import Settings from '../../settings/settings';
+import { displayScale } from '../displayScale/gnomeDisplayScale';
 
 export class WindowBorderManager {
     private readonly _signals: SignalHandling;
 
     private _border: WindowBorder | null;
-    private _enableScaling: boolean;
     private _interfaceSettings: Gio.Settings;
+    private _unsubscribeScale: (() => void) | null = null;
 
-    constructor(enableScaling: boolean) {
+    constructor() {
         this._signals = new SignalHandling();
         this._border = null;
-        this._enableScaling = enableScaling;
         this._interfaceSettings = new Gio.Settings({
             schema_id: 'org.gnome.desktop.interface',
         });
     }
 
     public enable(): void {
+        // the border is styled with the scale, so build it again when the scale changes
+        const unsubscribe = displayScale().subscribe(() => {
+            if (!this._border) return;
+            this._border.destroy();
+            this._border = null;
+            this._onWindowFocused();
+        });
+        this._unsubscribeScale?.();
+        this._unsubscribeScale = unsubscribe;
         if (Settings.ENABLE_WINDOW_BORDER) this._turnOn();
 
         // enable/disable based on user preferences
@@ -62,6 +71,8 @@ export class WindowBorderManager {
     }
 
     public destroy(): void {
+        this._unsubscribeScale?.();
+        this._unsubscribeScale = null;
         this._signals.disconnect();
         this._border?.destroy();
         this._border = null;
@@ -80,8 +91,7 @@ export class WindowBorderManager {
             return;
         }
 
-        if (!this._border)
-            this._border = new WindowBorder(metaWindow, this._enableScaling);
+        if (!this._border) this._border = new WindowBorder(metaWindow);
         else this._border.trackWindow(metaWindow);
     }
 }

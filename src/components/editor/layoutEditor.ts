@@ -7,7 +7,6 @@ import {
     buildRectangle,
     buildTileGaps,
     enableScalingFactorSupport,
-    getMonitorScalingFactor,
     getWindowsOfMonitor,
 } from '../../utils/ui';
 import Layout from '../layout/Layout';
@@ -18,6 +17,7 @@ import Tile from '../layout/Tile';
 import HoverLine from './hoverLine';
 import { Monitor } from 'resource:///org/gnome/shell/ui/layout.js';
 import { getEventCoords } from '../../utils/gnomesupport';
+import { displayScale } from '../displayScale/gnomeDisplayScale';
 
 export default class LayoutEditor extends St.Widget {
     static {
@@ -33,7 +33,7 @@ export default class LayoutEditor extends St.Widget {
 
     private _minimizedWindows: Meta.Window[];
 
-    constructor(layout: Layout, monitor: Monitor, enableScaling: boolean) {
+    constructor(layout: Layout, monitor: Monitor) {
         super({ styleClass: 'layout-editor' });
 
         Main.layoutManager.addChrome(this);
@@ -44,10 +44,10 @@ export default class LayoutEditor extends St.Widget {
             GObject.BindingFlags.DEFAULT
         );
 
-        if (enableScaling) {
-            const scalingFactor = getMonitorScalingFactor(monitor.index);
-            enableScalingFactorSupport(this, scalingFactor);
-        }
+        enableScalingFactorSupport(
+            this,
+            displayScale().styleScaleOf(monitor.index)
+        );
 
         const workArea = Main.layoutManager.getWorkAreaForMonitor(
             monitor.index

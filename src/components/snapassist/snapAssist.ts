@@ -10,11 +10,11 @@ import SignalHandling from '../../utils/signalHandling';
 import {
     buildMarginOf,
     enableScalingFactorSupport,
-    getMonitorScalingFactor,
     getScalingFactorOf,
 } from '../../utils/ui';
 import { buildBlurEffect } from '../../utils/gnomesupport';
 import { liveActor } from '../windowLifetime/windowLifetime';
+import { displayScale } from '../displayScale/gnomeDisplayScale';
 
 export const SNAP_ASSIST_SIGNAL = 'snap-assist';
 
@@ -90,7 +90,7 @@ class SnapAssistContent extends St.BoxLayout {
         this._snapAssistantAnimationTime = 100;
         this._monitorIndex = monitorIndex;
         this._snapAssistantThreshold =
-            54 * getMonitorScalingFactor(this._monitorIndex);
+            54 * displayScale().monitorScaleOf(this._monitorIndex);
 
         Settings.bind(
             Settings.KEY_ENABLE_BLUR_SNAP_ASSISTANT,
@@ -144,7 +144,7 @@ class SnapAssistContent extends St.BoxLayout {
 
     private set snapAssistantThreshold(value: number) {
         this._snapAssistantThreshold =
-            value * getMonitorScalingFactor(this._monitorIndex);
+            value * displayScale().monitorScaleOf(this._monitorIndex);
     }
 
     private set snapAssistantAnimationTime(value: number) {

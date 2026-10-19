@@ -14,3 +14,6 @@ Glossary of the terms this project uses. Decisions are in `docs/adr/`.
 - **Window memory**: the remembered frame per application, restored for new windows (ADR 0002).
 - **Window placement**: the single decision, when a window is shown, whether to restore it,
   auto-tile it or leave it alone (ADR 0003).
+- **Display scale**: how the screen is scaled. Logical (default on GNOME 50+): the shell's theme
+  scale stays 1 and sizes are already divided by the monitor scale. Physical: the theme scale
+  carries the scale and widgets are styled with it. Answered by one module (ADR 0005).

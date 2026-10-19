@@ -6,11 +6,7 @@ import { GObject, St, Clutter, Meta } from '../../gi/ext';
 import GlobalState from '../../utils/globalState';
 import { registerGObjectClass } from '../../utils/gjs';
 import Tile from '../../components/layout/Tile';
-import {
-    enableScalingFactorSupport,
-    getMonitorScalingFactor,
-    getWindows,
-} from '../../utils/ui';
+import { enableScalingFactorSupport, getWindows } from '../../utils/ui';
 import { bestVacantTile } from '../../components/tileState/tileState';
 import { vacantTilesOf } from '../../components/tileState/vacantTiles';
 import LayoutTileButtons from './layoutTileButtons';
@@ -18,6 +14,7 @@ import { buildMarginOf } from '../../utils/ui';
 import LayoutIcon from './layoutIcon';
 import { _ } from '../../translations';
 import { widgetOrientation } from '../../utils/gnomesupport';
+import { displayScale } from '../displayScale/gnomeDisplayScale';
 
 const LAYOUT_ICON_WIDTH = 46;
 const LAYOUT_ICON_HEIGHT = 32;
@@ -119,7 +116,9 @@ export default class OverriddenWindowMenu extends GObject.Object {
 
         const enableScaling =
             window.get_monitor() === Main.layoutManager.primaryIndex;
-        const scalingFactor = getMonitorScalingFactor(window.get_monitor());
+        const scalingFactor = displayScale().monitorScaleOf(
+            window.get_monitor()
+        );
 
         if (vacantTiles.length > 0) {
             const bestTile = bestVacantTile(vacantTiles) as Tile;

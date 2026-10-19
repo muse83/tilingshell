@@ -95,15 +95,6 @@ export const buildTileGaps = (
     };
 };
 
-export const getMonitorScalingFactor = (monitorIndex: number) => {
-    const scalingFactor = St.ThemeContext.get_for_stage(
-        global.get_stage()
-    ).get_scale_factor();
-    if (scalingFactor === 1)
-        return global.display.get_monitor_scale(monitorIndex);
-    return scalingFactor;
-};
-
 export const getScalingFactorOf = (widget: St.Widget): [boolean, number] => {
     const [hasReference, scalingReference] = widget
         .get_theme_node()

@@ -5,11 +5,11 @@ import Settings from '../../settings/settings';
 import {
     buildRectangle,
     enableScalingFactorSupport,
-    getMonitorScalingFactor,
     getScalingFactorOf,
     getScalingFactorSupportString,
 } from '../../utils/ui';
 import { liveActor } from '../windowLifetime/windowLifetime';
+import { displayScale } from '../displayScale/gnomeDisplayScale';
 
 Gio._promisify(Shell.Screenshot, 'composite_to_stream');
 
@@ -47,13 +47,12 @@ export default class WindowBorder extends St.DrawingArea {
     private _window: Meta.Window;
     private _windowMonitor: number;
     private _bindings: GObject.Binding[];
-    private _enableScaling: boolean;
     private _borderRadiusValue: [number, number, number, number];
     private _timeout: GLib.Source | undefined;
     private _delayedSmartBorderRadius: boolean;
     private _scaledBorderWidth: number;
 
-    constructor(win: Meta.Window, enableScaling: boolean) {
+    constructor(win: Meta.Window) {
         super({
             style_class: 'window-border',
         });
@@ -62,7 +61,6 @@ export default class WindowBorder extends St.DrawingArea {
         this._scaledBorderWidth = 1;
         this._window = win;
         this._windowMonitor = win.get_monitor();
-        this._enableScaling = enableScaling;
         this._delayedSmartBorderRadius = false;
         const smartRadius = Settings.ENABLE_SMART_WINDOW_BORDER_RADIUS;
         this._borderRadiusValue = [
@@ -344,9 +342,9 @@ export default class WindowBorder extends St.DrawingArea {
 
     public updateStyle(): void {
         // handle scale factor of the monitor
-        const monitorScalingFactor = this._enableScaling
-            ? getMonitorScalingFactor(this._window.get_monitor())
-            : undefined;
+        const monitorScalingFactor = displayScale().styleScaleOf(
+            this._window.get_monitor()
+        );
         // CAUTION: this overrides the CSS style
         enableScalingFactorSupport(this, monitorScalingFactor);
 
