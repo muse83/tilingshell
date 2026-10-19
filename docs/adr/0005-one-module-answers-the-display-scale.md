@@ -27,3 +27,18 @@ change between two physical scales (2 to 3) was ignored.
 ## Consequences
 No yes/no value passes through the extension any more. The indicator, window border manager and
 the extension (for its tiling managers) subscribe on their own.
+
+## Verification (2026-10-19)
+- Unit tests for the decision logic and the subscribe/notify rules (`tests/displayScale.test.ts`).
+- Dev stack with `SECOND_MONITOR=1`: extension active, window placement scenario passes, theme
+  scale toggled 1 -> 2 -> 3 -> 1 rebuilds the tiling managers each time, no shell errors.
+- Monitor index check: the layout manager's monitor list and Mutter's indices have the same
+  order on two monitors. No fix needed.
+- Not checked in the dev stack: the window border being rebuilt after a switch from physical to
+  logical scaling (covered by code reading only).
+
+## Left out on purpose
+- Window memory does not read the scale, so nothing to rebuild there. Its creation before
+  `startup-complete` is a start-order question, not a scale question.
+- Remaining direct style lookups in the tiling manager, window border and layout switcher stay as
+  they are (one use per file).
