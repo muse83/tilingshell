@@ -1,7 +1,7 @@
 import { St, Mtk, Meta } from '../../gi/ext';
 import SignalHandling from '../../utils/signalHandling';
 import Settings from '../../settings/settings';
-import ExtendedWindow from './extendedWindow';
+import { isTiled } from '../tileState/tileState';
 import { getWindows } from '../../utils/ui';
 
 export class ResizingManager {
@@ -57,7 +57,7 @@ export class ResizingManager {
     private _onWindowResizingBegin(window: Meta.Window, grabOp: Meta.GrabOp) {
         if (
             !window ||
-            !(window as ExtendedWindow).assignedTile ||
+            !isTiled(window) ||
             !this._signals
         )
             return;
@@ -109,7 +109,7 @@ export class ResizingManager {
         const otherTiledWindows = getWindows().filter(
             otherWindow =>
                 otherWindow &&
-                (otherWindow as ExtendedWindow).assignedTile &&
+                isTiled(otherWindow) &&
                 otherWindow !== window &&
                 !otherWindow.minimized
         );

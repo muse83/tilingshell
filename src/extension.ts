@@ -45,7 +45,7 @@ import OverriddenWindowMenu from './components/window_menu/overriddenWindowMenu'
 import Tile from './components/layout/Tile';
 import { WindowBorderManager } from './components/windowBorder/windowBorderManager';
 import TilingShellWindowManager from './components/windowManager/tilingShellWindowManager';
-import ExtendedWindow from './components/tilingsystem/extendedWindow';
+import { forgetTile, isTiled } from './components/tileState/tileState';
 import OverriddenAltTab from './components/altTab/overriddenAltTab';
 import { LayoutSwitcherPopup } from './components/layoutSwitcher/layoutSwitcher';
 import { unmaximizeWindow } from './utils/gnomesupport';
@@ -592,7 +592,7 @@ export default class TilingShellExtension extends Extension {
             const focusActor = liveActor<Meta.WindowActor>(focus_window);
             if (focusActor) Main.wm.skipNextEffect(focusActor);
             unmaximizeWindow(focus_window);
-            (focus_window as ExtendedWindow).assignedTile = undefined;
+            forgetTile(focus_window);
         }
 
         const neighborTilingManager =
@@ -639,11 +639,7 @@ export default class TilingShellExtension extends Extension {
         windowList
             .filter(win => {
                 if (win === focus_window || win.minimized) return false;
-                if (
-                    onlyTiledWindows &&
-                    (win as ExtendedWindow).assignedTile === undefined
-                )
-                    return false;
+                if (onlyTiledWindows && !isTiled(win)) return false;
 
                 const winRect = win.get_frame_rect();
                 switch (direction) {

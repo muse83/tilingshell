@@ -23,7 +23,20 @@ import Tile from '../layout/Tile';
 import TileUtils from '../layout/TileUtils';
 import GlobalState from '../../utils/globalState';
 import { Monitor } from 'resource:///org/gnome/shell/ui/layout.js';
-import ExtendedWindow from './extendedWindow';
+import {
+    assignTile,
+    bestVacantTile,
+    forgetTile,
+    isInTile,
+    isTiled,
+    releaseFromTile,
+    releaseOnDrag,
+    rememberSizeBeforeTile,
+    setSizeBeforeTile,
+    tileOf,
+    tileWindow,
+} from '../tileState/tileState';
+import { vacantTilesOf } from '../tileState/vacantTiles';
 import EdgeTilingManager from './edgeTilingManager';
 import TouchPointer from './touchPointer';
 import { KeyBindingsDirection } from '../../keybindings';
@@ -32,8 +45,6 @@ import TilingLayoutWithSuggestions from '../windowsSuggestions/tilingLayoutWithS
 import { maximizeWindow, unmaximizeWindow } from '../../utils/gnomesupport';
 import { liveActor } from '../windowLifetime/windowLifetime';
 import { isNormalTopLevel } from '../windowPlacement/windowFacts';
-
-const MINIMUM_DISTANCE_TO_RESTORE_ORIGINAL_SIZE = 90;
 
 class SnapAssistingInfo {
     private _snapAssistantLayoutId: string | undefined;
@@ -307,18 +318,16 @@ export class TilingManager {
             TilingShellWindowManager.get(),
             'maximized',
             (_, window: Meta.Window) => {
-                delete (window as ExtendedWindow).assignedTile;
+                forgetTile(window);
             }
         );
     }
 
     public onUntileWindow(window: Meta.Window, force: boolean): void {
-        const destination = (window as ExtendedWindow).originalSize;
+        const destination = releaseFromTile(window);
         if (!destination) return;
 
         this._easeWindowRect(window, destination, false, force);
-
-        (window as ExtendedWindow).assignedTile = undefined;
     }
 
     public onKeyboardMoveWindow(
@@ -337,7 +346,6 @@ export class TilingManager {
         const tilingLayout = this._workspaceTilingLayout.get(currentWs);
         if (!tilingLayout) return false;
         const windowRectCopy = window.get_frame_rect().copy();
-        const extWin = window as ExtendedWindow;
 
         if (isMaximized) {
             switch (direction) {
@@ -354,11 +362,7 @@ export class TilingManager {
         }
 
         // maximize the window using keybindings
-        if (
-            direction === KeyBindingsDirection.UP &&
-            extWin.assignedTile &&
-            extWin.assignedTile?.y === 0
-        ) {
+        if (direction === KeyBindingsDirection.UP && tileOf(window)?.y === 0) {
             maximizeWindow(window);
             return true;
         }
@@ -406,13 +410,7 @@ export class TilingManager {
             destination &&
             !window.maximizedHorizontally &&
             !window.maximizedVertically &&
-            (window as ExtendedWindow).assignedTile &&
-            (window as ExtendedWindow).assignedTile?.x === destination.tile.x &&
-            (window as ExtendedWindow).assignedTile?.y === destination.tile.y &&
-            (window as ExtendedWindow).assignedTile?.width ===
-                destination.tile.width &&
-            (window as ExtendedWindow).assignedTile?.height ===
-                destination.tile.height
+            isInTile(window, destination.tile)
         )
             return true;
 
@@ -431,8 +429,9 @@ export class TilingManager {
             return false;
         }
 
-        if (!(window as ExtendedWindow).assignedTile && !isMaximized)
-            (window as ExtendedWindow).originalSize = windowRectCopy;
+        rememberSizeBeforeTile(window, windowRectCopy, {
+            maximized: isMaximized,
+        });
 
         if (spanFlag) {
             destination.rect = destination.rect.union(windowRectCopy);
@@ -447,10 +446,7 @@ export class TilingManager {
         this._easeWindowRect(window, destination.rect, false, force);
 
         if (direction !== KeyBindingsDirection.NODIRECTION) {
-            // ensure the assigned tile is a COPY
-            (window as ExtendedWindow).assignedTile = new Tile({
-                ...destination.tile,
-            });
+            assignTile(window, destination.tile);
         }
         return true;
     }
@@ -614,36 +610,32 @@ export class TilingManager {
         const [x, y, modifier] = TouchPointer.get().isTouchDeviceActive()
             ? TouchPointer.get().get_pointer(window)
             : global.get_pointer();
-        const extWin = window as ExtendedWindow;
-        extWin.assignedTile = undefined;
         const currPointerPos = { x, y };
         if (this._grabStartPosition === null)
             this._grabStartPosition = { x, y };
 
-        // if there is "originalSize" attached, it means the window were tiled and
-        // it is the first time the window is moved. If that's the case, change
-        // window's size to the size it had before it were tiled (the originalSize)
-        if (
-            extWin.originalSize &&
-            squaredEuclideanDistance(currPointerPos, this._grabStartPosition) >
-                MINIMUM_DISTANCE_TO_RESTORE_ORIGINAL_SIZE
-        ) {
+        // the window leaves its tile. If it was tiled and this is the first time it is
+        // moved far enough, change window's size to the size it had before it were tiled
+        const sizeBeforeTile = releaseOnDrag(
+            window,
+            squaredEuclideanDistance(currPointerPos, this._grabStartPosition)
+        );
+        if (sizeBeforeTile) {
             if (Settings.RESTORE_WINDOW_ORIGINAL_SIZE) {
                 const windowRect = window.get_frame_rect();
                 const offsetX = (x - windowRect.x) / windowRect.width;
                 const offsetY = (y - windowRect.y) / windowRect.height;
 
                 const newSize = buildRectangle({
-                    x: x - extWin.originalSize.width * offsetX,
-                    y: y - extWin.originalSize.height * offsetY,
-                    width: extWin.originalSize.width,
-                    height: extWin.originalSize.height,
+                    x: x - sizeBeforeTile.width * offsetX,
+                    y: y - sizeBeforeTile.height * offsetY,
+                    width: sizeBeforeTile.width,
+                    height: sizeBeforeTile.height,
                 });
 
                 this._easeWindowRect(window, newSize);
                 TouchPointer.get().updateWindowPosition(newSize);
             }
-            extWin.originalSize = undefined;
             this._grabStartPosition = null;
         }
 
@@ -836,12 +828,11 @@ export class TilingManager {
 
         if (window.maximizedHorizontally || window.maximizedVertically) return;
 
-        (window as ExtendedWindow).originalSize = window
-            .get_frame_rect()
-            .copy();
-        (window as ExtendedWindow).assignedTile = new Tile({
-            ...TileUtils.build_tile(selectedTilesRect, this._workArea),
-        });
+        setSizeBeforeTile(window, window.get_frame_rect().copy());
+        assignTile(
+            window,
+            TileUtils.build_tile(selectedTilesRect, this._workArea)
+        );
         this._easeWindowRect(window, desiredWindowRect);
 
         // Sync the desktop layout to match the snap-assisted layout if enabled
@@ -921,15 +912,11 @@ export class TilingManager {
         outerGaps: Clutter.Margin,
         scalingFactor: number
     ): void {
-        const tiledWindows: ExtendedWindow[] = [];
+        const tiledWindows: Meta.Window[] = [];
         const nontiledWindows: Meta.Window[] = [];
         getWindows().forEach(extWin => {
-            if (
-                extWin &&
-                !extWin.minimized &&
-                (extWin as ExtendedWindow).assignedTile
-            )
-                tiledWindows.push(extWin as ExtendedWindow);
+            if (extWin && !extWin.minimized && isTiled(extWin))
+                tiledWindows.push(extWin);
             else nontiledWindows.push(extWin);
         });
 
@@ -1230,19 +1217,19 @@ export class TilingManager {
         const rememberOriginalSize = !isMaximized;
         if (isMaximized) unmaximizeWindow(window);
 
-        if (rememberOriginalSize && !(window as ExtendedWindow).assignedTile) {
-            (window as ExtendedWindow).originalSize = window
-                .get_frame_rect()
-                .copy();
-        }
-        (window as ExtendedWindow).assignedTile = TileUtils.build_tile(
-            buildRectangle({
-                x: scaledRect.x,
-                y: scaledRect.y,
-                width: scaledRect.width,
-                height: scaledRect.height,
-            }),
-            this._workArea
+        tileWindow(
+            window,
+            TileUtils.build_tile(
+                buildRectangle({
+                    x: scaledRect.x,
+                    y: scaledRect.y,
+                    width: scaledRect.width,
+                    height: scaledRect.height,
+                }),
+                this._workArea
+            ),
+            window.get_frame_rect().copy(),
+            { maximized: !rememberOriginalSize }
         );
         if (skipAnimation) {
             window.move_resize_frame(
@@ -1301,7 +1288,7 @@ export class TilingManager {
         )
             return null;
 
-        (window as ExtendedWindow).assignedTile = undefined;
+        forgetTile(window);
         const vacantTile = this._findEmptyTile(window);
         if (!vacantTile) return null;
 
@@ -1309,17 +1296,6 @@ export class TilingManager {
     }
 
     private _findEmptyTile(window: Meta.Window): Tile | undefined {
-        const tiledWindows: ExtendedWindow[] = getWindows()
-            .filter(otherWindow => {
-                return (
-                    otherWindow &&
-                    (otherWindow as ExtendedWindow).assignedTile &&
-                    !otherWindow.minimized &&
-                    !otherWindow.maximizedVertically &&
-                    !otherWindow.maximizedHorizontally
-                );
-            })
-            .map(w => w as ExtendedWindow);
         const tiles = GlobalState.get().getSelectedLayoutOfMonitor(
             window.get_monitor(),
             global.workspaceManager.get_active_workspace_index()
@@ -1327,36 +1303,8 @@ export class TilingManager {
         const workArea = Main.layoutManager.getWorkAreaForMonitor(
             window.get_monitor()
         );
-        const vacantTiles = tiles.filter(t => {
-            const tileRect = TileUtils.apply_props(t, workArea);
-            return !tiledWindows.find(win =>
-                tileRect.overlap(win.get_frame_rect())
-            );
-        });
-
-        if (vacantTiles.length === 0) return undefined;
 
         // finally find the nearest tile to the center of the screen
-        vacantTiles.sort((a, b) => a.x - b.x);
-
-        let bestTileIndex = 0;
-        let bestDistance = Math.abs(
-            0.5 -
-                vacantTiles[bestTileIndex].x +
-                vacantTiles[bestTileIndex].width / 2
-        );
-        for (let index = 1; index < vacantTiles.length; index++) {
-            const distance = Math.abs(
-                0.5 - (vacantTiles[index].x + vacantTiles[index].width / 2)
-            );
-            if (bestDistance > distance) {
-                bestTileIndex = index;
-                bestDistance = distance;
-            }
-        }
-
-        if (bestTileIndex < 0 || bestTileIndex >= vacantTiles.length)
-            return undefined;
-        return vacantTiles[bestTileIndex];
+        return bestVacantTile(vacantTilesOf(getWindows(), tiles, workArea));
     }
 }

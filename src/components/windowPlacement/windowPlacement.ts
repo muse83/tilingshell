@@ -6,7 +6,7 @@ import { logger } from '../../utils/logger';
 import { buildRectangle } from '../../utils/ui';
 import { maximizeWindow } from '../../utils/gnomesupport';
 import Tile from '../layout/Tile';
-import ExtendedWindow from '../tilingsystem/extendedWindow';
+import { setSizeBeforeTile } from '../tileState/tileState';
 import { TilingManager } from '../tilingsystem/tilingManager';
 import WindowMemory from '../windowMemory/windowMemory';
 import { liveActor } from '../windowLifetime/windowLifetime';
@@ -171,8 +171,7 @@ export default class WindowPlacement {
             )?.restoreTile(new Tile(tile), window);
             // tiling captured the old size: dragging the window out of the tile must
             // bring back the remembered size
-            if (frame)
-                (window as ExtendedWindow).originalSize = buildRectangle(frame);
+            if (frame) setSizeBeforeTile(window, buildRectangle(frame));
             return tiled ?? frame ?? null;
         }
         if (decision.maximized) {

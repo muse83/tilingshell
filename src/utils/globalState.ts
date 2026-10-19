@@ -6,7 +6,7 @@ import { GObject, Meta, Gio } from '../gi/ext';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { logger } from './logger';
 import { getWindows } from './ui';
-import ExtendedWindow from '../components/tilingsystem/extendedWindow';
+import { isTiled } from '../components/tileState/tileState';
 
 const debug = logger('GlobalState');
 
@@ -357,7 +357,7 @@ export default class GlobalState extends GObject.Object {
             // check if there are tiled windows on that monitor and in the last workspace
             const tiledWindows = getWindows(lastWs).find(
                 win =>
-                    (win as ExtendedWindow).assignedTile &&
+                    isTiled(win) &&
                     win.get_monitor() === monitorIndex
             );
             if (!tiledWindows) {

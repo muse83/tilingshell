@@ -2,7 +2,7 @@ import { Meta } from '../../gi/ext';
 import SignalHandling from '../../utils/signalHandling';
 import Settings from '../../settings/settings';
 import { getWindows } from '../../utils/ui';
-import ExtendedWindow from '../tilingsystem/extendedWindow';
+import { isTiled } from '../tileState/tileState';
 
 export class RaiseTogetherManager {
     private readonly _signals: SignalHandling;
@@ -55,7 +55,7 @@ export class RaiseTogetherManager {
 
     private _connectRaisedSignal(window: Meta.Window) {
         const raisedId = this._signals.connect(window, 'raised', () => {
-            if (!(window as ExtendedWindow).assignedTile) return; // window not tiled
+            if (!isTiled(window)) return;
 
             this._onTiledWindowRaised(window);
         });
@@ -68,7 +68,7 @@ export class RaiseTogetherManager {
     private _onTiledWindowRaised(tiledWindow: Meta.Window) {
         const workspace = tiledWindow.get_workspace();
         getWindows(workspace).forEach(winSameWorkspace => {
-            if (!(winSameWorkspace as ExtendedWindow).assignedTile) return; // window not tiled
+            if (!isTiled(winSameWorkspace)) return;
 
             this._stopRaiseSignalHandling(winSameWorkspace);
             winSameWorkspace.raise();

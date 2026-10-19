@@ -4,7 +4,13 @@ import Layout from '../layout/Layout';
 import { buildRectangle, isPointInsideRect } from '../../utils/ui';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import GlobalState from '../../utils/globalState';
-import ExtendedWindow from '../tilingsystem/extendedWindow';
+import {
+    assignTile,
+    occupyingFrames,
+    setSizeBeforeTile,
+    vacant,
+} from '../tileState/tileState';
+import { windowView } from '../tileState/vacantTiles';
 import SuggestedWindowPreview from './suggestedWindowPreview';
 import Tile from '../../components/layout/Tile';
 import LayoutWidget from '../../components/layout/LayoutWidget';
@@ -68,7 +74,7 @@ export default class TilingLayoutWithSuggestions extends LayoutWidget<Suggestion
     }
 
     public open(
-        tiledWindows: ExtendedWindow[],
+        tiledWindows: Meta.Window[],
         nontiledWindows: Meta.Window[],
         window: Meta.Window,
         windowDesiredRect: Mtk.Rectangle,
@@ -117,26 +123,28 @@ export default class TilingLayoutWithSuggestions extends LayoutWidget<Suggestion
     }
 
     private _showVacantPreviewsOnly(
-        tiledWindows: ExtendedWindow[],
+        tiledWindows: Meta.Window[],
         windowDesiredRect: Mtk.Rectangle,
         window: Meta.Window
     ) {
-        const vacantPreviews = this._previews.map(prev => {
-            const previewRect = buildRectangle({
-                x: prev.innerX,
-                y: prev.innerY,
-                width: prev.innerWidth,
-                height: prev.innerHeight,
-            });
-            return !tiledWindows.find(win =>
-                previewRect.overlap(
-                    win === window ? windowDesiredRect : win.get_frame_rect()
-                )
-            );
-        });
+        const vacantPreviews = vacant(
+            this._previews,
+            prev =>
+                buildRectangle({
+                    x: prev.innerX,
+                    y: prev.innerY,
+                    width: prev.innerWidth,
+                    height: prev.innerHeight,
+                }),
+            occupyingFrames(tiledWindows, windowView, {
+                window,
+                frame: windowDesiredRect,
+            }),
+            (a, b) => a.overlap(b)
+        );
         const newPreviews = [];
         for (let index = 0; index < this._previews.length; index++) {
-            if (vacantPreviews[index]) {
+            if (vacantPreviews.includes(this._previews[index])) {
                 this._previews[index].open();
                 newPreviews.push(this._previews[index]);
             } else {
@@ -343,7 +351,7 @@ export default class TilingLayoutWithSuggestions extends LayoutWidget<Suggestion
         if (nonTiledWin.minimized) nonTiledWin.unminimize();
 
         const winRect = nonTiledWin.get_frame_rect();
-        (nonTiledWin as ExtendedWindow).originalSize = winRect.copy();
+        setSizeBeforeTile(nonTiledWin, winRect.copy());
 
         // create a static clone and hide the live clone
         // then we can change the actual window size
@@ -361,9 +369,7 @@ export default class TilingLayoutWithSuggestions extends LayoutWidget<Suggestion
             monitorIndex,
         });
         // finally assign the tile to the window
-        (nonTiledWin as ExtendedWindow).assignedTile = new Tile({
-            ...preview.tile,
-        });
+        assignTile(nonTiledWin, preview.tile);
         // hide the live clone, since we have a clone animating on top of it
         suggestedWin.opacity = 0;
         // begin hiding the preview. Destroy it when it is hidden

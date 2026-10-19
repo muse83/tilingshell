@@ -11,8 +11,8 @@ import {
     getMonitorScalingFactor,
     getWindows,
 } from '../../utils/ui';
-import ExtendedWindow from '../../components/tilingsystem/extendedWindow';
-import TileUtils from '../../components/layout/TileUtils';
+import { bestVacantTile } from '../../components/tileState/tileState';
+import { vacantTilesOf } from '../../components/tileState/vacantTiles';
 import LayoutTileButtons from './layoutTileButtons';
 import { buildMarginOf } from '../../utils/ui';
 import LayoutIcon from './layoutIcon';
@@ -111,49 +111,18 @@ export default class OverriddenWindowMenu extends GObject.Object {
         const workArea = Main.layoutManager.getWorkAreaForMonitor(
             window.get_monitor()
         );
-        const tiledWindows: ExtendedWindow[] = getWindows()
-            .map(otherWindow => {
-                return otherWindow &&
-                    !otherWindow.minimized &&
-                    (otherWindow as ExtendedWindow).assignedTile
-                    ? (otherWindow as ExtendedWindow)
-                    : undefined;
-            })
-            .filter(w => w !== undefined);
-
         const tiles = GlobalState.get().getSelectedLayoutOfMonitor(
             window.get_monitor(),
             global.workspaceManager.get_active_workspace_index()
         ).tiles;
-        const vacantTiles = tiles.filter(t => {
-            const tileRect = TileUtils.apply_props(t, workArea);
-            return !tiledWindows.find(win =>
-                tileRect.overlap(win.get_frame_rect())
-            );
-        });
+        const vacantTiles = vacantTilesOf(getWindows(), tiles, workArea);
 
         const enableScaling =
             window.get_monitor() === Main.layoutManager.primaryIndex;
         const scalingFactor = getMonitorScalingFactor(window.get_monitor());
 
         if (vacantTiles.length > 0) {
-            vacantTiles.sort((a, b) => a.x - b.x);
-
-            let bestTileIndex = 0;
-            let bestDistance = Math.abs(
-                0.5 -
-                    vacantTiles[bestTileIndex].x +
-                    vacantTiles[bestTileIndex].width / 2
-            );
-            for (let index = 1; index < vacantTiles.length; index++) {
-                const distance = Math.abs(
-                    0.5 - (vacantTiles[index].x + vacantTiles[index].width / 2)
-                );
-                if (bestDistance > distance) {
-                    bestTileIndex = index;
-                    bestDistance = distance;
-                }
-            }
+            const bestTile = bestVacantTile(vacantTiles) as Tile;
 
             // @ts-expect-error "this is not an instance of OverriddenWindowMenu, but it is the WindowMenu itself"
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
@@ -167,14 +136,14 @@ export default class OverriddenWindowMenu extends GObject.Object {
             buildMenuWithLayoutIcon(
                 _('Move to best tile'),
                 vacantPopupMenu,
-                [vacantTiles[bestTileIndex]],
+                [bestTile],
                 tiles,
                 INNER_GAPS
             );
             vacantPopupMenu.connect('activate', () => {
                 OverriddenWindowMenu.get().emit(
                     'tile-clicked',
-                    vacantTiles[bestTileIndex],
+                    bestTile,
                     window
                 );
             });

@@ -2,7 +2,7 @@ import { Meta } from '../../gi/ext';
 import Settings from '../../settings/settings';
 import SignalHandling from '../../utils/signalHandling';
 import { logger } from '../../utils/logger';
-import ExtendedWindow from '../tilingsystem/extendedWindow';
+import { sizeBeforeTile, tileOf } from '../tileState/tileState';
 import { appIdOf } from '../windowPlacement/windowFacts';
 import {
     parseRememberedFrames,
@@ -97,13 +97,12 @@ export default class WindowMemory {
             return;
         }
 
-        const extWin = window as ExtendedWindow;
         const updated = rememberClosing(this.entries(), appId, {
             frame: window.get_frame_rect(),
             maximized:
                 window.maximizedHorizontally && window.maximizedVertically,
-            tile: extWin.assignedTile,
-            sizeBeforeTile: extWin.originalSize,
+            tile: tileOf(window),
+            sizeBeforeTile: sizeBeforeTile(window),
         });
 
         Settings.REMEMBERED_WINDOWS = JSON.stringify(updated);

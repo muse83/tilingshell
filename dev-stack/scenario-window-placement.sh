@@ -3,7 +3,8 @@
 # Needs: SECOND_MONITOR=1 ./up.sh. Prints PASS/FAIL per check and exits 1 on any failure.
 #   1 each mode (also auto-tiling with every tile taken): never visible at a wrong frame, ends at the right frame, not slower (x3)
 #   2 second window of the same app is cascaded, not put on top
-#   3 remembered tile already taken by the same app: tile size, cascaded, untiled
+#   3 remembered tile already taken by the same app: tile size, cascaded, untiled (tiled or not
+#     is read from what the window memory writes down when each window is closed)
 #   4 remembered tile on the second monitor
 #   5 shutdown: open windows are remembered when the extension is disabled
 # usage: ./scenario-window-placement.sh
@@ -16,8 +17,14 @@ X="__M.extensionManager.lookup('$UUID').stateObj"
 APP=test.Place
 FAILS=0
 check() { if [ "$2" = ok ]; then echo "PASS $1"; else echo "FAIL $1: $2"; FAILS=$((FAILS+1)); fi; }
-# JS: all windows as [x,y,width,height,monitor,tiled]
-WINDOWS="JSON.stringify(global.get_window_actors().map(a=>a.metaWindow).map(w=>{const r=w.get_frame_rect(); return [r.x,r.y,r.width,r.height,w.get_monitor(),!!w.assignedTile]}))"
+# JS: all windows as [x,y,width,height,monitor]
+WINDOWS="JSON.stringify(global.get_window_actors().map(a=>a.metaWindow).map(w=>{const r=w.get_frame_rect(); return [r.x,r.y,r.width,r.height,w.get_monitor()]}))"
+# Whether a window is tiled is not exposed by the extension. Closing a window makes the window
+# memory write down its state, so close the window at x and print the entry it remembered.
+closed_entry() {
+  ev "const w=global.get_window_actors().map(a=>a.metaWindow).find(w=>w.get_frame_rect().x==$1); w.delete(global.get_current_time()); 'del'" >/dev/null; nap 2
+  ev "$X.getSettings().get_string('remembered-windows')"
+}
 setup() { # remember, auto-tiling, entry json
   ev "global.get_window_actors().forEach(a=>a.metaWindow.delete(global.get_current_time())); 'close'" >/dev/null; nap 2
   ev "const s=$X.getSettings(); s.set_boolean('remember-windows', $1); s.set_boolean('enable-autotiling', $2); s.set_string('remembered-windows', '$3'); 'cfg'" >/dev/null
@@ -49,10 +56,19 @@ setup true false "{\"$APP\":{\"frame\":$FRAME,\"tile\":$TILE}}"
 W=$(ev "$WINDOWS")
 r=$(python3 -c "
 import json,sys
-w=json.loads(sys.argv[1]); tiled=[x for x in w if x[5]]; free=[x for x in w if not x[5]]
-if len(tiled)!=1 or len(free)!=1: print('got '+sys.argv[1]); sys.exit()
-t,f=tiled[0],free[0]
+w=sorted(json.loads(sys.argv[1]))
+if len(w)!=2: print('got '+sys.argv[1]); sys.exit()
+t,f=w
 print('ok' if f[2:4]==t[2:4] and f[0]==t[0]+30 and f[1]!=t[1] else 'got '+sys.argv[1])" "$W")
+if [ "$r" = ok ]; then
+  # the cascaded window is not tiled, the first one is
+  XS=$(python3 -c "import json,sys; w=sorted(json.loads(sys.argv[1])); print(w[0][0], w[1][0])" "$W")
+  E2=$(closed_entry "${XS#* }"); E1=$(closed_entry "${XS% *}")
+  r=$(python3 -c "
+import json,sys
+e2=json.loads(sys.argv[1]).get('$APP',{}); e1=json.loads(sys.argv[2]).get('$APP',{})
+print('ok' if 'tile' not in e2 and 'tile' in e1 else 'got cascaded '+sys.argv[1]+' first '+sys.argv[2])" "$E2" "$E1")
+fi
 check "3 taken tile: second window has tile size, is cascaded and not tiled" "$r"
 
 setup true false "{\"$APP\":{\"frame\":{\"x\":2100,\"y\":100,\"width\":500,\"height\":350},\"tile\":$TILE}}"
@@ -61,7 +77,13 @@ W=$(ev "$WINDOWS")
 r=$(python3 -c "
 import json,sys
 w=json.loads(sys.argv[1])
-print('ok' if len(w)==1 and w[0][4]==1 and w[0][5] and w[0][0]>=1920 and w[0][0]+w[0][2]<=3200 else 'got '+sys.argv[1])" "$W")
+print('ok' if len(w)==1 and w[0][4]==1 and w[0][0]>=1920 and w[0][0]+w[0][2]<=3200 else 'got '+sys.argv[1])" "$W")
+if [ "$r" = ok ]; then
+  E=$(closed_entry "$(python3 -c "import json,sys; print(json.loads(sys.argv[1])[0][0])" "$W")")
+  r=$(python3 -c "
+import json,sys
+print('ok' if 'tile' in json.loads(sys.argv[1]).get('$APP',{}) else 'untiled '+sys.argv[1])" "$E")
+fi
 check "4 remembered tile on the second monitor" "$r"
 
 setup true false "{}"

@@ -1,6 +1,6 @@
 import * as AltTab from 'resource:///org/gnome/shell/ui/altTab.js';
 import { St, Meta, Clutter } from '../../gi/ext';
-import ExtendedWindow from '../../components/tilingsystem/extendedWindow';
+import { tileOf, tiledWindows } from '../../components/tileState/tileState';
 import MultipleWindowsIcon from './MultipleWindowsIcon';
 import { buildMargin, getWindows } from '../../utils/ui';
 import Settings from '../../settings/settings';
@@ -63,14 +63,14 @@ export default class OverriddenAltTab {
         const oldFunction = OverriddenAltTab._old_show?.bind(this);
         const res = !oldFunction || oldFunction(backward, binding, mask);
 
-        const tiledWindows: Meta.Window[] = (
+        const tiled: Meta.Window[] = tiledWindows(
             this._getWindowList() as Meta.Window[]
-        ).filter(win => (win as ExtendedWindow).assignedTile);
+        );
 
-        if (tiledWindows.length <= 1) return res;
+        if (tiled.length <= 1) return res;
 
-        const tiles = tiledWindows
-            .map(win => (win as ExtendedWindow).assignedTile)
+        const tiles = tiled
+            .map(win => tileOf(win))
             .filter(tile => tile !== undefined);
 
         const inner_gaps = Settings.get_inner_gaps();
@@ -92,7 +92,7 @@ export default class OverriddenAltTab {
                 left: inner_gaps.left === 0 ? 0 : gaps,
                 right: inner_gaps.right === 0 ? 0 : gaps,
             }),
-            windows: tiledWindows,
+            windows: tiled,
         });
 
         // Append the group item to the list
