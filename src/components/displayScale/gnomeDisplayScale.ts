@@ -1,4 +1,6 @@
 import { St } from '../../gi/ext';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import { enableScalingFactorSupport } from '../../utils/ui';
 import { DisplayScale } from './displayScale';
 
 let instance: DisplayScale | null = null;
@@ -32,4 +34,23 @@ export const disableDisplayScale = () => {
     themeContext = null;
     signalId = 0;
     instance = null;
+};
+
+/** Style a widget with the scale of a monitor (nothing under logical scaling). */
+export const styleWidgetForMonitor = (
+    widget: St.Widget,
+    monitorIndex: number
+) =>
+    enableScalingFactorSupport(
+        widget,
+        displayScale().styleScaleOf(monitorIndex)
+    );
+
+/** Same, for the monitor the widget is on (the primary one if it is on none). */
+export const styleWidgetForItsMonitor = (widget: St.Widget) => {
+    const monitor = Main.layoutManager.findMonitorForActor(widget);
+    styleWidgetForMonitor(
+        widget,
+        monitor?.index ?? Main.layoutManager.primaryIndex
+    );
 };

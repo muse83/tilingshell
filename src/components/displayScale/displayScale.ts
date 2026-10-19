@@ -24,14 +24,14 @@ export class DisplayScale {
         this._lastThemeScale = source.themeScale();
     }
 
-    /** True when widgets need an explicit scale (physical scaling). */
-    get isScaled(): boolean {
+    /** True under physical scaling: widgets need an explicit scale. */
+    get isPhysical(): boolean {
         return this._source.themeScale() !== 1;
     }
 
     /** The scale to style widgets of this monitor with, or undefined if none is needed. */
     styleScaleOf(monitorIndex: number): number | undefined {
-        return this.isScaled ? this.monitorScaleOf(monitorIndex) : undefined;
+        return this.isPhysical ? this.monitorScaleOf(monitorIndex) : undefined;
     }
 
     /** The effective scale of this monitor, whichever scaling mode is active. */

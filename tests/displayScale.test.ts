@@ -17,7 +17,7 @@ const source = (themeScale: number, monitorScales: number[] = [1, 1]) => {
 test('logical scaling (theme scale 1): nothing needs explicit scaling', () => {
     const { src } = source(1, [2, 1]);
     const scale = new DisplayScale(src);
-    assert.equal(scale.isScaled, false);
+    assert.equal(scale.isPhysical, false);
     assert.equal(scale.styleScaleOf(0), undefined);
     assert.equal(scale.styleScaleOf(1), undefined);
 });
@@ -32,7 +32,7 @@ test('logical scaling: monitorScaleOf reports the compositor scale of that monit
 test('physical scaling (theme scale != 1): every monitor gets the theme scale', () => {
     const { src } = source(2, [1, 1]);
     const scale = new DisplayScale(src);
-    assert.equal(scale.isScaled, true);
+    assert.equal(scale.isPhysical, true);
     assert.equal(scale.styleScaleOf(0), 2);
     assert.equal(scale.styleScaleOf(1), 2);
     assert.equal(scale.monitorScaleOf(1), 2);
@@ -56,13 +56,13 @@ test('switching between logical and physical scaling notifies and updates answer
     state.themeScale = 2;
     scale.refresh();
     assert.equal(calls, 1);
-    assert.equal(scale.isScaled, true);
+    assert.equal(scale.isPhysical, true);
     assert.equal(scale.styleScaleOf(0), 2);
 
     state.themeScale = 1;
     scale.refresh();
     assert.equal(calls, 2);
-    assert.equal(scale.isScaled, false);
+    assert.equal(scale.isPhysical, false);
     assert.equal(scale.styleScaleOf(0), undefined);
 });
 

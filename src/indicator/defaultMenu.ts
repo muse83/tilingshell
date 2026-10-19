@@ -2,12 +2,12 @@ import { GObject, St, Clutter } from '../gi/ext';
 import SignalHandling from '../utils/signalHandling';
 import Indicator from './indicator';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import {
-    enableScalingFactorSupport,
-    getMonitors,
-    getScalingFactorOf,
-} from '../utils/ui';
+import { getMonitors, getScalingFactorOf } from '../utils/ui';
 import Settings from '../settings/settings';
+import {
+    displayScale,
+    styleWidgetForItsMonitor,
+} from '../components/displayScale/gnomeDisplayScale';
 import GlobalState from '../utils/globalState';
 import CurrentMenu from './currentMenu';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
@@ -19,7 +19,6 @@ import Layout from '../components/layout/Layout';
 import { _ } from '../translations';
 import { widgetOrientation } from '../utils/gnomesupport';
 import { createButton, createIconButton } from './utils';
-import { displayScale } from '../components/displayScale/gnomeDisplayScale';
 
 const debug = logger('DefaultMenu');
 
@@ -159,17 +158,7 @@ export default class DefaultMenu implements CurrentMenu {
             layoutsPopupMenu
         );
 
-        if (displayScale().isScaled) {
-            const monitor = Main.layoutManager.findMonitorForActor(
-                this._container
-            );
-            enableScalingFactorSupport(
-                this._container,
-                displayScale().styleScaleOf(
-                    monitor?.index || Main.layoutManager.primaryIndex
-                )
-            );
-        }
+        styleWidgetForItsMonitor(this._container);
         this._scalingFactor = getScalingFactorOf(this._container)[1];
 
         this._layoutsRows = [];
@@ -226,17 +215,9 @@ export default class DefaultMenu implements CurrentMenu {
         );
 
         this._signals.connect(Main.layoutManager, 'monitors-changed', () => {
-            if (!displayScale().isScaled) return;
+            if (!displayScale().isPhysical) return;
 
-            const monitor = Main.layoutManager.findMonitorForActor(
-                this._container
-            );
-            enableScalingFactorSupport(
-                this._container,
-                displayScale().styleScaleOf(
-                    monitor?.index || Main.layoutManager.primaryIndex
-                )
-            );
+            styleWidgetForItsMonitor(this._container);
 
             this._updateScaling();
             if (this._layoutsRows.length !== getMonitors().length)

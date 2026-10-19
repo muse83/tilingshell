@@ -1048,7 +1048,7 @@ export class TilingManager {
             tilingLayout.innerGaps,
             tilingLayout.outerGaps,
             this._workArea,
-            displayScale().isScaled
+            displayScale().isPhysical
                 ? getScalingFactorOf(tilingLayout)[1]
                 : undefined
         ).gaps;
@@ -1119,7 +1119,7 @@ export class TilingManager {
             tilingLayout.innerGaps,
             tilingLayout.outerGaps,
             this._workArea,
-            displayScale().isScaled
+            displayScale().isPhysical
                 ? getScalingFactorOf(tilingLayout)[1]
                 : undefined
         ).gaps;
@@ -1187,7 +1187,7 @@ export class TilingManager {
             tilingLayout.innerGaps,
             tilingLayout.outerGaps,
             this._workArea,
-            displayScale().isScaled
+            displayScale().isPhysical
                 ? getScalingFactorOf(tilingLayout)[1]
                 : undefined
         ).gaps;

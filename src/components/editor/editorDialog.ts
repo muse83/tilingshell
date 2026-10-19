@@ -7,11 +7,9 @@ import Layout from '../../components/layout/Layout';
 
 import Tile from '../../components/layout/Tile';
 import * as ModalDialog from 'resource:///org/gnome/shell/ui/modalDialog.js';
-import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import { enableScalingFactorSupport } from '../../utils/ui';
 import { _ } from '../../translations';
 import { widgetOrientation } from '../../utils/gnomesupport';
-import { displayScale } from '../displayScale/gnomeDisplayScale';
+import { styleWidgetForItsMonitor } from '../displayScale/gnomeDisplayScale';
 
 export default class EditorDialog extends ModalDialog.ModalDialog {
     static {
@@ -38,13 +36,7 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
             styleClass: 'editor-dialog',
         });
 
-        const monitor = Main.layoutManager.findMonitorForActor(this);
-        enableScalingFactorSupport(
-            this,
-            displayScale().styleScaleOf(
-                monitor?.index || Main.layoutManager.primaryIndex
-            )
-        );
+        styleWidgetForItsMonitor(this);
 
         this.contentLayout.add_child(
             new St.Label({

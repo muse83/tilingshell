@@ -6,7 +6,6 @@ import {
     buildMargin,
     buildRectangle,
     buildTileGaps,
-    enableScalingFactorSupport,
     getWindowsOfMonitor,
 } from '../../utils/ui';
 import Layout from '../layout/Layout';
@@ -17,7 +16,7 @@ import Tile from '../layout/Tile';
 import HoverLine from './hoverLine';
 import { Monitor } from 'resource:///org/gnome/shell/ui/layout.js';
 import { getEventCoords } from '../../utils/gnomesupport';
-import { displayScale } from '../displayScale/gnomeDisplayScale';
+import { styleWidgetForMonitor } from '../displayScale/gnomeDisplayScale';
 
 export default class LayoutEditor extends St.Widget {
     static {
@@ -44,10 +43,7 @@ export default class LayoutEditor extends St.Widget {
             GObject.BindingFlags.DEFAULT
         );
 
-        enableScalingFactorSupport(
-            this,
-            displayScale().styleScaleOf(monitor.index)
-        );
+        styleWidgetForMonitor(this, monitor.index);
 
         const workArea = Main.layoutManager.getWorkAreaForMonitor(
             monitor.index
