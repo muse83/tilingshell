@@ -17,3 +17,6 @@ Glossary of the terms this project uses. Decisions are in `docs/adr/`.
 - **Display scale**: how the screen is scaled. Logical (default on GNOME 50+): the shell's theme
   scale stays 1 and sizes are already divided by the monitor scale. Physical: the theme scale
   carries the scale and widgets are styled with it. Answered by one module (ADR 0005).
+- **Edge zone**: a strip along the border of the work area (corners, left, right, top centre)
+  that a dragged window can be dropped on to tile it. Which zone the pointer is in and the
+  resulting target area are decided in one module without GNOME code.
