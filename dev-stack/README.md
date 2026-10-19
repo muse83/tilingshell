@@ -29,7 +29,7 @@ GNOME Shell 51.0, running headless on Wayland with the extension from the repo r
 | `./scenario-close-with-suggestions.sh` | Ctrl-drag tile with suggestions, close all windows, report whether the shell survived (`SUGG`, `BORDER` env) |
 | `./scenario-suggestions-hover-click.sh` | Suggestions: hover shows the title overlay, click tiles the window |
 | `./measure-placement.sh` | `MODE=restore\|autotile\|both\|tile`: samples a new window every 4 ms and fails if it was visible at a wrong frame, ended elsewhere than expected or took longer than `MAX_MS` (default 50) |
-| `./scenario-window-placement.sh` | Where a new window goes: all modes x3, cascading, taken tile, second monitor, shutdown save. Needs `SECOND_MONITOR=1 ./up.sh`; prints PASS/FAIL, exit 1 on failure |
+| `./scenario-window-placement.sh` | Where a new window goes: all modes x3, cascading, taken tile, second monitor, shutdown save. Needs `SECOND_MONITOR=1 ./up.sh`; prints PASS/FAIL, exit 1 on failure. "Tiled or not" is read from what the window memory writes down when a window is closed, not from the window |
 | `./prefs-check.sh` | Builds the preferences dialog in an own harness (`prefs-harness.js`) and reports errors |
 
 Logs on the host in `out/`: `gnome-shell.log` (shell journal), `build.log`, `stack.log`, `mock-*.log`.

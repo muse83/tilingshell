@@ -41,6 +41,17 @@ are in the GitHub issues of muse83/tilingshell (#16-#21, with verification comme
   both modes, cascading, a taken tile, the second monitor and the shutdown save. The suspected
   monitor-index mismatch is not real: the shell's monitor list is ordered by monitor index and
   the tile on the second monitor lands there (issue #19 keeps the rest of its scope).
+- Candidate 3 (issue #18) partly done, ADR 0004: `src/components/tileState/` owns the tile of a
+  window and the size before tiling (rules in `tileState.ts`, tests in `tests/tileState.test.ts`;
+  GNOME glue in `vacantTiles.ts`). The loose fields on the window (`ExtendedWindow`) are gone.
+  The vacant-tiles calculation existed three times (auto-tiling, suggestion previews, window
+  menu) plus the choice of the best vacant tile twice; each is now done once. Behaviour 1:1.
+  Dev stack: all three scenarios pass. Not covered by a scenario: dragging out of a tile with
+  size restore, releasing by keyboard or menu. One quirk kept on purpose: the start value of
+  the best-tile distance for the first tile is bracketed differently from the others.
+  Split off: issue #22 (edge and keyboard maximise count as tiled) and issue #23 (slim the
+  tiling manager's drag and release functions). The tiled/untiled split of the window list in
+  the suggestions opener is still in the tiling manager and belongs to issue #23.
 
 ## Not found
 No leftover legacy-version shims in the files read. `prefs.ts` (1726 lines, the largest file)
