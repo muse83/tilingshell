@@ -33,6 +33,8 @@ GNOME Shell 51.0, running headless on Wayland with the extension from the repo r
 | `./scenario-maximise-tiled.sh` | Maximise and tile: keyboard up / top-edge drag keep the window tiled, window button does not, keyboard down brings the tile back, window memory round trip, no tile beside a maximised tiled window. Run it on a freshly started stack (`./up.sh`); the placement scenario is timing sensitive and reports false failures after other scenarios ran |
 | `./prefs-check.sh` | Builds the preferences dialog in an own harness (`prefs-harness.js`) and reports errors |
 
+Known defect (2026-10-19): `__drag` does not move windows in the current stack, so the top-edge step (4) of `scenario-maximise-tiled.sh` fails, also on commits before it. Edge tiling cannot be checked live until this is fixed.
+
 Logs on the host in `out/`: `gnome-shell.log` (shell journal), `build.log`, `stack.log`, `mock-*.log`.
 Re-run `./up.sh` after source changes (it rebuilds and restarts; image layers are cached).
 
