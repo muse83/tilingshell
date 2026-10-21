@@ -40,6 +40,9 @@ export GSETTINGS_BACKEND=keyfile
 
 # Upstream metadata does not list GNOME 51 yet; skip the version check so it loads anyway.
 gsettings set org.gnome.shell disable-extension-version-validation true
+# The first-run welcome dialog is modal and swallows the first pointer press, so virtual drags
+# did nothing. Pretend a newer version was already shown.
+gsettings set org.gnome.shell welcome-dialog-last-shown-version '999'
 gsettings set org.gnome.shell enabled-extensions "['tilingshell@ferrarodomenico.com']"
 
 exec gnome-shell --unsafe-mode --headless --wayland --no-x11 --virtual-monitor 1920x1080 ${SECOND_MONITOR:+--virtual-monitor 1280x720} \

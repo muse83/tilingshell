@@ -26,11 +26,11 @@ other, and nothing was tested.
   corners first. This differs only on the seam at a 50% threshold with odd widths.
 - An unknown mode value acts like default mode.
 
-## Verification (2026-10-19)
+## Verification (2026-10-19, extended 2026-10-21)
 - 42 unit tests; full suite 124 passing; typecheck and build clean.
-- Not verified in the dev stack: the dev stack's pointer drag does not move windows, also
-  without this change (the top-edge scenario of `scenario-maximise-tiled.sh` fails the same way
-  on the previous commit). Edge tiling is covered by unit tests and code comparison only.
+- Live check added 2026-10-21 after the dev stack's pointer drag was fixed: top-edge drag
+  maximises and keeps the tile, left-edge drag tiles into the left half (steps 4 and 8 of
+  `scenario-maximise-tiled.sh`, default mode only; adaptive and granular modes not yet covered).
 
 ## Left out on purpose
 - The manager's state rules (in progress without zone, top-edge maximise) are not unit tested;

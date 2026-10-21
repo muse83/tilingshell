@@ -9,6 +9,7 @@
 #   5 remembered maximised+tiled window comes back maximised and tiled
 #   6 a window maximised tiled occupies the whole screen: auto-tiling puts no new window beside it
 #   7 maximise refused by keyboard must not make a later window-button maximise count as tiled
+#   8 drag to the left edge tiles the window into the left half (edge tiling, default mode)
 # usage: ./scenario-maximise-tiled.sh
 set -uo pipefail
 cd "$(dirname "$0")"
@@ -106,6 +107,14 @@ key $UP
 ev "delete $FIRST.can_maximize; $FIRST.maximize(); 'max'" >/dev/null; nap 2
 r=$(entry_is "$(closed_entry)" "e.get('maximized') and 'tile' not in e")
 check "7 refused keyboard maximise leaves no stale tile for the window button" "$r"
+
+# 8 left-edge drag tiles the window into the left half
+setup false "{}"; ./launch-window.sh $APP One 480 320; nap 3
+ev "$FIRST.move_frame(false, 700, 300); 'mv'" >/dev/null; nap 1
+ev "$(cat input-helpers.js)" >/dev/null
+ev "__drag(900, 320, 2, 540, 20, 400); 'drag'" >/dev/null; nap 4
+r=$(entry_is "$(closed_entry)" "$HALF")
+check "8 left-edge drag tiles the window into the left half" "$r"
 
 ev "global.get_window_actors().forEach(a=>a.metaWindow.delete(global.get_current_time())); 'close'" >/dev/null
 # leave the settings as found, other scenarios depend on the defaults
