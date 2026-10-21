@@ -38,6 +38,7 @@ import {
 } from '../tileState/tileState';
 import { vacantTilesOf } from '../tileState/vacantTiles';
 import EdgeTilingManager from './edgeTilingManager';
+import { decideDrop } from './dropDecision';
 import TouchPointer from './touchPointer';
 import { KeyBindingsDirection } from '../../keybindings';
 import TilingShellWindowManager from '../../components/windowManager/tilingShellWindowManager';
@@ -46,6 +47,20 @@ import { maximizeWindow, unmaximizeWindow } from '../../utils/gnomesupport';
 import { liveActor } from '../windowLifetime/windowLifetime';
 import { isNormalTopLevel } from '../windowPlacement/windowFacts';
 import { displayScale } from '../displayScale/gnomeDisplayScale';
+
+// the fixed layout window suggestions use after edge tiling in default mode
+const quartersLayout = () =>
+    new Layout(
+        [
+            [0, 0],
+            [0.5, 0],
+            [0, 0.5],
+            [0.5, 0.5],
+        ].map(
+            ([x, y]) => new Tile({ x, y, height: 0.5, width: 0.5, groups: [] })
+        ),
+        'quarters'
+    );
 
 class SnapAssistingInfo {
     private _snapAssistantLayoutId: string | undefined;
@@ -775,60 +790,55 @@ export class TilingManager {
         this._snapAssist.close(true);
         this._lastCursorPos = null;
 
-        const isTilingSystemActivated = this._activationKeyStatus(
-            global.get_pointer()[2],
-            Settings.TILING_SYSTEM_ACTIVATION_KEY
-        );
-        if (
-            !isTilingSystemActivated &&
-            !this._snapAssistingInfo.isSnapAssisting &&
-            !this._edgeTilingManager.isPerformingEdgeTiling()
-        )
-            return;
-
         const wasSnapAssistingLayout = this._snapAssistingInfo.isSnapAssisting
             ? GlobalState.get().layouts.find(
                   lay => lay.id === this._snapAssistingInfo.layoutId
               )
             : undefined;
-
-        // disable snap assistance
-        this._snapAssistingInfo.update(undefined);
-
-        const maximizedByEdge =
-            this._edgeTilingManager.isPerformingEdgeTiling() &&
-            this._edgeTilingManager.needMaximize() &&
-            window.can_maximize();
-        if (maximizedByEdge) {
-            maximizeAsTile(window);
-            maximizeWindow(window);
-        }
-
-        // disable edge-tiling
         const wasEdgeTiling = this._edgeTilingManager.isPerformingEdgeTiling();
+
+        const decision = decideDrop({
+            tilingSystemKeyHeld: this._activationKeyStatus(
+                global.get_pointer()[2],
+                Settings.TILING_SYSTEM_ACTIVATION_KEY
+            ),
+            snapAssisting: this._snapAssistingInfo.isSnapAssisting,
+            snapAssistLayoutId: wasSnapAssistingLayout?.id,
+            edgeTilingInProgress: wasEdgeTiling,
+            edgeNeedsMaximize: this._edgeTilingManager.needMaximize(),
+            windowCanMaximize: window.can_maximize(),
+            edgeModeIsDefault:
+                Settings.EDGE_TILING_MODE === EdgeTilingMode.DEFAULT,
+            suggestionsForSnapAssistant:
+                Settings.ENABLE_SNAP_ASSISTANT_WINDOWS_SUGGESTIONS,
+            suggestionsForEdgeTiling:
+                Settings.ENABLE_SCREEN_EDGES_WINDOWS_SUGGESTIONS,
+            suggestionsForTilingSystem:
+                Settings.ENABLE_TILING_SYSTEM_WINDOWS_SUGGESTIONS,
+            syncLayoutWithSnapAssistant: Settings.SNAP_ASSIST_SYNC_LAYOUT,
+            // abort if the pointer is moving on another monitor: the user moved
+            // the window to another monitor not handled by this tiling manager
+            pointerOnThisMonitor: this._isPointerInsideThisMonitor(window),
+            selectionValid:
+                desiredWindowRect.width > 0 && desiredWindowRect.height > 0,
+            windowMaximized:
+                window.maximizedHorizontally || window.maximizedVertically,
+            hasTilingLayout: !!tilingLayout,
+        });
+
+        // disable snap assistance and edge-tiling
+        this._snapAssistingInfo.update(undefined);
         this._edgeTilingManager.abortEdgeTiling();
+
+        if (decision.kind === 'nothing') return;
 
         // the maximise is reported later and gives the window its whole-screen tile; do not
         // give it another tile or move it meanwhile
-        if (maximizedByEdge) return;
-
-        const canShowTilingSuggestions =
-            (wasSnapAssistingLayout &&
-                Settings.ENABLE_SNAP_ASSISTANT_WINDOWS_SUGGESTIONS) ||
-            (wasEdgeTiling &&
-                Settings.ENABLE_SCREEN_EDGES_WINDOWS_SUGGESTIONS) ||
-            (isTilingSystemActivated &&
-                Settings.ENABLE_TILING_SYSTEM_WINDOWS_SUGGESTIONS);
-
-        // abort if the pointer is moving on another monitor: the user moved
-        // the window to another monitor not handled by this tiling manager
-        if (!this._isPointerInsideThisMonitor(window)) return;
-
-        // abort if there is an invalid selection
-        if (desiredWindowRect.width <= 0 || desiredWindowRect.height <= 0)
+        if (decision.kind === 'maximiseByEdge') {
+            maximizeAsTile(window);
+            maximizeWindow(window);
             return;
-
-        if (window.maximizedHorizontally || window.maximizedVertically) return;
+        }
 
         setSizeBeforeTile(window, window.get_frame_rect().copy());
         assignTile(
@@ -838,62 +848,25 @@ export class TilingManager {
         this._easeWindowRect(window, desiredWindowRect);
 
         // Sync the desktop layout to match the snap-assisted layout if enabled
-        if (wasSnapAssistingLayout && Settings.SNAP_ASSIST_SYNC_LAYOUT) {
+        if (decision.syncMonitorLayout && wasSnapAssistingLayout) {
             GlobalState.get().setSelectedLayoutOfMonitor(
                 wasSnapAssistingLayout.id,
                 this._monitor.index
             );
         }
 
-        if (!tilingLayout || !canShowTilingSuggestions) return;
+        if (!tilingLayout || !decision.suggestions) return;
 
-        // retrieve the current layout for the monitor and workspace
-        // were the window was tiled
-        const layout = wasEdgeTiling
-            ? Settings.EDGE_TILING_MODE === EdgeTilingMode.DEFAULT
-                ? new Layout(
-                      [
-                          new Tile({
-                              x: 0,
-                              y: 0,
-                              height: 0.5,
-                              width: 0.5,
-                              groups: [],
-                          }),
-                          new Tile({
-                              x: 0.5,
-                              y: 0,
-                              height: 0.5,
-                              width: 0.5,
-                              groups: [],
-                          }),
-                          new Tile({
-                              x: 0,
-                              y: 0.5,
-                              height: 0.5,
-                              width: 0.5,
-                              groups: [],
-                          }),
-                          new Tile({
-                              x: 0.5,
-                              y: 0.5,
-                              height: 0.5,
-                              width: 0.5,
-                              groups: [],
-                          }),
-                      ],
-                      'quarters'
-                  )
-                : GlobalState.get().getSelectedLayoutOfMonitor(
-                      this._monitor.index,
-                      window.get_workspace().index()
-                  )
-            : wasSnapAssistingLayout
-              ? wasSnapAssistingLayout
-              : GlobalState.get().getSelectedLayoutOfMonitor(
-                    this._monitor.index,
-                    window.get_workspace().index()
-                );
+        const layout =
+            decision.suggestions === 'quarters'
+                ? quartersLayout()
+                : decision.suggestions === 'snapAssistLayout' &&
+                    wasSnapAssistingLayout
+                  ? wasSnapAssistingLayout
+                  : GlobalState.get().getSelectedLayoutOfMonitor(
+                        this._monitor.index,
+                        window.get_workspace().index()
+                    );
         this._openWindowsSuggestions(
             window,
             desiredWindowRect,

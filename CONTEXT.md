@@ -20,3 +20,9 @@ Glossary of the terms this project uses. Decisions are in `docs/adr/`.
 - **Edge zone**: a strip along the border of the work area (corners, left, right, top centre)
   that a dragged window can be dropped on to tile it. Which zone the pointer is in and the
   resulting target area are decided in one module without GNOME code.
+- **Drop decision**: the single decision, when a dragged window is released, whether nothing
+  happens, the window is maximised by the top edge (keeping its tile) or it is tiled, and in
+  the tile case whether window suggestions open, on which layout, and whether the monitor's
+  layout follows the snap assistant's. Decided in one module without GNOME code (ADR 0007).
+- **Window suggestions**: the offer, right after a window was tiled, to fill the remaining
+  tiles with windows that are not tiled yet.
