@@ -24,5 +24,9 @@ Glossary of the terms this project uses. Decisions are in `docs/adr/`.
   happens, the window is maximised by the top edge (keeping its tile) or it is tiled, and in
   the tile case whether window suggestions open, on which layout, and whether the monitor's
   layout follows the snap assistant's. Decided in one module without GNOME code (ADR 0007).
+- **Drag decision**: the single decision, on every tick while a window is dragged, what is shown:
+  the layout, the edge preview, the snap assistant, nothing, or "close everything" (other
+  monitor, window cannot move or resize). It also says "unchanged" when keys and pointer are
+  unchanged. Decided in the same module as the drop decision (ADR 0007).
 - **Window suggestions**: the offer, right after a window was tiled, to fill the remaining
   tiles with windows that are not tiled yet.

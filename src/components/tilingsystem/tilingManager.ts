@@ -38,7 +38,7 @@ import {
 } from '../tileState/tileState';
 import { vacantTilesOf } from '../tileState/vacantTiles';
 import EdgeTilingManager from './edgeTilingManager';
-import { decideDrop } from './dropDecision';
+import { decideDrag, decideDrop, type DragState } from './dropDecision';
 import TouchPointer from './touchPointer';
 import { KeyBindingsDirection } from '../../keybindings';
 import TilingShellWindowManager from '../../components/windowManager/tilingShellWindowManager';
@@ -96,10 +96,13 @@ export class TilingManager {
 
     private _isGrabbingWindow: boolean;
     private _movingWindowTimerDuration: number = 15;
-    private _lastCursorPos: { x: number; y: number } | null = null;
     private _grabStartPosition: { x: number; y: number } | null = null;
-    private _wasSpanMultipleTilesActivated: boolean;
-    private _wasTilingSystemActivated: boolean;
+    private _dragState: DragState = {
+        tilingSystemKeyHeld: false,
+        spanKeyHeld: false,
+        pointer: null,
+    };
+
     private _snapAssistingInfo: SnapAssistingInfo;
 
     private _movingWindowTimerId: number | null = null;
@@ -113,8 +116,6 @@ export class TilingManager {
      */
     constructor(monitor: Monitor) {
         this._isGrabbingWindow = false;
-        this._wasSpanMultipleTilesActivated = false;
-        this._wasTilingSystemActivated = false;
         this._snapAssistingInfo = new SnapAssistingInfo();
         this._monitor = monitor;
         this._signals = new SignalHandling();
@@ -603,12 +604,39 @@ export class TilingManager {
 
         this._edgeTilingManager.workspaceIndex = currentWs.index();
 
+        const [x, y, modifier] = TouchPointer.get().isTouchDeviceActive()
+            ? TouchPointer.get().get_pointer(window)
+            : global.get_pointer();
+        const currPointerPos = { x, y };
+
+        const deactivationKey = Settings.TILING_SYSTEM_DEACTIVATION_KEY;
+        const { decision, state } = decideDrag({
+            previous: this._dragState,
+            pointer: currPointerPos,
+            windowMovable: window.allows_resize() && window.allows_move(),
+            pointerOnThisMonitor: this._isPointerInsideThisMonitor(window),
+            tilingSystemKeyHeld: this._activationKeyStatus(
+                modifier,
+                Settings.TILING_SYSTEM_ACTIVATION_KEY
+            ),
+            tilingSystemDeactivationKeyHeld:
+                deactivationKey !== ActivationKey.NONE &&
+                this._activationKeyStatus(modifier, deactivationKey),
+            spanKeyHeld: this._activationKeyStatus(
+                modifier,
+                Settings.SPAN_MULTIPLE_TILES_ACTIVATION_KEY
+            ),
+            tilingSystemEnabled: Settings.TILING_SYSTEM,
+            spanMultipleTilesEnabled: Settings.SPAN_MULTIPLE_TILES,
+            activeScreenEdgesEnabled: Settings.ACTIVE_SCREEN_EDGES,
+            snapAssistEnabled: Settings.SNAP_ASSIST,
+            snapAssisting: this._snapAssistingInfo.isSnapAssisting,
+            pointerNearEdge:
+                this._edgeTilingManager.canActivateEdgeTiling(currPointerPos),
+        });
+
         // if the window was moved into another monitor and it is still grabbed
-        if (
-            !window.allows_resize() ||
-            !window.allows_move() ||
-            !this._isPointerInsideThisMonitor(window)
-        ) {
+        if (decision.kind === 'closeAll') {
             tilingLayout.close();
             this._selectedTilesPreview.close(true);
             this._snapAssist.close(true);
@@ -618,10 +646,6 @@ export class TilingManager {
             return GLib.SOURCE_CONTINUE;
         }
 
-        const [x, y, modifier] = TouchPointer.get().isTouchDeviceActive()
-            ? TouchPointer.get().get_pointer(window)
-            : global.get_pointer();
-        const currPointerPos = { x, y };
         if (this._grabStartPosition === null)
             this._grabStartPosition = { x, y };
 
@@ -650,59 +674,18 @@ export class TilingManager {
             this._grabStartPosition = null;
         }
 
-        const isSpanMultiTilesActivated = this._activationKeyStatus(
-            modifier,
-            Settings.SPAN_MULTIPLE_TILES_ACTIVATION_KEY
-        );
-        const isTilingSystemActivated = this._activationKeyStatus(
-            modifier,
-            Settings.TILING_SYSTEM_ACTIVATION_KEY
-        );
-        const deactivationKey = Settings.TILING_SYSTEM_DEACTIVATION_KEY;
-        const isTilingSystemDeactivated =
-            deactivationKey === ActivationKey.NONE
-                ? false
-                : this._activationKeyStatus(modifier, deactivationKey);
-        const allowSpanMultipleTiles =
-            Settings.SPAN_MULTIPLE_TILES && isSpanMultiTilesActivated;
-        const showTilingSystem =
-            Settings.TILING_SYSTEM &&
-            isTilingSystemActivated &&
-            !isTilingSystemDeactivated;
-        // ensure we handle window movement only when needed
-        // if the snap assistant activation key status is not changed and the mouse is on the same position as before
-        // and the tiling system activation key status is not changed, we have nothing to do
-        const changedSpanMultipleTiles =
-            Settings.SPAN_MULTIPLE_TILES &&
-            isSpanMultiTilesActivated !== this._wasSpanMultipleTilesActivated;
-        const changedShowTilingSystem =
-            Settings.TILING_SYSTEM &&
-            isTilingSystemActivated !== this._wasTilingSystemActivated;
-        if (
-            !changedSpanMultipleTiles &&
-            !changedShowTilingSystem &&
-            currPointerPos.x === this._lastCursorPos?.x &&
-            currPointerPos.y === this._lastCursorPos?.y
-        )
-            return GLib.SOURCE_CONTINUE;
+        if (decision.kind === 'unchanged') return GLib.SOURCE_CONTINUE;
+        this._dragState = state;
 
-        this._lastCursorPos = currPointerPos;
-        this._wasTilingSystemActivated = isTilingSystemActivated;
-        this._wasSpanMultipleTilesActivated = isSpanMultiTilesActivated;
-
-        // layout must not be shown if it was disabled or if it is enabled but tiling system activation key is not pressed
-        // then close it and open snap assist (if enabled)
-        if (!showTilingSystem) {
+        // the layout is not shown (disabled, key not pressed or deactivation key held):
+        // close it, then show the edge preview, the snap assistant or nothing
+        if (decision.kind !== 'showLayout') {
             if (tilingLayout.showing) {
                 tilingLayout.close();
                 this._selectedTilesPreview.close(true);
             }
 
-            if (
-                Settings.ACTIVE_SCREEN_EDGES &&
-                !this._snapAssistingInfo.isSnapAssisting &&
-                this._edgeTilingManager.canActivateEdgeTiling(currPointerPos)
-            ) {
+            if (decision.kind === 'showEdgePreview') {
                 const { changed, rect } =
                     this._edgeTilingManager.startEdgeTiling(currPointerPos);
                 if (changed)
@@ -714,7 +697,7 @@ export class TilingManager {
                     this._edgeTilingManager.abortEdgeTiling();
                 }
 
-                if (Settings.SNAP_ASSIST) {
+                if (decision.kind === 'showSnapAssistant') {
                     this._snapAssist.onMovingWindow(
                         window,
                         currPointerPos,
@@ -725,6 +708,8 @@ export class TilingManager {
 
             return GLib.SOURCE_CONTINUE;
         }
+
+        const { allowSpanMultipleTiles, changedSpanMultipleTiles } = decision;
 
         // we know that the layout must be shown, snap assistant must be closed
         if (!tilingLayout.showing) {
@@ -788,7 +773,7 @@ export class TilingManager {
         const selectedTilesRect = this._selectedTilesPreview.rect.copy();
         this._selectedTilesPreview.close(true);
         this._snapAssist.close(true);
-        this._lastCursorPos = null;
+        this._dragState = { ...this._dragState, pointer: null };
 
         const wasSnapAssistingLayout = this._snapAssistingInfo.isSnapAssisting
             ? GlobalState.get().layouts.find(
