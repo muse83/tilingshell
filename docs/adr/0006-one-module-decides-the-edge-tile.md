@@ -29,8 +29,9 @@ other, and nothing was tested.
 ## Verification (2026-10-19, extended 2026-10-21)
 - 42 unit tests; full suite 124 passing; typecheck and build clean.
 - Live check added 2026-10-21 after the dev stack's pointer drag was fixed: top-edge drag
-  maximises and keeps the tile, left-edge drag tiles into the left half (steps 4 and 8 of
-  `scenario-maximise-tiled.sh`, default mode only; adaptive and granular modes not yet covered).
+  maximises and keeps the tile; a left-edge drag tiles the left half (default), the whole left
+  column (adaptive) or the tile level with the pointer (granular). Steps 4 and 8 to 10 of
+  `scenario-maximise-tiled.sh`. Corner and right-edge zones are covered by unit tests only.
 
 ## Left out on purpose
 - The manager's state rules (in progress without zone, top-edge maximise) are not unit tested;

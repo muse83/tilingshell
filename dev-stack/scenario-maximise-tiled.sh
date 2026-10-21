@@ -10,6 +10,8 @@
 #   6 a window maximised tiled occupies the whole screen: auto-tiling puts no new window beside it
 #   7 maximise refused by keyboard must not make a later window-button maximise count as tiled
 #   8 drag to the left edge tiles the window into the left half (edge tiling, default mode)
+#   9 adaptive mode: the same drag tiles the whole left column of the layout (22% wide, full height)
+#  10 granular mode: the left-edge drag tiles the layout tile level with the pointer (top / bottom)
 # usage: ./scenario-maximise-tiled.sh
 set -uo pipefail
 cd "$(dirname "$0")"
@@ -116,7 +118,24 @@ ev "__drag(900, 320, 2, 540, 20, 400); 'drag'" >/dev/null; nap 4
 r=$(entry_is "$(closed_entry)" "$HALF")
 check "8 left-edge drag tiles the window into the left half" "$r"
 
+# 9, 10 layout based edge modes, on the first layout (a left column of two tiles, 22% wide)
+EDGE_COLUMN="e.get('tile') and abs(e['tile']['x'])<0.01 and abs(e['tile']['y'])<0.01 and abs(e['tile']['width']-0.22)<0.01 and abs(e['tile']['height']-1)<0.01"
+edge_drag() { # edge-tiling-mode, pointer y at the left edge
+  setup false "{}"; ev "$X.getSettings().set_string('edge-tiling-mode', '$1'); 'mode'" >/dev/null
+  ./launch-window.sh $APP One 480 320; nap 3
+  ev "$FIRST.move_frame(false, 700, 300); 'mv'" >/dev/null; nap 1
+  ev "$(cat input-helpers.js)" >/dev/null
+  ev "__drag(900, 320, 2, $2, 20, 400); 'drag'" >/dev/null; nap 4
+}
+tile_is() { echo "e.get('tile') and abs(e['tile']['x'])<0.01 and abs(e['tile']['y']-$1)<0.01 and abs(e['tile']['width']-0.22)<0.01 and abs(e['tile']['height']-0.5)<0.01"; }
+edge_drag adaptive 540
+check "9 adaptive edge mode tiles the whole left column" "$(entry_is "$(closed_entry)" "$EDGE_COLUMN")"
+edge_drag granular 300
+check "10 granular edge mode tiles the top tile of the left column" "$(entry_is "$(closed_entry)" "$(tile_is 0)")"
+edge_drag granular 800
+check "10 granular edge mode tiles the bottom tile of the left column" "$(entry_is "$(closed_entry)" "$(tile_is 0.5)")"
+
 ev "global.get_window_actors().forEach(a=>a.metaWindow.delete(global.get_current_time())); 'close'" >/dev/null
 # leave the settings as found, other scenarios depend on the defaults
-ev "const s=$X.getSettings(); ['enable-autotiling','remember-windows','remembered-windows','top-edge-maximize','enable-move-keybindings'].forEach(k=>s.reset(k)); 'reset'" >/dev/null
+ev "const s=$X.getSettings(); ['enable-autotiling','remember-windows','remembered-windows','top-edge-maximize','enable-move-keybindings','edge-tiling-mode'].forEach(k=>s.reset(k)); 'reset'" >/dev/null
 if [ $FAILS -eq 0 ]; then echo "RESULT: all maximise checks passed"; else echo "RESULT: $FAILS check(s) FAILED"; exit 1; fi
