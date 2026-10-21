@@ -30,3 +30,15 @@ Glossary of the terms this project uses. Decisions are in `docs/adr/`.
   unchanged. Decided in the same module as the drop decision (ADR 0007).
 - **Window suggestions**: the offer, right after a window was tiled, to fill the remaining
   tiles with windows that are not tiled yet.
+- **Settings group**: one topic of the settings (layouts, spacing, window memory, appearance,
+  behaviour, shortcuts, version and migration) with its own interface. Together they form the
+  settings module (ADR 0008).
+- **Settings storage**: where settings values live behind the settings module. GNOME settings in
+  production, memory in tests. Offers read and write; the layouts group also notifies on change
+  (ADR 0008).
+- **Layout repair**: when stored layout data is empty or broken, it is replaced by the default
+  layouts.
+- **Migration**: the compatibility changes applied to stored settings when the last installed
+  version differs from the running one.
+- **Start order**: which parts of the extension start before which others; stop runs in reverse
+  (ADR 0008).
