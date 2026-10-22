@@ -117,3 +117,22 @@ order that is written down nowhere. Only the shell can run any of it, so none of
      shortcuts group.
 - Checked in the dev stack: extension active, preferences build without errors, maximise/tile
   and window placement scenarios pass, disable and re-enable run without shell errors.
+
+## Amendment: Start and stop order (issue 30, 2026-10-22)
+- `lifecycle/lifecycle.ts` knows no GNOME code. Parts have a name, the names they depend on, `start`
+  and `stop`. Start runs in dependency order (parts without an order between them in the order
+  given), stop in exact reverse, a failed start stops the parts already started and rethrows,
+  a failing stop does not keep the others running (first error is rethrown afterwards). Unknown
+  dependencies, cycles and duplicate names are rejected when the module is built. Covered by
+  `node --test` with fake parts.
+- The extension declares 17 parts in `_parts()` and its enable/disable only start and stop them.
+  The signal connections are the last part (they depend on the others), so on stop they are
+  disconnected first, as before.
+- Differences to before: stop order is now the strict reverse of start, so the keybindings, the
+  display scale, the native settings overrides and the window manager are released in a different position than the old
+  hand-written disable (none depends on another one being alive). The global state is its own
+  part that stops before the settings. If start fails, the extension releases its signals itself
+  and rethrows.
+- Checked in the dev stack: extension active, three disable/re-enable cycles without error,
+  preferences build, maximise/tile scenarios pass. The window placement scenario needs a second
+  monitor and was not run.

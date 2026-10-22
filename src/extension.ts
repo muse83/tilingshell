@@ -38,6 +38,7 @@ import {
 } from './components/displayScale/gnomeDisplayScale';
 import WindowMemory from './components/windowMemory/windowMemory';
 import WindowPlacement from './components/windowPlacement/windowPlacement';
+import { Lifecycle, type Part } from './lifecycle/lifecycle';
 import SignalHandling from './utils/signalHandling';
 import GlobalState from './utils/globalState';
 import Indicator from './indicator/indicator';
@@ -71,6 +72,7 @@ export default class TilingShellExtension extends Extension {
     private _resizingManager: ResizingManager | null;
     private _windowBorderManager: WindowBorderManager | null;
     private _raiseTogetherManager: RaiseTogetherManager | null;
+    private _lifecycle: Lifecycle | null = null;
 
     constructor(metadata: ConstructorParameters<typeof Extension>[0]) {
         super(metadata);
@@ -93,74 +95,238 @@ export default class TilingShellExtension extends Extension {
     }
 
     enable(): void {
-        if (this._signals) this._signals.disconnect();
+        // a second enable without disable: release everything first
+        this._lifecycle?.stop();
+        this._signals?.disconnect();
         this._signals = new SignalHandling();
 
-        Settings.initialize(this.getSettings());
-        Settings.version.migrate(this.metadata['version-name']);
-
-        // force initialization and tracking of windows
-        TilingShellWindowManager.get();
-
-        enableDisplayScale();
-
-        if (this._keybindings) this._keybindings.destroy();
-        this._keybindings = new KeyBindings(this.getSettings());
-
-        // disable native edge tiling
-        if (Settings.behaviour.activeScreenEdges) {
-            SettingsOverride.get().override(
-                new Gio.Settings({ schemaId: 'org.gnome.mutter' }),
-                'edge-tiling',
-                new GLib.Variant('b', false)
-            );
+        this._lifecycle = new Lifecycle(this._parts());
+        try {
+            this._lifecycle.start();
+        } catch (error) {
+            // the signals part never started, so nothing else would release them
+            this._signals.disconnect();
+            this._signals = null;
+            throw error;
         }
-
-        if (Main.layoutManager._startingUp) {
-            this._signals.connect(
-                Main.layoutManager,
-                'startup-complete',
-                () => {
-                    this._createTilingManagers();
-                    this._setupSignals();
-                }
-            );
-        } else {
-            this._createTilingManagers();
-            this._setupSignals();
-        }
-
-        this._resizingManager = new ResizingManager();
-        this._resizingManager.enable();
-
-        if (this._windowBorderManager) this._windowBorderManager.destroy();
-        this._windowBorderManager = new WindowBorderManager();
-        this._windowBorderManager.enable();
-
-        this._raiseTogetherManager = new RaiseTogetherManager();
-        this._raiseTogetherManager.enable();
-
-        this._windowPlacement?.destroy();
-        this._windowMemory?.destroy();
-        this._windowMemory = new WindowMemory();
-        this._windowMemory.enable();
-        this._windowPlacement = new WindowPlacement(
-            this._windowMemory,
-            monitorIndex => this._tilingManagers[monitorIndex]
-        );
-        this._windowPlacement.enable();
-
-        this.createIndicator();
-
-        if (this._dbus) this._dbus.disable();
-        this._dbus = new DBus();
-        this._dbus.enable(this);
-
-        if (Settings.behaviour.overrideWindowMenu)
-            OverriddenWindowMenu.enable();
-        if (Settings.behaviour.overrideAltTab) OverriddenAltTab.enable();
 
         debug('extension is enabled');
+    }
+
+    /**
+     * Everything the extension runs, with what it needs running first. Stop
+     * runs in reverse, so the signals (last) are disconnected first, while the
+     * objects they belong to are still alive.
+     */
+    private _parts(): Part[] {
+        return [
+            {
+                name: 'window-manager',
+                dependsOn: ['settings'],
+                // force initialization and tracking of windows
+                start: () => {
+                    TilingShellWindowManager.get();
+                },
+                stop: () => TilingShellWindowManager.destroy(),
+            },
+            {
+                name: 'settings',
+                start: () => {
+                    Settings.initialize(this.getSettings());
+                    Settings.version.migrate(this.metadata['version-name']);
+                },
+                stop: () => Settings.destroy(),
+            },
+            {
+                name: 'global-state',
+                dependsOn: ['settings'],
+                start: () => {},
+                stop: () => GlobalState.destroy(),
+            },
+            {
+                name: 'display-scale',
+                start: () => enableDisplayScale(),
+                stop: () => {
+                    this._unsubscribeScale?.();
+                    this._unsubscribeScale = null;
+                    disableDisplayScale();
+                },
+            },
+            {
+                name: 'keybindings',
+                dependsOn: ['settings'],
+                start: () => {
+                    this._keybindings?.destroy();
+                    this._keybindings = new KeyBindings(this.getSettings());
+                },
+                stop: () => {
+                    // bring back overridden keybindings
+                    this._keybindings?.destroy();
+                    this._keybindings = null;
+                },
+            },
+            {
+                name: 'settings-override',
+                dependsOn: ['settings'],
+                start: () => {
+                    // disable native edge tiling
+                    if (Settings.behaviour.activeScreenEdges) {
+                        SettingsOverride.get().override(
+                            new Gio.Settings({ schemaId: 'org.gnome.mutter' }),
+                            'edge-tiling',
+                            new GLib.Variant('b', false)
+                        );
+                    }
+                },
+                // restore native edge tiling and all the overridden settings
+                stop: () => SettingsOverride.destroy(),
+            },
+            {
+                name: 'tiling-managers',
+                dependsOn: ['settings', 'global-state', 'display-scale'],
+                start: () => {
+                    const signals = this._signals;
+                    if (!signals) return;
+                    const create = () => {
+                        this._createTilingManagers();
+                        this._setupSignals();
+                    };
+                    if (Main.layoutManager._startingUp)
+                        signals.connect(
+                            Main.layoutManager,
+                            'startup-complete',
+                            create
+                        );
+                    else create();
+                },
+                stop: () => {
+                    this._tilingManagers.forEach(tm => tm.destroy());
+                    this._tilingManagers = [];
+                },
+            },
+            {
+                name: 'resizing-manager',
+                dependsOn: ['settings'],
+                start: () => {
+                    this._resizingManager = new ResizingManager();
+                    this._resizingManager.enable();
+                },
+                stop: () => {
+                    this._resizingManager?.destroy();
+                    this._resizingManager = null;
+                },
+            },
+            {
+                name: 'window-border-manager',
+                dependsOn: ['settings'],
+                start: () => {
+                    this._windowBorderManager?.destroy();
+                    this._windowBorderManager = new WindowBorderManager();
+                    this._windowBorderManager.enable();
+                },
+                stop: () => {
+                    this._windowBorderManager?.destroy();
+                    this._windowBorderManager = null;
+                },
+            },
+            {
+                name: 'raise-together-manager',
+                dependsOn: ['settings'],
+                start: () => {
+                    this._raiseTogetherManager = new RaiseTogetherManager();
+                    this._raiseTogetherManager.enable();
+                },
+                stop: () => {
+                    this._raiseTogetherManager?.destroy();
+                    this._raiseTogetherManager = null;
+                },
+            },
+            {
+                name: 'window-memory',
+                dependsOn: ['settings'],
+                start: () => {
+                    this._windowMemory?.destroy();
+                    this._windowMemory = new WindowMemory();
+                    this._windowMemory.enable();
+                },
+                stop: () => {
+                    this._windowMemory?.destroy();
+                    this._windowMemory = null;
+                },
+            },
+            {
+                name: 'window-placement',
+                dependsOn: ['window-memory', 'tiling-managers'],
+                start: () => {
+                    const memory = this._windowMemory;
+                    if (!memory) return;
+                    this._windowPlacement?.destroy();
+                    this._windowPlacement = new WindowPlacement(
+                        memory,
+                        monitorIndex => this._tilingManagers[monitorIndex]
+                    );
+                    this._windowPlacement.enable();
+                },
+                stop: () => {
+                    this._windowPlacement?.destroy();
+                    this._windowPlacement = null;
+                },
+            },
+            {
+                name: 'indicator',
+                dependsOn: ['settings'],
+                start: () => this.createIndicator(),
+                stop: () => {
+                    this._indicator?.destroy();
+                    this._indicator = null;
+                },
+            },
+            {
+                name: 'dbus',
+                start: () => {
+                    this._dbus?.disable();
+                    this._dbus = new DBus();
+                    this._dbus.enable(this);
+                },
+                stop: () => {
+                    this._dbus?.disable();
+                    this._dbus = null;
+                },
+            },
+            {
+                name: 'window-menu-override',
+                dependsOn: ['settings', 'settings-override'],
+                start: () => {
+                    if (Settings.behaviour.overrideWindowMenu)
+                        OverriddenWindowMenu.enable();
+                },
+                stop: () => OverriddenWindowMenu.destroy(),
+            },
+            {
+                name: 'alt-tab-override',
+                dependsOn: ['settings', 'settings-override'],
+                start: () => {
+                    if (Settings.behaviour.overrideAltTab)
+                        OverriddenAltTab.enable();
+                },
+                stop: () => OverriddenAltTab.destroy(),
+            },
+            {
+                name: 'signals',
+                dependsOn: [
+                    'tiling-managers',
+                    'indicator',
+                    'window-placement',
+                    'window-menu-override',
+                    'alt-tab-override',
+                ],
+                start: () => {},
+                stop: () => {
+                    this._signals?.disconnect();
+                    this._signals = null;
+                },
+            },
+        ];
     }
 
     public openLayoutEditor() {
@@ -713,55 +879,8 @@ export default class TilingShellExtension extends Extension {
     }
 
     disable(): void {
-        // disconnect signals first, while the objects they belong to are alive
-        this._signals?.disconnect();
-        this._signals = null;
-
-        // bring back overridden keybindings
-        this._keybindings?.destroy();
-        this._keybindings = null;
-
-        // destroy indicator
-        this._indicator?.destroy();
-        this._indicator = null;
-
-        // destroy tiling managers
-        this._tilingManagers.forEach(tm => tm.destroy());
-        this._tilingManagers = [];
-
-        this._resizingManager?.destroy();
-        this._resizingManager = null;
-
-        this._windowBorderManager?.destroy();
-        this._windowBorderManager = null;
-
-        this._raiseTogetherManager?.destroy();
-        this._raiseTogetherManager = null;
-
-        this._windowPlacement?.destroy();
-        this._windowPlacement = null;
-        this._windowMemory?.destroy();
-        this._windowMemory = null;
-
-        // disable dbus
-        this._dbus?.disable();
-        this._dbus = null;
-
-        this._unsubscribeScale?.();
-        this._unsubscribeScale = null;
-        disableDisplayScale();
-
-        OverriddenWindowMenu.destroy();
-        OverriddenAltTab.destroy();
-
-        // restore native edge tiling and all the overridden settings
-        SettingsOverride.destroy();
-
-        // destroy state and settings
-        GlobalState.destroy();
-        Settings.destroy();
-        TilingShellWindowManager.destroy();
-
+        this._lifecycle?.stop();
+        this._lifecycle = null;
         debug('extension is disabled');
     }
 }

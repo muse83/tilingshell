@@ -41,4 +41,4 @@ Glossary of the terms this project uses. Decisions are in `docs/adr/`.
 - **Migration**: the compatibility changes applied to stored settings when the last installed
   version differs from the running one.
 - **Start order**: which parts of the extension start before which others; stop runs in reverse
-  (ADR 0008).
+  (ADR 0008). Each part declares the parts it needs; one module sorts and runs them.
