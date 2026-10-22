@@ -9,7 +9,7 @@ export interface Part {
 /**
  * Starts parts in dependency order and stops them in reverse. Parts with no
  * order between them start in the order they were given. A failed start stops
- * the parts already started and rethrows the error.
+ * the failed part and the parts already started, then rethrows the error.
  */
 export class Lifecycle {
     private readonly _order: Part[];
@@ -59,8 +59,10 @@ export class Lifecycle {
         if (this._running.length > 0) this.stop();
         for (const part of this._order) {
             try {
-                part.start();
+                // counted as running before it starts, so a half-started part is
+                // stopped too; every stop must cope with a part that never finished
                 this._running.push(part);
+                part.start();
             } catch (error) {
                 try {
                     this.stop();

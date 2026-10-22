@@ -121,7 +121,8 @@ order that is written down nowhere. Only the shell can run any of it, so none of
 ## Amendment: Start and stop order (issue 30, 2026-10-22)
 - `lifecycle/lifecycle.ts` knows no GNOME code. Parts have a name, the names they depend on, `start`
   and `stop`. Start runs in dependency order (parts without an order between them in the order
-  given), stop in exact reverse, a failed start stops the parts already started and rethrows,
+  given), stop in exact reverse, a failed start stops the failed part itself (so a half-started part is released; every stop
+  must cope with a part that never finished) and the parts already started, then rethrows,
   a failing stop does not keep the others running (first error is rethrown afterwards). Unknown
   dependencies, cycles and duplicate names are rejected when the module is built. Covered by
   `node --test` with fake parts.

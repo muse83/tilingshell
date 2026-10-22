@@ -50,7 +50,7 @@ test('parts without an order between them start as given', () => {
     assert.deepEqual(life.running, ['x', 'y', 'z']);
 });
 
-test('a failed start stops the parts already started and rethrows', () => {
+test('a failed start stops the failed part and those already started, then rethrows', () => {
     const log: string[] = [];
     const life = new Lifecycle([
         fake(log, 'a'),
@@ -58,7 +58,7 @@ test('a failed start stops the parts already started and rethrows', () => {
         fake(log, 'c', ['b']),
     ]);
     assert.throws(() => life.start(), /b start/);
-    assert.deepEqual(log, ['start a', 'start b', 'stop a']);
+    assert.deepEqual(log, ['start a', 'start b', 'stop b', 'stop a']);
     assert.deepEqual(life.running, []);
 });
 
