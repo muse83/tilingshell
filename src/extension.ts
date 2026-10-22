@@ -170,13 +170,19 @@ export default class TilingShellExtension extends Extension {
                 dependsOn: ['settings'],
                 start: () => {
                     // disable native edge tiling
-                    if (Settings.behaviour.activeScreenEdges) {
-                        SettingsOverride.get().override(
-                            new Gio.Settings({ schemaId: 'org.gnome.mutter' }),
-                            'edge-tiling',
-                            new GLib.Variant('b', false)
-                        );
-                    }
+                    if (Settings.behaviour.activeScreenEdges)
+                        this._overrideNativeEdgeTiling(true);
+
+                    // when Tiling Shell's edge-tiling is enabled/disable
+                    // then enable/disable native edge-tiling
+                    this._signals?.connect(
+                        Settings.behaviour,
+                        Settings.behaviour.keys.ACTIVE_SCREEN_EDGES,
+                        () =>
+                            this._overrideNativeEdgeTiling(
+                                Settings.behaviour.activeScreenEdges
+                            )
+                    );
                 },
                 // restore native edge tiling and all the overridden settings
                 stop: () => SettingsOverride.destroy(),
@@ -299,6 +305,29 @@ export default class TilingShellExtension extends Extension {
                 start: () => {
                     if (Settings.behaviour.overrideWindowMenu)
                         OverriddenWindowMenu.enable();
+
+                    // enable/disable window menu from preferences
+                    this._signals?.connect(
+                        Settings.behaviour,
+                        Settings.behaviour.keys.OVERRIDE_WINDOW_MENU,
+                        () => {
+                            if (Settings.behaviour.overrideWindowMenu)
+                                OverriddenWindowMenu.enable();
+                            else OverriddenWindowMenu.disable();
+                        }
+                    );
+
+                    // tile a window when a tile or a button is clicked from the window menu
+                    this._signals?.connect(
+                        OverriddenWindowMenu,
+                        'tile-clicked',
+                        (_, tile: Tile, window: Meta.Window) => {
+                            const manager =
+                                this._tilingManagers[window.get_monitor()];
+                            if (manager)
+                                manager.onTileFromWindowMenu(tile, window);
+                        }
+                    );
                 },
                 stop: () => OverriddenWindowMenu.destroy(),
             },
@@ -308,12 +337,24 @@ export default class TilingShellExtension extends Extension {
                 start: () => {
                     if (Settings.behaviour.overrideAltTab)
                         OverriddenAltTab.enable();
+
+                    // enable/disable addition of tiled windows at the end of ALT+TAB from preferences
+                    this._signals?.connect(
+                        Settings.behaviour,
+                        Settings.behaviour.keys.OVERRIDE_ALT_TAB,
+                        () => {
+                            if (Settings.behaviour.overrideAltTab)
+                                OverriddenAltTab.enable();
+                            else OverriddenAltTab.disable();
+                        }
+                    );
                 },
                 stop: () => OverriddenAltTab.destroy(),
             },
             {
                 name: 'signals',
                 dependsOn: [
+                    'settings-override',
                     'tiling-managers',
                     'indicator',
                     'window-placement',
@@ -327,6 +368,22 @@ export default class TilingShellExtension extends Extension {
                 },
             },
         ];
+    }
+
+    private _overrideNativeEdgeTiling(override: boolean) {
+        const gioSettings = new Gio.Settings({ schemaId: 'org.gnome.mutter' });
+        if (override) {
+            debug('disable native edge tiling');
+            SettingsOverride.get().override(
+                gioSettings,
+                'edge-tiling',
+                new GLib.Variant('b', false)
+            );
+        } else {
+            // bring back the value of native edge tiling
+            debug('bring back native edge tiling');
+            SettingsOverride.get().restoreKey(gioSettings, 'edge-tiling');
+        }
     }
 
     public openLayoutEditor() {
@@ -481,67 +538,6 @@ export default class TilingShellExtension extends Extension {
                 }
             );
         }
-
-        // when Tiling Shell's edge-tiling is enabled/disable
-        // then enable/disable native edge-tiling
-        this._signals.connect(
-            Settings.behaviour,
-            Settings.behaviour.keys.ACTIVE_SCREEN_EDGES,
-            () => {
-                const gioSettings = new Gio.Settings({
-                    schemaId: 'org.gnome.mutter',
-                });
-                if (Settings.behaviour.activeScreenEdges) {
-                    debug('disable native edge tiling');
-                    // disable native edge tiling
-                    SettingsOverride.get().override(
-                        gioSettings,
-                        'edge-tiling',
-                        new GLib.Variant('b', false)
-                    );
-                } else {
-                    // bring back the value of native edge tiling
-                    debug('bring back native edge tiling');
-                    SettingsOverride.get().restoreKey(
-                        gioSettings,
-                        'edge-tiling'
-                    );
-                }
-            }
-        );
-
-        // enable/disable window menu from preferences
-        this._signals.connect(
-            Settings.behaviour,
-            Settings.behaviour.keys.OVERRIDE_WINDOW_MENU,
-            () => {
-                if (Settings.behaviour.overrideWindowMenu)
-                    OverriddenWindowMenu.enable();
-                else OverriddenWindowMenu.disable();
-            }
-        );
-
-        // tile a window when a tile or a button is clicked from the window menu
-        this._signals.connect(
-            OverriddenWindowMenu,
-            'tile-clicked',
-            (_, tile: Tile, window: Meta.Window) => {
-                const monitorIndex = window.get_monitor();
-                const manager = this._tilingManagers[monitorIndex];
-                if (manager) manager.onTileFromWindowMenu(tile, window);
-            }
-        );
-
-        // enable/disable addition of tiled windows at the end of ALT+TAB from preferences
-        this._signals.connect(
-            Settings.behaviour,
-            Settings.behaviour.keys.OVERRIDE_ALT_TAB,
-            () => {
-                if (Settings.behaviour.overrideAltTab)
-                    OverriddenAltTab.enable();
-                else OverriddenAltTab.disable();
-            }
-        );
 
         /* todo move maximized to workspace
         this._signals.connect(

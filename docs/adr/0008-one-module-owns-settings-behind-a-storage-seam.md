@@ -137,3 +137,13 @@ order that is written down nowhere. Only the shell can run any of it, so none of
 - Checked in the dev stack: extension active, three disable/re-enable cycles without error,
   preferences build, maximise/tile scenarios pass. The window placement scenario needs a second
   monitor and was not run.
+- Follow-up (same day): the signal handlers that react to settings moved out of the extension's
+  central signal setup into the part they belong to: native edge tiling on/off into the settings
+  override part, the window-menu switch and the tile-clicked handler into the window-menu part,
+  the Alt-Tab switch into the Alt-Tab part. They now connect when their part starts, not after
+  the shell's start-up is complete (nothing to react to before that). Still in the central setup
+  because they work on the tiling managers: monitor changes (which also asks the global state to
+  validate the selected layouts), the display scale and the keybinding handlers.
+- Observed, not changed: in the dev stack, switching "active screen edges" off at run time did
+  not bring the native edge tiling back (it stayed off), with the old and the new code alike.
+  Needs its own look.
