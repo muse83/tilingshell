@@ -9,6 +9,11 @@ export interface SettingsStorage {
     // list of string lists, e.g. the selected layouts per workspace and monitor
     getStringLists(key: string): string[][];
     setStringLists(key: string, value: string[][]): void;
+    getBoolean(key: string): boolean;
+    setBoolean(key: string, value: boolean): void;
+    // list of strings, e.g. a keybinding
+    getStrv(key: string): string[];
+    setStrv(key: string, value: string[]): void;
     reset(key: string): void;
     // calls back after the key changed, also when this process wrote it. Returns the disconnect.
     onChange(key: string, callback: () => void): () => void;
@@ -17,6 +22,8 @@ export interface SettingsStorage {
 export class MemoryStorage implements SettingsStorage {
     private _strings = new Map<string, string>();
     private _lists = new Map<string, string[][]>();
+    private _booleans = new Map<string, boolean>();
+    private _strvs = new Map<string, string[]>();
     private _callbacks = new Map<string, Set<() => void>>();
 
     getString(key: string): string {
@@ -47,8 +54,37 @@ export class MemoryStorage implements SettingsStorage {
         this._notify(key);
     }
 
+    getBoolean(key: string): boolean {
+        return this._booleans.get(key) ?? false;
+    }
+
+    setBoolean(key: string, value: boolean): void {
+        if (this.getBoolean(key) === value) return;
+        this._booleans.set(key, value);
+        this._notify(key);
+    }
+
+    getStrv(key: string): string[] {
+        return [...(this._strvs.get(key) ?? [])];
+    }
+
+    setStrv(key: string, value: string[]): void {
+        if (
+            JSON.stringify(this._strvs.get(key) ?? []) === JSON.stringify(value)
+        )
+            return;
+        this._strvs.set(key, [...value]);
+        this._notify(key);
+    }
+
     reset(key: string): void {
-        if (!this._strings.delete(key) && !this._lists.delete(key)) return;
+        const removed = [
+            this._strings.delete(key),
+            this._lists.delete(key),
+            this._booleans.delete(key),
+            this._strvs.delete(key),
+        ];
+        if (!removed.some(Boolean)) return;
         this._notify(key);
     }
 

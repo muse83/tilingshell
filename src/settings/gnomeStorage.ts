@@ -40,6 +40,22 @@ export default class GnomeStorage implements SettingsStorage {
         this._settings.set_value(key, GLib.Variant.new_array(null, variants));
     }
 
+    getBoolean(key: string): boolean {
+        return this._settings.get_boolean(key);
+    }
+
+    setBoolean(key: string, value: boolean): void {
+        this._settings.set_boolean(key, value);
+    }
+
+    getStrv(key: string): string[] {
+        return this._settings.get_strv(key);
+    }
+
+    setStrv(key: string, value: string[]): void {
+        this._settings.set_strv(key, value);
+    }
+
     reset(key: string): void {
         this._settings.reset(key);
     }

@@ -4,11 +4,7 @@ import SignalHandling from '../../utils/signalHandling';
 import { logger } from '../../utils/logger';
 import { sizeBeforeTile, tileOf } from '../tileState/tileState';
 import { appIdOf } from '../windowPlacement/windowFacts';
-import {
-    parseRememberedFrames,
-    RememberedFrames,
-    rememberClosing,
-} from './frameMemory';
+import { RememberedFrames, rememberClosing } from './frameMemory';
 
 const debug = logger('WindowMemory');
 
@@ -29,7 +25,7 @@ export default class WindowMemory {
 
     /** The remembered frame of every application. */
     public entries(): RememberedFrames {
-        return parseRememberedFrames(Settings.REMEMBERED_WINDOWS);
+        return Settings.windowMemory.entries;
     }
 
     public enable(): void {
@@ -105,7 +101,7 @@ export default class WindowMemory {
             sizeBeforeTile: sizeBeforeTile(window),
         });
 
-        Settings.REMEMBERED_WINDOWS = JSON.stringify(updated);
+        Settings.windowMemory.setEntries(updated);
         debug('remembered', appId, JSON.stringify(updated[appId]));
     }
 }

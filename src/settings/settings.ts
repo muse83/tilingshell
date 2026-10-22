@@ -1,6 +1,12 @@
 import { Gio, GObject } from '../gi/shared';
 import GnomeStorage from './gnomeStorage';
 import LayoutsSettings from './layoutsSettings';
+import VersionSettings, {
+    KEY_LAST_VERSION_NAME_INSTALLED,
+} from './versionSettings';
+import WindowMemorySettings, {
+    KEY_REMEMBERED_WINDOWS,
+} from './windowMemorySettings';
 
 export enum ActivationKey {
     NONE = -1,
@@ -82,8 +88,10 @@ export default class Settings {
     static _settings: Gio.Settings | null;
     static _is_initialized: boolean = false;
     private static _layouts: LayoutsSettings | null = null;
+    private static _version: VersionSettings | null = null;
+    private static _windowMemory: WindowMemorySettings | null = null;
 
-    static KEY_LAST_VERSION_NAME_INSTALLED = 'last-version-name-installed';
+    static KEY_LAST_VERSION_NAME_INSTALLED = KEY_LAST_VERSION_NAME_INSTALLED;
     static KEY_OVERRIDDEN_SETTINGS = 'overridden-settings';
     static KEY_WINDOW_BORDER_COLOR = 'window-border-color';
     static KEY_WINDOW_USE_CUSTOM_BORDER_COLOR =
@@ -103,7 +111,7 @@ export default class Settings {
     static KEY_SPAN_MULTIPLE_TILES = 'enable-span-multiple-tiles';
     static KEY_RESTORE_WINDOW_ORIGINAL_SIZE = 'restore-window-original-size';
     static KEY_REMEMBER_WINDOWS = 'remember-windows';
-    static KEY_REMEMBERED_WINDOWS = 'remembered-windows';
+    static KEY_REMEMBERED_WINDOWS = KEY_REMEMBERED_WINDOWS;
     static KEY_WRAPAROUND_FOCUS = 'enable-wraparound-focus';
     static KEY_ENABLE_DIRECTIONAL_FOCUS_TILED_ONLY =
         'enable-directional-focus-tiled-only';
@@ -169,7 +177,10 @@ export default class Settings {
 
         this._is_initialized = true;
         this._settings = settings;
-        this._layouts = new LayoutsSettings(new GnomeStorage(settings));
+        const storage = new GnomeStorage(settings);
+        this._layouts = new LayoutsSettings(storage);
+        this._version = new VersionSettings(storage);
+        this._windowMemory = new WindowMemorySettings(storage);
     }
 
     static destroy() {
@@ -177,6 +188,8 @@ export default class Settings {
             this._is_initialized = false;
             this._layouts?.destroy();
             this._layouts = null;
+            this._version = null;
+            this._windowMemory = null;
             this._settings = null;
         }
     }
@@ -185,6 +198,19 @@ export default class Settings {
     static get layouts(): LayoutsSettings {
         if (!this._layouts) throw new Error('Settings are not initialized');
         return this._layouts;
+    }
+
+    // the version and migration group (ADR 0008)
+    static get version(): VersionSettings {
+        if (!this._version) throw new Error('Settings are not initialized');
+        return this._version;
+    }
+
+    // the window memory group (ADR 0008)
+    static get windowMemory(): WindowMemorySettings {
+        if (!this._windowMemory)
+            throw new Error('Settings are not initialized');
+        return this._windowMemory;
     }
 
     static get gioSetting(): Gio.Settings {
@@ -198,14 +224,6 @@ export default class Settings {
         flags: Gio.SettingsBindFlags = Gio.SettingsBindFlags.DEFAULT
     ): void {
         this._settings?.bind(key, object, property, flags);
-    }
-
-    static get LAST_VERSION_NAME_INSTALLED(): string {
-        return get_string(Settings.KEY_LAST_VERSION_NAME_INSTALLED);
-    }
-
-    static set LAST_VERSION_NAME_INSTALLED(val: string) {
-        set_string(Settings.KEY_LAST_VERSION_NAME_INSTALLED, val);
     }
 
     static get OVERRIDDEN_SETTINGS(): string {
@@ -311,14 +329,6 @@ export default class Settings {
 
     static set REMEMBER_WINDOWS(val: boolean) {
         set_boolean(Settings.KEY_REMEMBER_WINDOWS, val);
-    }
-
-    static get REMEMBERED_WINDOWS(): string {
-        return get_string(Settings.KEY_REMEMBERED_WINDOWS);
-    }
-
-    static set REMEMBERED_WINDOWS(val: string) {
-        set_string(Settings.KEY_REMEMBERED_WINDOWS, val);
     }
 
     static get RESTORE_WINDOW_ORIGINAL_SIZE(): boolean {

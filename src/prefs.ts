@@ -305,7 +305,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                 _('Clear remembered windows'),
                 _('Forget the size, position and tile of all applications'),
                 () => {
-                    Settings.REMEMBERED_WINDOWS = '{}';
+                    Settings.windowMemory.clear();
                 },
                 'destructive-action'
             )

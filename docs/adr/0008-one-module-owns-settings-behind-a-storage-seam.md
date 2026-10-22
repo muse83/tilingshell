@@ -62,3 +62,21 @@ order that is written down nowhere. Only the shell can run any of it, so none of
   preferences cannot be done there (no interactive access).
 - Left for later tickets: the global state now only passes layout access through; the layout import
   in preferences filters empty layouts a second time.
+
+## Amendment: Version and window memory groups (issue 28, 2026-10-22)
+- Storage interface gained boolean and list-of-strings read and write (needed by the migration).
+- Version group (`versionSettings.ts`, `Settings.version`): `migrate(runningVersion)` records the
+  running version on the first run (stored version "0") and applies the compatibility changes.
+  The extension's main file only calls it. Window memory group (`windowMemorySettings.ts`,
+  `Settings.windowMemory`): `entries`, `setEntries`, `clear`; unreadable data reads as nothing.
+- Kept 1:1, including two oddities, now covered by tests: the cycle-layouts-backward change runs
+  at every start while the stored version is not 17.3 (the stored version is only written on the
+  first run), so it overwrites a keybinding the user set there; and it writes `<Shift>` alone when
+  cycle-layouts is empty. Fixing both is a separate ticket.
+- The "remember windows" on/off switch stays in the residual Behaviour group (ticket for the
+  remaining groups).
+- Checked in the dev stack: an old state (version 17.0) written through the shell was migrated on
+  re-enable (custom border kept, backwards keybinding set); the maximise/tile scenario, including
+  the remembered-window round trip, passes.
+- Left for the ticket with the remaining groups: `Settings` still re-exports the two key names
+  (last version, remembered windows) because the settings export lists them as excluded keys.

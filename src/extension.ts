@@ -92,42 +92,12 @@ export default class TilingShellExtension extends Extension {
         );
     }
 
-    private _validateSettings() {
-        if (Settings.LAST_VERSION_NAME_INSTALLED === '17.0') {
-            debug('apply compatibility changes');
-            // if users enabled window border, they set it custom in the past, so enable the custom border
-            // keep using the custom border instead of using the accent color by default
-            Settings.WINDOW_USE_CUSTOM_BORDER_COLOR =
-                Settings.ENABLE_WINDOW_BORDER;
-        }
-
-        if (Settings.LAST_VERSION_NAME_INSTALLED !== '17.3') {
-            debug('apply compatibility changes for 17.3');
-
-            // if users used cycle layouts keybinding, enable the backwards one
-            Settings.gioSetting.set_strv(
-                Settings.SETTING_CYCLE_LAYOUTS_BACKWARD,
-                [
-                    `<Shift>${Settings.gioSetting.get_strv(Settings.SETTING_CYCLE_LAYOUTS)}`,
-                ]
-            );
-        }
-    }
-
     enable(): void {
         if (this._signals) this._signals.disconnect();
         this._signals = new SignalHandling();
 
         Settings.initialize(this.getSettings());
-        if (Settings.LAST_VERSION_NAME_INSTALLED === '0') {
-            // Setting used for compatibility changes if necessary
-            if (this.metadata['version-name']) {
-                Settings.LAST_VERSION_NAME_INSTALLED =
-                    this.metadata['version-name'] || '0';
-            }
-        }
-
-        this._validateSettings();
+        Settings.version.migrate(this.metadata['version-name']);
 
         // force initialization and tracking of windows
         TilingShellWindowManager.get();
