@@ -55,15 +55,16 @@ export default class EdgeTilingManager extends GObject.Object {
         this._activeZone = null;
         this._currentLayout = null;
         this.workarea = initialWorkArea;
-        this._quarterActivationPercentage = Settings.QUARTER_TILING_THRESHOLD;
+        this._quarterActivationPercentage =
+            Settings.behaviour.quarterTilingThreshold;
         Settings.bind(
-            Settings.KEY_QUARTER_TILING_THRESHOLD,
+            Settings.behaviour.keys.QUARTER_TILING_THRESHOLD,
             this,
             'quarterActivationPercentage'
         );
-        this._edgeTilingOffset = Settings.EDGE_TILING_OFFSET;
+        this._edgeTilingOffset = Settings.behaviour.edgeTilingOffset;
         Settings.bind(
-            Settings.KEY_EDGE_TILING_OFFSET,
+            Settings.behaviour.keys.EDGE_TILING_OFFSET,
             this,
             'edgeTilingOffset'
         );
@@ -126,7 +127,7 @@ export default class EdgeTilingManager extends GObject.Object {
             pointer: pointerPos,
             workArea: this._workArea,
             quarterPercentage: this._quarterActivationPercentage,
-            mode: Settings.EDGE_TILING_MODE,
+            mode: Settings.behaviour.edgeTilingMode,
             tiles: this._currentLayout?.tiles ?? null,
             activeZone: this._activeZone,
         });
@@ -143,7 +144,7 @@ export default class EdgeTilingManager extends GObject.Object {
     public needMaximize(): boolean {
         return (
             this._performing &&
-            Settings.TOP_EDGE_MAXIMIZE &&
+            Settings.behaviour.topEdgeMaximize &&
             this._activeZone === 'topCenter'
         );
     }

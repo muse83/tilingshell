@@ -85,7 +85,7 @@ export default class WindowMemory {
     }
 
     private _remember(window: Meta.Window): void {
-        if (!Settings.REMEMBER_WINDOWS) return;
+        if (!Settings.behaviour.rememberWindows) return;
 
         const appId = appIdOf(window);
         if (appId === null || window.is_fullscreen()) {

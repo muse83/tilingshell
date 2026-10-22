@@ -73,7 +73,7 @@ export default class OverriddenAltTab {
             .map(win => tileOf(win))
             .filter(tile => tile !== undefined);
 
-        const inner_gaps = Settings.get_inner_gaps();
+        const inner_gaps = Settings.spacing.getInnerGaps();
         const height = this._items[0].height;
         const width = Math.floor((height * 16) / 9);
         const gaps =

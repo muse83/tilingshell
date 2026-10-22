@@ -71,13 +71,13 @@ export default class KeyBindings extends GObject.Object {
         this._signals = new SignalHandling();
 
         this._signals.connect(
-            Settings,
-            Settings.KEY_ENABLE_MOVE_KEYBINDINGS,
+            Settings.shortcuts,
+            Settings.shortcuts.keys.ENABLE_MOVE_KEYBINDINGS,
             () => {
                 this._setupKeyBindings(extensionSettings);
             }
         );
-        if (Settings.ENABLE_MOVE_KEYBINDINGS)
+        if (Settings.shortcuts.enableMoveKeybindings)
             this._setupKeyBindings(extensionSettings);
     }
 
@@ -90,7 +90,7 @@ export default class KeyBindings extends GObject.Object {
     }
 
     private _setupKeyBindings(extensionSettings: Gio.Settings) {
-        if (Settings.ENABLE_MOVE_KEYBINDINGS)
+        if (Settings.shortcuts.enableMoveKeybindings)
             this._applyKeybindings(extensionSettings);
         else this._removeKeybindings();
     }
@@ -100,7 +100,7 @@ export default class KeyBindings extends GObject.Object {
         this._overrideNatives(extensionSettings);
 
         Main.wm.addKeybinding(
-            Settings.SETTING_SPAN_WINDOW_RIGHT,
+            Settings.shortcuts.keys.SPAN_WINDOW_RIGHT,
             extensionSettings,
             Meta.KeyBindingFlags.NONE,
             Shell.ActionMode.NORMAL,
@@ -110,7 +110,7 @@ export default class KeyBindings extends GObject.Object {
         );
 
         Main.wm.addKeybinding(
-            Settings.SETTING_SPAN_WINDOW_LEFT,
+            Settings.shortcuts.keys.SPAN_WINDOW_LEFT,
             extensionSettings,
             Meta.KeyBindingFlags.NONE,
             Shell.ActionMode.NORMAL,
@@ -120,7 +120,7 @@ export default class KeyBindings extends GObject.Object {
         );
 
         Main.wm.addKeybinding(
-            Settings.SETTING_SPAN_WINDOW_UP,
+            Settings.shortcuts.keys.SPAN_WINDOW_UP,
             extensionSettings,
             Meta.KeyBindingFlags.NONE,
             Shell.ActionMode.NORMAL,
@@ -130,7 +130,7 @@ export default class KeyBindings extends GObject.Object {
         );
 
         Main.wm.addKeybinding(
-            Settings.SETTING_SPAN_WINDOW_DOWN,
+            Settings.shortcuts.keys.SPAN_WINDOW_DOWN,
             extensionSettings,
             Meta.KeyBindingFlags.NONE,
             Shell.ActionMode.NORMAL,
@@ -140,7 +140,7 @@ export default class KeyBindings extends GObject.Object {
         );
 
         Main.wm.addKeybinding(
-            Settings.SETTING_SPAN_WINDOW_ALL_TILES,
+            Settings.shortcuts.keys.SPAN_WINDOW_ALL_TILES,
             extensionSettings,
             Meta.KeyBindingFlags.NONE,
             Shell.ActionMode.NORMAL,
@@ -151,7 +151,7 @@ export default class KeyBindings extends GObject.Object {
 
         // untile window with keybinding
         Main.wm.addKeybinding(
-            Settings.SETTING_UNTILE_WINDOW,
+            Settings.shortcuts.keys.UNTILE_WINDOW,
             extensionSettings,
             Meta.KeyBindingFlags.NONE,
             Shell.ActionMode.NORMAL,
@@ -160,7 +160,7 @@ export default class KeyBindings extends GObject.Object {
 
         // center the window with keybinding
         Main.wm.addKeybinding(
-            Settings.SETTING_MOVE_WINDOW_CENTER,
+            Settings.shortcuts.keys.MOVE_WINDOW_CENTER,
             extensionSettings,
             Meta.KeyBindingFlags.NONE,
             Shell.ActionMode.NORMAL,
@@ -168,7 +168,7 @@ export default class KeyBindings extends GObject.Object {
         );
 
         Main.wm.addKeybinding(
-            Settings.SETTING_FOCUS_WINDOW_RIGHT,
+            Settings.shortcuts.keys.FOCUS_WINDOW_RIGHT,
             extensionSettings,
             Meta.KeyBindingFlags.NONE,
             Shell.ActionMode.NORMAL,
@@ -182,7 +182,7 @@ export default class KeyBindings extends GObject.Object {
         );
 
         Main.wm.addKeybinding(
-            Settings.SETTING_FOCUS_WINDOW_LEFT,
+            Settings.shortcuts.keys.FOCUS_WINDOW_LEFT,
             extensionSettings,
             Meta.KeyBindingFlags.NONE,
             Shell.ActionMode.NORMAL,
@@ -196,7 +196,7 @@ export default class KeyBindings extends GObject.Object {
         );
 
         Main.wm.addKeybinding(
-            Settings.SETTING_FOCUS_WINDOW_UP,
+            Settings.shortcuts.keys.FOCUS_WINDOW_UP,
             extensionSettings,
             Meta.KeyBindingFlags.NONE,
             Shell.ActionMode.NORMAL,
@@ -210,7 +210,7 @@ export default class KeyBindings extends GObject.Object {
         );
 
         Main.wm.addKeybinding(
-            Settings.SETTING_FOCUS_WINDOW_DOWN,
+            Settings.shortcuts.keys.FOCUS_WINDOW_DOWN,
             extensionSettings,
             Meta.KeyBindingFlags.NONE,
             Shell.ActionMode.NORMAL,
@@ -224,7 +224,7 @@ export default class KeyBindings extends GObject.Object {
         );
 
         Main.wm.addKeybinding(
-            Settings.SETTING_FOCUS_WINDOW_NEXT,
+            Settings.shortcuts.keys.FOCUS_WINDOW_NEXT,
             extensionSettings,
             Meta.KeyBindingFlags.NONE,
             Shell.ActionMode.NORMAL,
@@ -234,7 +234,7 @@ export default class KeyBindings extends GObject.Object {
         );
 
         Main.wm.addKeybinding(
-            Settings.SETTING_FOCUS_WINDOW_PREV,
+            Settings.shortcuts.keys.FOCUS_WINDOW_PREV,
             extensionSettings,
             Meta.KeyBindingFlags.NONE,
             Shell.ActionMode.NORMAL,
@@ -244,7 +244,7 @@ export default class KeyBindings extends GObject.Object {
         );
 
         Main.wm.addKeybinding(
-            Settings.SETTING_HIGHLIGHT_CURRENT_WINDOW,
+            Settings.shortcuts.keys.HIGHLIGHT_CURRENT_WINDOW,
             extensionSettings,
             Meta.KeyBindingFlags.NONE,
             Shell.ActionMode.NORMAL,
@@ -254,7 +254,7 @@ export default class KeyBindings extends GObject.Object {
         );
 
         this._cycleLayoutsAction = Main.wm.addKeybinding(
-            Settings.SETTING_CYCLE_LAYOUTS,
+            Settings.shortcuts.keys.CYCLE_LAYOUTS,
             extensionSettings,
             Meta.KeyBindingFlags.NONE,
             Shell.ActionMode.NORMAL,
@@ -274,7 +274,7 @@ export default class KeyBindings extends GObject.Object {
         );
 
         this._cycleLayoutsBackwardAction = Main.wm.addKeybinding(
-            Settings.SETTING_CYCLE_LAYOUTS_BACKWARD,
+            Settings.shortcuts.keys.CYCLE_LAYOUTS_BACKWARD,
             extensionSettings,
             Meta.KeyBindingFlags.IS_REVERSED,
             Shell.ActionMode.NORMAL,
@@ -314,7 +314,7 @@ export default class KeyBindings extends GObject.Object {
             schema_id: 'org.gnome.mutter.keybindings',
         });
         this._overrideKeyBinding(
-            Settings.SETTING_MOVE_WINDOW_RIGHT,
+            Settings.shortcuts.keys.MOVE_WINDOW_RIGHT,
             (display: Meta.Display) => {
                 this.emit('move-window', display, KeyBindingsDirection.RIGHT);
             },
@@ -323,7 +323,7 @@ export default class KeyBindings extends GObject.Object {
             'toggle-tiled-right'
         );
         this._overrideKeyBinding(
-            Settings.SETTING_MOVE_WINDOW_LEFT,
+            Settings.shortcuts.keys.MOVE_WINDOW_LEFT,
             (display: Meta.Display) => {
                 this.emit('move-window', display, KeyBindingsDirection.LEFT);
             },
@@ -337,7 +337,7 @@ export default class KeyBindings extends GObject.Object {
             schema_id: 'org.gnome.desktop.wm.keybindings',
         });
         this._overrideKeyBinding(
-            Settings.SETTING_MOVE_WINDOW_UP,
+            Settings.shortcuts.keys.MOVE_WINDOW_UP,
             (display: Meta.Display) => {
                 this.emit('move-window', display, KeyBindingsDirection.UP);
             },
@@ -346,7 +346,7 @@ export default class KeyBindings extends GObject.Object {
             'maximize'
         );
         this._overrideKeyBinding(
-            Settings.SETTING_MOVE_WINDOW_DOWN,
+            Settings.shortcuts.keys.MOVE_WINDOW_DOWN,
             (display: Meta.Display) => {
                 this.emit('move-window', display, KeyBindingsDirection.DOWN);
             },
@@ -384,26 +384,30 @@ export default class KeyBindings extends GObject.Object {
 
     private _removeKeybindings() {
         this._restoreNatives();
-        Main.wm.removeKeybinding(Settings.SETTING_MOVE_WINDOW_RIGHT);
-        Main.wm.removeKeybinding(Settings.SETTING_MOVE_WINDOW_LEFT);
-        Main.wm.removeKeybinding(Settings.SETTING_MOVE_WINDOW_UP);
-        Main.wm.removeKeybinding(Settings.SETTING_MOVE_WINDOW_DOWN);
-        Main.wm.removeKeybinding(Settings.SETTING_SPAN_WINDOW_RIGHT);
-        Main.wm.removeKeybinding(Settings.SETTING_SPAN_WINDOW_LEFT);
-        Main.wm.removeKeybinding(Settings.SETTING_SPAN_WINDOW_UP);
-        Main.wm.removeKeybinding(Settings.SETTING_SPAN_WINDOW_DOWN);
-        Main.wm.removeKeybinding(Settings.SETTING_SPAN_WINDOW_ALL_TILES);
-        Main.wm.removeKeybinding(Settings.SETTING_UNTILE_WINDOW);
-        Main.wm.removeKeybinding(Settings.SETTING_MOVE_WINDOW_CENTER);
-        Main.wm.removeKeybinding(Settings.SETTING_FOCUS_WINDOW_UP);
-        Main.wm.removeKeybinding(Settings.SETTING_FOCUS_WINDOW_DOWN);
-        Main.wm.removeKeybinding(Settings.SETTING_FOCUS_WINDOW_LEFT);
-        Main.wm.removeKeybinding(Settings.SETTING_FOCUS_WINDOW_RIGHT);
-        Main.wm.removeKeybinding(Settings.SETTING_FOCUS_WINDOW_NEXT);
-        Main.wm.removeKeybinding(Settings.SETTING_FOCUS_WINDOW_PREV);
-        Main.wm.removeKeybinding(Settings.SETTING_HIGHLIGHT_CURRENT_WINDOW);
-        Main.wm.removeKeybinding(Settings.SETTING_CYCLE_LAYOUTS);
-        Main.wm.removeKeybinding(Settings.SETTING_CYCLE_LAYOUTS_BACKWARD);
+        Main.wm.removeKeybinding(Settings.shortcuts.keys.MOVE_WINDOW_RIGHT);
+        Main.wm.removeKeybinding(Settings.shortcuts.keys.MOVE_WINDOW_LEFT);
+        Main.wm.removeKeybinding(Settings.shortcuts.keys.MOVE_WINDOW_UP);
+        Main.wm.removeKeybinding(Settings.shortcuts.keys.MOVE_WINDOW_DOWN);
+        Main.wm.removeKeybinding(Settings.shortcuts.keys.SPAN_WINDOW_RIGHT);
+        Main.wm.removeKeybinding(Settings.shortcuts.keys.SPAN_WINDOW_LEFT);
+        Main.wm.removeKeybinding(Settings.shortcuts.keys.SPAN_WINDOW_UP);
+        Main.wm.removeKeybinding(Settings.shortcuts.keys.SPAN_WINDOW_DOWN);
+        Main.wm.removeKeybinding(Settings.shortcuts.keys.SPAN_WINDOW_ALL_TILES);
+        Main.wm.removeKeybinding(Settings.shortcuts.keys.UNTILE_WINDOW);
+        Main.wm.removeKeybinding(Settings.shortcuts.keys.MOVE_WINDOW_CENTER);
+        Main.wm.removeKeybinding(Settings.shortcuts.keys.FOCUS_WINDOW_UP);
+        Main.wm.removeKeybinding(Settings.shortcuts.keys.FOCUS_WINDOW_DOWN);
+        Main.wm.removeKeybinding(Settings.shortcuts.keys.FOCUS_WINDOW_LEFT);
+        Main.wm.removeKeybinding(Settings.shortcuts.keys.FOCUS_WINDOW_RIGHT);
+        Main.wm.removeKeybinding(Settings.shortcuts.keys.FOCUS_WINDOW_NEXT);
+        Main.wm.removeKeybinding(Settings.shortcuts.keys.FOCUS_WINDOW_PREV);
+        Main.wm.removeKeybinding(
+            Settings.shortcuts.keys.HIGHLIGHT_CURRENT_WINDOW
+        );
+        Main.wm.removeKeybinding(Settings.shortcuts.keys.CYCLE_LAYOUTS);
+        Main.wm.removeKeybinding(
+            Settings.shortcuts.keys.CYCLE_LAYOUTS_BACKWARD
+        );
     }
 
     private _restoreNatives() {

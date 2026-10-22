@@ -57,7 +57,7 @@ class LayoutSwitcherList extends SwitcherPopup.SwitcherList {
             new LayoutButton(
                 box,
                 layout,
-                Settings.get_inner_gaps(1).top > 0 ? GAPS : 0,
+                Settings.spacing.getInnerGaps(1).top > 0 ? GAPS : 0,
                 LAYOUT_HEIGHT,
                 LAYOUT_WIDTH
             )

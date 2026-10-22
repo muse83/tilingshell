@@ -16,13 +16,17 @@ export class RaiseTogetherManager {
     }
 
     public enable(): void {
-        if (Settings.RAISE_TOGETHER) this._turnOn();
+        if (Settings.behaviour.raiseTogether) this._turnOn();
 
         // enable/disable based on user preferences
-        this._signals.connect(Settings, Settings.KEY_RAISE_TOGETHER, () => {
-            if (Settings.RAISE_TOGETHER) this._turnOn();
-            else this._turnOff();
-        });
+        this._signals.connect(
+            Settings.behaviour,
+            Settings.behaviour.keys.RAISE_TOGETHER,
+            () => {
+                if (Settings.behaviour.raiseTogether) this._turnOn();
+                else this._turnOff();
+            }
+        );
     }
 
     public destroy() {

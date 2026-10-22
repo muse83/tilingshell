@@ -50,8 +50,8 @@ export default class LayoutEditor extends St.Widget {
         );
         this.set_position(workArea.x, workArea.y);
         this.set_size(workArea.width, workArea.height);
-        this._innerGaps = buildMargin(Settings.get_inner_gaps());
-        this._outerGaps = buildMargin(Settings.get_outer_gaps());
+        this._innerGaps = buildMargin(Settings.spacing.getInnerGaps());
+        this._outerGaps = buildMargin(Settings.spacing.getOuterGaps());
         this._sliders = [];
         this._containerRect = buildRectangle({
             x: 0,

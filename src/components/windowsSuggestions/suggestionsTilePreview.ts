@@ -40,7 +40,7 @@ export default class SuggestionsTilePreview extends TilePreview {
         // blur not supported due to GNOME shell known bug
         this._blur = false;
         /* Settings.bind(
-            Settings.KEY_ENABLE_BLUR_SELECTED_TILEPREVIEW,
+            Settings.appearance.keys.ENABLE_BLUR_SELECTED_TILEPREVIEW,
             this,
             'blur',
             Gio.SettingsBindFlags.GET,

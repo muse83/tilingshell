@@ -21,7 +21,7 @@
 
 import { Gtk, Adw, Gio, GLib, Gdk, GObject } from './gi/prefs';
 import Settings from './settings/settings';
-import { EdgeTilingMode, ActivationKey } from './settings/settings';
+import { EdgeTilingMode, ActivationKey } from './settings/behaviourSettings';
 import { logger } from './utils/logger';
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 import Layout from './components/layout/Layout';
@@ -79,20 +79,20 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         prefsPage.add(appearenceGroup);
 
         const showIndicatorRow = this._buildSwitchRow(
-            Settings.KEY_SHOW_INDICATOR,
+            Settings.appearance.keys.SHOW_INDICATOR,
             _('Show Indicator'),
             _('Whether to show the panel indicator')
         );
         appearenceGroup.add(showIndicatorRow);
         const innerGapsRow = this._buildSpinButtonRow(
-            Settings.KEY_INNER_GAPS,
+            Settings.spacing.keys.INNER_GAPS,
             _('Inner gaps'),
             _('Gaps between windows')
         );
         appearenceGroup.add(innerGapsRow);
 
         const outerGapsRow = this._buildSpinButtonRow(
-            Settings.KEY_OUTER_GAPS,
+            Settings.spacing.keys.OUTER_GAPS,
             _('Outer gaps'),
             _('Gaps between a window and the monitor borders')
         );
@@ -107,7 +107,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         appearenceGroup.add(blurRow);
 
         const snapAssistantThresholdRow = this._buildSpinButtonRow(
-            Settings.KEY_SNAP_ASSISTANT_THRESHOLD,
+            Settings.behaviour.keys.SNAP_ASSISTANT_THRESHOLD,
             _('Snap Assistant threshold'),
             _(
                 'Minimum distance from the Snap Assistant to the pointer to open it'
@@ -119,14 +119,14 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
 
         blurRow.add_row(
             this._buildSwitchRow(
-                Settings.KEY_ENABLE_BLUR_SNAP_ASSISTANT,
+                Settings.appearance.keys.ENABLE_BLUR_SNAP_ASSISTANT,
                 _('Snap Assistant'),
                 _('Apply blur effect to Snap Assistant')
             )
         );
         blurRow.add_row(
             this._buildSwitchRow(
-                Settings.KEY_ENABLE_BLUR_SELECTED_TILEPREVIEW,
+                Settings.appearance.keys.ENABLE_BLUR_SELECTED_TILEPREVIEW,
                 _('Selected tile preview'),
                 _('Apply blur effect to selected tile preview')
             )
@@ -139,41 +139,42 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         appearenceGroup.add(windowBorderExpanderRow);
         windowBorderExpanderRow.add_row(
             this._buildSwitchRow(
-                Settings.KEY_ENABLE_WINDOW_BORDER,
+                Settings.appearance.keys.ENABLE_WINDOW_BORDER,
                 _('Enable'),
                 _('Show a border around focused window')
             )
         );
         windowBorderExpanderRow.add_row(
             this._buildSwitchRow(
-                Settings.KEY_ENABLE_SMART_WINDOW_BORDER_RADIUS,
+                Settings.appearance.keys.ENABLE_SMART_WINDOW_BORDER_RADIUS,
                 _('Smart border radius'),
                 _("Dynamically adapt to the window's actual border radius")
             )
         );
         windowBorderExpanderRow.add_row(
             this._buildSpinButtonRow(
-                Settings.KEY_WINDOW_BORDER_WIDTH,
+                Settings.appearance.keys.WINDOW_BORDER_WIDTH,
                 _('Width'),
                 _('The size of the border'),
                 1
             )
         );
         const colorButton = this._buildColorButton(
-            this._getRGBAFromString(Settings.WINDOW_BORDER_COLOR),
-            (val: string) => (Settings.WINDOW_BORDER_COLOR = val)
+            this._getRGBAFromString(Settings.appearance.windowBorderColor),
+            (val: string) => (Settings.appearance.windowBorderColor = val)
         );
         const windowBorderColorRow = new Adw.ActionRow({
             title: _('Border color'),
             subtitle: _('Choose the color of the border'),
         });
         windowBorderColorRow.add_suffix(colorButton);
-        colorButton.set_visible(Settings.WINDOW_USE_CUSTOM_BORDER_COLOR);
+        colorButton.set_visible(Settings.appearance.windowUseCustomBorderColor);
         const customColorDropDown = this._buildCustomColorDropDown(
-            Settings.WINDOW_USE_CUSTOM_BORDER_COLOR,
+            Settings.appearance.windowUseCustomBorderColor,
             (use_custom_color: boolean) => {
                 colorButton.set_visible(use_custom_color);
-                Settings.WINDOW_USE_CUSTOM_BORDER_COLOR = use_custom_color;
+                Settings.appearance.windowUseCustomBorderColor =
+                    use_custom_color;
             }
         );
         windowBorderColorRow.add_suffix(customColorDropDown);
@@ -186,7 +187,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         appearenceGroup.add(animationsRow);
         animationsRow.add_row(
             this._buildSpinButtonRow(
-                Settings.KEY_SNAP_ASSISTANT_ANIMATION_TIME,
+                Settings.appearance.keys.SNAP_ASSISTANT_ANIMATION_TIME,
                 _('Snap assistant animation time'),
                 _('The snap assistant animation time in milliseconds'),
                 0,
@@ -195,7 +196,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         );
         animationsRow.add_row(
             this._buildSpinButtonRow(
-                Settings.KEY_TILE_PREVIEW_ANIMATION_TIME,
+                Settings.appearance.keys.TILE_PREVIEW_ANIMATION_TIME,
                 _('Tiles animation time'),
                 _('The tiles animation time in milliseconds'),
                 0,
@@ -211,34 +212,34 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         prefsPage.add(behaviourGroup);
 
         const snapAssistRow = this._buildSwitchRow(
-            Settings.KEY_SNAP_ASSIST,
+            Settings.behaviour.keys.SNAP_ASSIST,
             _('Enable Snap Assistant'),
             _('Move the window on top of the screen to snap assist it')
         );
         behaviourGroup.add(snapAssistRow);
 
         const snapAssistSyncLayoutRow = this._buildSwitchRow(
-            Settings.KEY_SNAP_ASSIST_SYNC_LAYOUT,
+            Settings.behaviour.keys.SNAP_ASSIST_SYNC_LAYOUT,
             _('Sync layout when tiling with Snap Assistant'),
             _(
                 'Change the active layout to match the layout used when tiling a window with Snap Assistant'
             )
         );
         Settings.bind(
-            Settings.KEY_SNAP_ASSIST,
+            Settings.behaviour.keys.SNAP_ASSIST,
             snapAssistSyncLayoutRow,
             'sensitive'
         );
         behaviourGroup.add(snapAssistSyncLayoutRow);
 
         const enableTilingSystemRow = this._buildSwitchRow(
-            Settings.KEY_TILING_SYSTEM,
+            Settings.behaviour.keys.TILING_SYSTEM,
             _('Enable Tiling System'),
             _('Hold the activation key while moving a window to tile it'),
             this._buildActivationKeysDropDown(
-                Settings.TILING_SYSTEM_ACTIVATION_KEY,
+                Settings.behaviour.tilingSystemActivationKey,
                 (val: ActivationKey) =>
-                    (Settings.TILING_SYSTEM_ACTIVATION_KEY = val)
+                    (Settings.behaviour.tilingSystemActivationKey = val)
             )
         );
         behaviourGroup.add(enableTilingSystemRow);
@@ -248,33 +249,33 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             _(
                 'Hold the deactivation key while moving a window to deactivate the tiling system'
             ),
-            Settings.TILING_SYSTEM_DEACTIVATION_KEY,
+            Settings.behaviour.tilingSystemDeactivationKey,
             (val: ActivationKey) =>
-                (Settings.TILING_SYSTEM_DEACTIVATION_KEY = val)
+                (Settings.behaviour.tilingSystemDeactivationKey = val)
         );
         behaviourGroup.add(tilingSystemDeactivationRow);
 
         const spanMultipleTilesRow = this._buildSwitchRow(
-            Settings.KEY_SPAN_MULTIPLE_TILES,
+            Settings.behaviour.keys.SPAN_MULTIPLE_TILES,
             _('Span multiple tiles'),
             _('Hold the activation key to span multiple tiles'),
             this._buildActivationKeysDropDown(
-                Settings.SPAN_MULTIPLE_TILES_ACTIVATION_KEY,
+                Settings.behaviour.spanMultipleTilesActivationKey,
                 (val: ActivationKey) =>
-                    (Settings.SPAN_MULTIPLE_TILES_ACTIVATION_KEY = val)
+                    (Settings.behaviour.spanMultipleTilesActivationKey = val)
             )
         );
         behaviourGroup.add(spanMultipleTilesRow);
 
         const autoTilingRow = this._buildSwitchRow(
-            Settings.KEY_ENABLE_AUTO_TILING,
+            Settings.behaviour.keys.ENABLE_AUTO_TILING,
             _('Enable Auto Tiling'),
             _('Automatically tile new windows to the best tile')
         );
         behaviourGroup.add(autoTilingRow);
 
         const resizeComplementingRow = this._buildSwitchRow(
-            Settings.KEY_RESIZE_COMPLEMENTING_WINDOWS,
+            Settings.behaviour.keys.RESIZE_COMPLEMENTING_WINDOWS,
             _('Enable auto-resize of the complementing tiled windows'),
             _(
                 'When a tiled window is resized, auto-resize the other tiled windows near it'
@@ -283,7 +284,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         behaviourGroup.add(resizeComplementingRow);
 
         const restoreToOriginalSizeRow = this._buildSwitchRow(
-            Settings.KEY_RESTORE_WINDOW_ORIGINAL_SIZE,
+            Settings.behaviour.keys.RESTORE_WINDOW_ORIGINAL_SIZE,
             _('Restore window size'),
             _(
                 'Whether to restore the windows to their original size when untiled'
@@ -292,7 +293,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         behaviourGroup.add(restoreToOriginalSizeRow);
 
         const rememberWindowsRow = this._buildSwitchRow(
-            Settings.KEY_REMEMBER_WINDOWS,
+            Settings.behaviour.keys.REMEMBER_WINDOWS,
             _('Remember windows'),
             _(
                 'Reopen the windows of an application with the size, position and tile they had when it was last closed'
@@ -312,7 +313,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         );
 
         const overrideWindowMenuRow = this._buildSwitchRow(
-            Settings.KEY_OVERRIDE_WINDOW_MENU,
+            Settings.behaviour.keys.OVERRIDE_WINDOW_MENU,
             _('Add snap assistant and auto-tile buttons to window menu'),
             _(
                 'Add snap assistant and auto-tile buttons in the menu that shows up when you right click on a window title'
@@ -321,7 +322,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         behaviourGroup.add(overrideWindowMenuRow);
 
         const overrideAltTabRow = this._buildSwitchRow(
-            Settings.KEY_OVERRIDE_ALT_TAB,
+            Settings.behaviour.keys.OVERRIDE_ALT_TAB,
             _('Add tiled windows to ALT+TAB menu'),
             _(
                 'Add the tiled windows to the ALT+TAB menu to open all the tiled windows at once'
@@ -330,7 +331,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         behaviourGroup.add(overrideAltTabRow);
 
         const raiseTogetherRow = this._buildSwitchRow(
-            Settings.KEY_RAISE_TOGETHER,
+            Settings.behaviour.keys.RAISE_TOGETHER,
             _('Raise tiled windows together'),
             _(
                 'When one tiled window is raised, raise all tiled windows into the foreground together'
@@ -350,18 +351,18 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             }),
         });
         Settings.bind(
-            Settings.KEY_ACTIVE_SCREEN_EDGES,
+            Settings.behaviour.keys.ACTIVE_SCREEN_EDGES,
             activeScreenEdgesGroup.headerSuffix,
             'active'
         );
 
         const topEdgeMaximize = this._buildSwitchRow(
-            Settings.KEY_TOP_EDGE_MAXIMIZE,
+            Settings.behaviour.keys.TOP_EDGE_MAXIMIZE,
             _('Drag against top edge to maximize window'),
             _('Drag windows against the top edge to maximize them')
         );
         Settings.bind(
-            Settings.KEY_ACTIVE_SCREEN_EDGES,
+            Settings.behaviour.keys.ACTIVE_SCREEN_EDGES,
             topEdgeMaximize,
             'sensitive'
         );
@@ -371,15 +372,15 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             _('Quarter tiling activation area'),
             _('Activation area to trigger quarter tiling (%% of the screen)'),
             (sc: Gtk.Scale) => {
-                Settings.QUARTER_TILING_THRESHOLD = sc.get_value();
+                Settings.behaviour.quarterTilingThreshold = sc.get_value();
             },
-            Settings.QUARTER_TILING_THRESHOLD,
+            Settings.behaviour.quarterTilingThreshold,
             1,
             50,
             1
         );
         Settings.bind(
-            Settings.KEY_ACTIVE_SCREEN_EDGES,
+            Settings.behaviour.keys.ACTIVE_SCREEN_EDGES,
             quarterTiling,
             'sensitive'
         );
@@ -389,15 +390,15 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             _('Edge tiling offset'),
             _('Offset from the screen edge to trigger edge tiling (in pixels)'),
             (sc: Gtk.Scale) => {
-                Settings.EDGE_TILING_OFFSET = sc.get_value();
+                Settings.behaviour.edgeTilingOffset = sc.get_value();
             },
-            Settings.EDGE_TILING_OFFSET,
+            Settings.behaviour.edgeTilingOffset,
             1,
             250,
             1
         );
         Settings.bind(
-            Settings.KEY_ACTIVE_SCREEN_EDGES,
+            Settings.behaviour.keys.ACTIVE_SCREEN_EDGES,
             edgeTilingOffset,
             'sensitive'
         );
@@ -405,8 +406,9 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
 
         // Create dropdown for edge tiling mode
         const edgeTilingBehaviourRow = this._buildEdgeTilingBehaviourRow(
-            Settings.EDGE_TILING_MODE,
-            (newMode: EdgeTilingMode) => (Settings.EDGE_TILING_MODE = newMode)
+            Settings.behaviour.edgeTilingMode,
+            (newMode: EdgeTilingMode) =>
+                (Settings.behaviour.edgeTilingMode = newMode)
         );
         activeScreenEdgesGroup.add(edgeTilingBehaviourRow);
 
@@ -420,7 +422,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         prefsPage.add(behaviourGroup);
 
         const tilingSystemWindowSuggestionRow = this._buildSwitchRow(
-            Settings.KEY_ENABLE_TILING_SYSTEM_WINDOWS_SUGGESTIONS,
+            Settings.behaviour.keys.ENABLE_TILING_SYSTEM_WINDOWS_SUGGESTIONS,
             _('Enable window suggestions for the tiling system'),
             _(
                 'Provides smart suggestions to fill empty tiles when using the tiling system'
@@ -429,7 +431,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         windowsSuggestionsGroup.add(tilingSystemWindowSuggestionRow);
 
         const snapAssistWindowSuggestionRow = this._buildSwitchRow(
-            Settings.KEY_ENABLE_SNAP_ASSISTANT_WINDOWS_SUGGESTIONS,
+            Settings.behaviour.keys.ENABLE_SNAP_ASSISTANT_WINDOWS_SUGGESTIONS,
             _('Enable window suggestions for the snap assistant'),
             _(
                 'Offers suggestions to populate empty tiles when using the snap assistant'
@@ -438,7 +440,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         windowsSuggestionsGroup.add(snapAssistWindowSuggestionRow);
 
         const screenEdgesWindowSuggestionRow = this._buildSwitchRow(
-            Settings.KEY_ENABLE_SCREEN_EDGES_WINDOWS_SUGGESTIONS,
+            Settings.behaviour.keys.ENABLE_SCREEN_EDGES_WINDOWS_SUGGESTIONS,
             _('Enable window suggestions for screen edge tiling'),
             _(
                 'Suggests windows to occupy empty tiles when tiling to screen edges'
@@ -609,7 +611,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             }),
         });
         Settings.bind(
-            Settings.KEY_ENABLE_MOVE_KEYBINDINGS,
+            Settings.shortcuts.keys.ENABLE_MOVE_KEYBINDINGS,
             keybindingsGroup.headerSuffix,
             'active'
         );
@@ -624,84 +626,84 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             boolean, // is on main page
         ][] = [
             [
-                Settings.SETTING_MOVE_WINDOW_RIGHT, // settings key
+                Settings.shortcuts.keys.MOVE_WINDOW_RIGHT, // settings key
                 _('Move window to right tile'), // title
                 _('Move the focused window to the tile on its right'), // subtitle
                 false, // is set
                 true, // is on main page
             ],
             [
-                Settings.SETTING_MOVE_WINDOW_LEFT,
+                Settings.shortcuts.keys.MOVE_WINDOW_LEFT,
                 _('Move window to left tile'),
                 _('Move the focused window to the tile on its left'),
                 false,
                 true,
             ],
             [
-                Settings.SETTING_MOVE_WINDOW_UP,
+                Settings.shortcuts.keys.MOVE_WINDOW_UP,
                 _('Move window to tile above'),
                 _('Move the focused window to the tile above'),
                 false,
                 true,
             ],
             [
-                Settings.SETTING_MOVE_WINDOW_DOWN,
+                Settings.shortcuts.keys.MOVE_WINDOW_DOWN,
                 _('Move window to tile below'),
                 _('Move the focused window to the tile below'),
                 false,
                 true,
             ],
             [
-                Settings.SETTING_SPAN_WINDOW_RIGHT,
+                Settings.shortcuts.keys.SPAN_WINDOW_RIGHT,
                 _('Span window to right tile'),
                 _('Span the focused window to the tile on its right'),
                 false,
                 false,
             ],
             [
-                Settings.SETTING_SPAN_WINDOW_LEFT,
+                Settings.shortcuts.keys.SPAN_WINDOW_LEFT,
                 _('Span window to left tile'),
                 _('Span the focused window to the tile on its left'),
                 false,
                 false,
             ],
             [
-                Settings.SETTING_SPAN_WINDOW_UP,
+                Settings.shortcuts.keys.SPAN_WINDOW_UP,
                 _('Span window above'),
                 _('Span the focused window to the tile above'),
                 false,
                 false,
             ],
             [
-                Settings.SETTING_SPAN_WINDOW_DOWN,
+                Settings.shortcuts.keys.SPAN_WINDOW_DOWN,
                 _('Span window down'),
                 _('Span the focused window to the tile below'),
                 false,
                 false,
             ],
             [
-                Settings.SETTING_SPAN_WINDOW_ALL_TILES,
+                Settings.shortcuts.keys.SPAN_WINDOW_ALL_TILES,
                 _('Span window to all tiles'),
                 _('Span the focused window to all the tiles'),
                 false,
                 false,
             ],
             [
-                Settings.SETTING_UNTILE_WINDOW,
+                Settings.shortcuts.keys.UNTILE_WINDOW,
                 _('Untile focused window'),
                 undefined,
                 false,
                 false,
             ],
             [
-                Settings.SETTING_MOVE_WINDOW_CENTER, // settings key
+                Settings.shortcuts.keys.MOVE_WINDOW_CENTER, // settings key
                 _('Move window to the center'), // title
                 _('Move the focused window to the center of the screen'), // subtitle
                 false, // is set
                 false, // is on main page
             ],
             [
-                Settings.SETTING_FOCUS_WINDOW_RIGHT,
+                Settings.shortcuts.keys.FOCUS_WINDOW_RIGHT,
                 _('Focus window to the right'),
                 _(
                     'Focus the window to the right of the current focused window'
@@ -710,42 +712,42 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                 false,
             ],
             [
-                Settings.SETTING_FOCUS_WINDOW_LEFT,
+                Settings.shortcuts.keys.FOCUS_WINDOW_LEFT,
                 _('Focus window to the left'),
                 _('Focus the window to the left of the current focused window'),
                 false,
                 false,
             ],
             [
-                Settings.SETTING_FOCUS_WINDOW_UP,
+                Settings.shortcuts.keys.FOCUS_WINDOW_UP,
                 _('Focus window above'),
                 _('Focus the window above the current focused window'),
                 false,
                 false,
             ],
             [
-                Settings.SETTING_FOCUS_WINDOW_DOWN,
+                Settings.shortcuts.keys.FOCUS_WINDOW_DOWN,
                 _('Focus window below'),
                 _('Focus the window below the current focused window'),
                 false,
                 false,
             ],
             [
-                Settings.SETTING_FOCUS_WINDOW_NEXT,
+                Settings.shortcuts.keys.FOCUS_WINDOW_NEXT,
                 _('Focus next window'),
                 _('Focus the window next to the current focused window'),
                 false,
                 false,
             ],
             [
-                Settings.SETTING_FOCUS_WINDOW_PREV,
+                Settings.shortcuts.keys.FOCUS_WINDOW_PREV,
                 _('Focus previous window'),
                 _('Focus the window prior to the current focused window'),
                 false,
                 false,
             ],
             [
-                Settings.SETTING_HIGHLIGHT_CURRENT_WINDOW,
+                Settings.shortcuts.keys.HIGHLIGHT_CURRENT_WINDOW,
                 _('Highlight focused window'),
                 _(
                     'Minimize all the other windows and show only the focused window'
@@ -754,7 +756,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                 false,
             ],
             [
-                Settings.SETTING_CYCLE_LAYOUTS,
+                Settings.shortcuts.keys.CYCLE_LAYOUTS,
                 _('Cycle layouts'),
                 _('Cycle through available workspace layouts'),
                 false,
@@ -764,8 +766,8 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
 
         const backwardSettingsKey: Map<string, string> = new Map([
             [
-                Settings.SETTING_CYCLE_LAYOUTS,
-                Settings.SETTING_CYCLE_LAYOUTS_BACKWARD,
+                Settings.shortcuts.keys.CYCLE_LAYOUTS,
+                Settings.shortcuts.keys.CYCLE_LAYOUTS_BACKWARD,
             ],
         ]);
 
@@ -789,7 +791,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                 );
 
                 Settings.bind(
-                    Settings.KEY_ENABLE_MOVE_KEYBINDINGS,
+                    Settings.shortcuts.keys.ENABLE_MOVE_KEYBINDINGS,
                     row,
                     'sensitive'
                 );
@@ -807,7 +809,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             })
         );
         Settings.bind(
-            Settings.KEY_ENABLE_MOVE_KEYBINDINGS,
+            Settings.shortcuts.keys.ENABLE_MOVE_KEYBINDINGS,
             openKeybindingsDialogRow,
             'sensitive'
         );
@@ -844,7 +846,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             );
 
             Settings.bind(
-                Settings.KEY_ENABLE_MOVE_KEYBINDINGS,
+                Settings.shortcuts.keys.ENABLE_MOVE_KEYBINDINGS,
                 row,
                 'sensitive'
             );
@@ -852,7 +854,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         });
 
         const wrapAroundRow = this._buildSwitchRow(
-            Settings.KEY_WRAPAROUND_FOCUS,
+            Settings.behaviour.keys.WRAPAROUND_FOCUS,
             _('Enable next/previous window focus to wrap around'),
             _(
                 'When focusing next or previous window, wrap around at the window edge'
@@ -861,7 +863,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
         keybindingsGroup.add(wrapAroundRow);
 
         const directionalFocusTiledWindows = this._buildSwitchRow(
-            Settings.KEY_ENABLE_DIRECTIONAL_FOCUS_TILED_ONLY,
+            Settings.behaviour.keys.ENABLE_DIRECTIONAL_FOCUS_TILED_ONLY,
             _('Restrict directional focus to tiled windows'),
             _(
                 'When using directional focus navigation, only consider tiled windows'
@@ -1301,7 +1303,14 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             ActivationKey.ALT,
             ActivationKey.SUPER,
         ];
-        activationKeys.forEach(k => options.append(ActivationKey[k]));
+        activationKeys.forEach(k =>
+            options.append(
+                Object.keys(ActivationKey).find(
+                    name =>
+                        ActivationKey[name as keyof typeof ActivationKey] === k
+                ) ?? String(k)
+            )
+        );
         options.append('(None)');
         const dropdown = new Gtk.DropDown({
             model: options,

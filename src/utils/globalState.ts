@@ -69,7 +69,7 @@ export default class GlobalState extends GObject.Object {
         this.validate_selected_layouts();
 
         Settings.bind(
-            Settings.KEY_TILE_PREVIEW_ANIMATION_TIME,
+            Settings.appearance.keys.TILE_PREVIEW_ANIMATION_TIME,
             this,
             'tilePreviewAnimationTime',
             Gio.SettingsBindFlags.GET

@@ -80,3 +80,40 @@ order that is written down nowhere. Only the shell can run any of it, so none of
   the remembered-window round trip, passes.
 - Left for the ticket with the remaining groups: `Settings` still re-exports the two key names
   (last version, remembered windows) because the settings export lists them as excluded keys.
+
+## Amendment: Remaining groups and removal of the wide settings class (issue 29, 2026-10-22)
+- Four groups, each in its own file over the storage seam: Spacing (inner and outer gaps; the
+  scale factor still comes from the caller), Appearance (window border, blur, animation times,
+  panel indicator), Behaviour (tiling switches, activation keys, edge zones, thresholds, window
+  suggestions, the remember-windows switch, the record of overridden GNOME settings) and
+  Shortcuts (the on/off switch of the keybindings and the keybinding key names). Behaviour is the
+  residual group.
+- The wide settings class is gone. `Settings` only creates the groups (`Settings.spacing`,
+  `.appearance`, `.behaviour`, `.shortcuts`, next to layouts, version and window memory) and keeps
+  `bind`. Each group offers `connect`/`disconnect` on a storage key, in GObject shape for
+  `SignalHandling`, and `keys` with its key names.
+- Supersedes the Decision bullet that only the Layouts group notifies on change: every group now
+  offers `connect`/`disconnect` per key (callbacks get no arguments).
+- Storage interface gained whole numbers; the GNOME adapter reads the key's type to tell signed
+  from unsigned. Like the other types, the in-memory adapter reports no change for an unchanged
+  number.
+- The two enums (activation key, edge tiling mode) are plain objects now, because Node's type
+  stripping cannot run enums. Same names and values; they live in the Behaviour file.
+- Differences to before: an empty activation key still reads as the default of that key; the
+  schema default is empty, so nothing changes.
+- Documented exceptions that still touch GNOME settings directly:
+  1. `Settings.bind`, binding one key to a property of a widget or actor (preferences rows, snap
+     assistant, tile preview, panel indicator, edge tiling manager, global state).
+  2. The shortcut picker in preferences (`ShortcutSettingButton`).
+  3. Registering keybindings: GNOME Shell takes the settings object itself
+     (`Main.wm.addKeybinding`, native keybinding override in `keybindings.ts`).
+  4. Settings export/import and restore to default (`settingsExport.ts`, `settingsOverride.ts`),
+     which work on the whole key list and `dconf`.
+  5. Settings of other GNOME schemas, not the extension's own: the accent colour
+     (`org.gnome.desktop.interface`, window border manager) and the native edge tiling and
+     keybinding overrides (`org.gnome.mutter` and others, `extension.ts`, `settingsOverride.ts`).
+  6. Preferences passes the raw settings object to its shortcut rows and reads from it whether a
+     keybinding is set (`prefs.ts`). Left for a later ticket if it should go through the
+     shortcuts group.
+- Checked in the dev stack: extension active, preferences build without errors, maximise/tile
+  and window placement scenarios pass, disable and re-enable run without shell errors.

@@ -77,7 +77,7 @@ class LayoutsRow extends St.BoxLayout {
         parent.add_child(this);
 
         const selectedIndex = layouts.findIndex(lay => lay.id === selectedId);
-        const hasGaps = Settings.get_inner_gaps(1).top > 0;
+        const hasGaps = Settings.spacing.getInnerGaps(1).top > 0;
 
         const layoutHeight: number = 36;
         const layoutWidth: number = 64; // 16:9 ratio. -> (16*layoutHeight) / 9 and then rounded to int
@@ -171,9 +171,13 @@ export default class DefaultMenu implements CurrentMenu {
         this._signals.connect(Settings.layouts, SIGNAL_LAYOUTS_CHANGED, () => {
             this._drawLayouts();
         });
-        this._signals.connect(Settings, Settings.KEY_INNER_GAPS, () => {
-            this._drawLayouts();
-        });
+        this._signals.connect(
+            Settings.spacing,
+            Settings.spacing.keys.INNER_GAPS,
+            () => {
+                this._drawLayouts();
+            }
+        );
 
         // if the selected layout was changed externaly, update the selected button
         this._signals.connect(Settings.layouts, SIGNAL_SELECTED_CHANGED, () => {

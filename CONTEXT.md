@@ -34,8 +34,8 @@ Glossary of the terms this project uses. Decisions are in `docs/adr/`.
   behaviour, shortcuts, version and migration) with its own interface. Together they form the
   settings module (ADR 0008).
 - **Settings storage**: where settings values live behind the settings module. GNOME settings in
-  production, memory in tests. Offers read and write; the layouts group also notifies on change
-  (ADR 0008).
+  production, memory in tests. Offers read and write (text, switches, whole numbers, lists) and a
+  change notification per key that every group uses for `connect` (ADR 0008).
 - **Layout repair**: when stored layout data is empty or broken, it is replaced by the default
   layouts.
 - **Migration**: the compatibility changes applied to stored settings when the last installed

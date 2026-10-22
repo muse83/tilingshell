@@ -62,7 +62,7 @@ export default class WindowBorder extends St.DrawingArea {
         this._window = win;
         this._windowMonitor = win.get_monitor();
         this._delayedSmartBorderRadius = false;
-        const smartRadius = Settings.ENABLE_SMART_WINDOW_BORDER_RADIUS;
+        const smartRadius = Settings.appearance.enableSmartWindowBorderRadius;
         this._borderRadiusValue = [
             DEFAULT_BORDER_RADIUS,
             DEFAULT_BORDER_RADIUS,
@@ -108,7 +108,7 @@ export default class WindowBorder extends St.DrawingArea {
             )
         );
 
-        if (Settings.ENABLE_SMART_WINDOW_BORDER_RADIUS) {
+        if (Settings.appearance.enableSmartWindowBorderRadius) {
             const cached_radius = (this._window as WindowWithCachedRadius)
                 .__ts_cached_radius;
             if (cached_radius) {
@@ -164,7 +164,7 @@ export default class WindowBorder extends St.DrawingArea {
 
             if (
                 this._delayedSmartBorderRadius &&
-                Settings.ENABLE_SMART_WINDOW_BORDER_RADIUS
+                Settings.appearance.enableSmartWindowBorderRadius
             ) {
                 this._delayedSmartBorderRadius = false;
                 this._runComputeBorderRadiusTimeout(winActor);
@@ -197,7 +197,7 @@ export default class WindowBorder extends St.DrawingArea {
 
             if (
                 this._delayedSmartBorderRadius &&
-                Settings.ENABLE_SMART_WINDOW_BORDER_RADIUS
+                Settings.appearance.enableSmartWindowBorderRadius
             ) {
                 this._delayedSmartBorderRadius = false;
                 this._runComputeBorderRadiusTimeout(winActor);
@@ -216,7 +216,7 @@ export default class WindowBorder extends St.DrawingArea {
             this.open();
         });
 
-        if (Settings.ENABLE_SMART_WINDOW_BORDER_RADIUS) {
+        if (Settings.appearance.enableSmartWindowBorderRadius) {
             const firstFrameId = winActor.connect_after('first-frame', () => {
                 if (
                     this._window.maximizedHorizontally ||
@@ -352,11 +352,12 @@ export default class WindowBorder extends St.DrawingArea {
         // the value is already scaled if the border is on primary monitor
         const borderWidth =
             (alreadyScaled ? 1 : scalingFactor) *
-            (Settings.WINDOW_BORDER_WIDTH /
+            (Settings.appearance.windowBorderWidth /
                 (alreadyScaled ? scalingFactor : 1));
-        this._scaledBorderWidth = scalingFactor * Settings.WINDOW_BORDER_WIDTH;
-        const borderColor = Settings.WINDOW_USE_CUSTOM_BORDER_COLOR
-            ? Settings.WINDOW_BORDER_COLOR
+        this._scaledBorderWidth =
+            scalingFactor * Settings.appearance.windowBorderWidth;
+        const borderColor = Settings.appearance.windowUseCustomBorderColor
+            ? Settings.appearance.windowBorderColor
             : '-st-accent-color';
         const radius = this._borderRadiusValue.map(val => {
             const valWithBorder = val === 0 ? val : val + borderWidth;

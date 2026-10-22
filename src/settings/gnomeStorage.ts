@@ -48,6 +48,23 @@ export default class GnomeStorage implements SettingsStorage {
         this._settings.set_boolean(key, value);
     }
 
+    getNumber(key: string): number {
+        const variant = this._settings.get_value(key);
+        return variant.get_type_string() === 'i'
+            ? variant.get_int32()
+            : variant.get_uint32();
+    }
+
+    setNumber(key: string, value: number): void {
+        const signed = this._settings.get_value(key).get_type_string() === 'i';
+        this._settings.set_value(
+            key,
+            signed
+                ? GLib.Variant.new_int32(value)
+                : GLib.Variant.new_uint32(value)
+        );
+    }
+
     getStrv(key: string): string[] {
         return this._settings.get_strv(key);
     }

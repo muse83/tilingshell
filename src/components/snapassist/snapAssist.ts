@@ -93,19 +93,19 @@ class SnapAssistContent extends St.BoxLayout {
             54 * displayScale().monitorScaleOf(this._monitorIndex);
 
         Settings.bind(
-            Settings.KEY_ENABLE_BLUR_SNAP_ASSISTANT,
+            Settings.appearance.keys.ENABLE_BLUR_SNAP_ASSISTANT,
             this,
             'blur',
             Gio.SettingsBindFlags.GET
         );
         Settings.bind(
-            Settings.KEY_SNAP_ASSISTANT_THRESHOLD,
+            Settings.behaviour.keys.SNAP_ASSISTANT_THRESHOLD,
             this,
             'snapAssistantThreshold',
             Gio.SettingsBindFlags.GET
         );
         Settings.bind(
-            Settings.KEY_SNAP_ASSISTANT_ANIMATION_TIME,
+            Settings.appearance.keys.SNAP_ASSISTANT_ANIMATION_TIME,
             this,
             'snapAssistantAnimationTime',
             Gio.SettingsBindFlags.GET

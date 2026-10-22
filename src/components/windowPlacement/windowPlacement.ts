@@ -100,8 +100,8 @@ export default class WindowPlacement {
                 monitorIndex: window.get_monitor(),
             },
             {
-                rememberEnabled: Settings.REMEMBER_WINDOWS,
-                autoTilingEnabled: Settings.ENABLE_AUTO_TILING,
+                rememberEnabled: Settings.behaviour.rememberWindows,
+                autoTilingEnabled: Settings.behaviour.enableAutoTiling,
                 entries: this._memory.entries(),
                 workAreas: Main.layoutManager.monitors.map((_m, i) =>
                     Main.layoutManager.getWorkAreaForMonitor(i)

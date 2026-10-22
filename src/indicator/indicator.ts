@@ -47,7 +47,7 @@ export default class Indicator extends PanelMenu.Button {
 
         // Bind the "show-indicator" setting to the "visible" property
         Settings.bind(
-            Settings.KEY_SHOW_INDICATOR,
+            Settings.appearance.keys.SHOW_INDICATOR,
             this,
             'visible',
             Gio.SettingsBindFlags.GET
@@ -238,7 +238,7 @@ export default class Indicator extends PanelMenu.Button {
                     this,
                     this._openPreferences.bind(this)
                 );
-                if (!Settings.SHOW_INDICATOR) this.hide();
+                if (!Settings.appearance.showIndicator) this.hide();
                 if (this._keyPressEvent) {
                     global.stage.disconnect(this._keyPressEvent);
                     this._keyPressEvent = null;

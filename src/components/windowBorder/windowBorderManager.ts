@@ -29,14 +29,14 @@ export class WindowBorderManager {
         });
         this._unsubscribeScale?.();
         this._unsubscribeScale = unsubscribe;
-        if (Settings.ENABLE_WINDOW_BORDER) this._turnOn();
+        if (Settings.appearance.enableWindowBorder) this._turnOn();
 
         // enable/disable based on user preferences
         this._signals.connect(
-            Settings,
-            Settings.KEY_ENABLE_WINDOW_BORDER,
+            Settings.appearance,
+            Settings.appearance.keys.ENABLE_WINDOW_BORDER,
             () => {
-                if (Settings.ENABLE_WINDOW_BORDER) this._turnOn();
+                if (Settings.appearance.enableWindowBorder) this._turnOn();
                 else this._turnOff();
             }
         );
@@ -49,19 +49,23 @@ export class WindowBorderManager {
             'notify::focus-window',
             this._onWindowFocused.bind(this)
         );
-        this._signals.connect(Settings, Settings.KEY_WINDOW_BORDER_COLOR, () =>
-            this._border?.updateStyle()
+        this._signals.connect(
+            Settings.appearance,
+            Settings.appearance.keys.WINDOW_BORDER_COLOR,
+            () => this._border?.updateStyle()
         );
         this._signals.connect(
-            Settings,
-            Settings.KEY_WINDOW_USE_CUSTOM_BORDER_COLOR,
+            Settings.appearance,
+            Settings.appearance.keys.WINDOW_USE_CUSTOM_BORDER_COLOR,
             () => this._border?.updateStyle()
         );
         this._interfaceSettings.connect('changed::accent-color', () =>
             this._border?.updateStyle()
         );
-        this._signals.connect(Settings, Settings.KEY_WINDOW_BORDER_WIDTH, () =>
-            this._border?.updateStyle()
+        this._signals.connect(
+            Settings.appearance,
+            Settings.appearance.keys.WINDOW_BORDER_WIDTH,
+            () => this._border?.updateStyle()
         );
     }
 

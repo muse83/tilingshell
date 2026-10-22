@@ -228,7 +228,8 @@ export default class EditorDialog extends ModalDialog.ModalDialog {
         onReorderLayout: (_fromIndex: number, _toIndex: number) => void;
         path: string;
     }) {
-        const gaps = Settings.get_inner_gaps(1).top > 0 ? this._gapsSize : 0;
+        const gaps =
+            Settings.spacing.getInnerGaps(1).top > 0 ? this._gapsSize : 0;
         this._layoutsBoxLayout.destroy_all_children();
 
         params.layouts.forEach((lay, btnInd) => {

@@ -1,7 +1,7 @@
 // Where a window dragged to a screen edge ends up: pointer, work area, layout and the edge
 // tiling settings in, zone and target rectangle out.
 // Free of any GNOME API at runtime (types only) so it can be tested with plain Node.
-import type { EdgeTilingMode } from '../../settings/settings';
+import type { EdgeTilingMode } from '../../settings/behaviourSettings';
 
 interface Rect {
     x: number;

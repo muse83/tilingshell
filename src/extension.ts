@@ -108,7 +108,7 @@ export default class TilingShellExtension extends Extension {
         this._keybindings = new KeyBindings(this.getSettings());
 
         // disable native edge tiling
-        if (Settings.ACTIVE_SCREEN_EDGES) {
+        if (Settings.behaviour.activeScreenEdges) {
             SettingsOverride.get().override(
                 new Gio.Settings({ schemaId: 'org.gnome.mutter' }),
                 'edge-tiling',
@@ -156,8 +156,9 @@ export default class TilingShellExtension extends Extension {
         this._dbus = new DBus();
         this._dbus.enable(this);
 
-        if (Settings.OVERRIDE_WINDOW_MENU) OverriddenWindowMenu.enable();
-        if (Settings.OVERRIDE_ALT_TAB) OverriddenAltTab.enable();
+        if (Settings.behaviour.overrideWindowMenu)
+            OverriddenWindowMenu.enable();
+        if (Settings.behaviour.overrideAltTab) OverriddenAltTab.enable();
 
         debug('extension is enabled');
     }
@@ -318,13 +319,13 @@ export default class TilingShellExtension extends Extension {
         // when Tiling Shell's edge-tiling is enabled/disable
         // then enable/disable native edge-tiling
         this._signals.connect(
-            Settings,
-            Settings.KEY_ACTIVE_SCREEN_EDGES,
+            Settings.behaviour,
+            Settings.behaviour.keys.ACTIVE_SCREEN_EDGES,
             () => {
                 const gioSettings = new Gio.Settings({
                     schemaId: 'org.gnome.mutter',
                 });
-                if (Settings.ACTIVE_SCREEN_EDGES) {
+                if (Settings.behaviour.activeScreenEdges) {
                     debug('disable native edge tiling');
                     // disable native edge tiling
                     SettingsOverride.get().override(
@@ -345,10 +346,10 @@ export default class TilingShellExtension extends Extension {
 
         // enable/disable window menu from preferences
         this._signals.connect(
-            Settings,
-            Settings.KEY_OVERRIDE_WINDOW_MENU,
+            Settings.behaviour,
+            Settings.behaviour.keys.OVERRIDE_WINDOW_MENU,
             () => {
-                if (Settings.OVERRIDE_WINDOW_MENU)
+                if (Settings.behaviour.overrideWindowMenu)
                     OverriddenWindowMenu.enable();
                 else OverriddenWindowMenu.disable();
             }
@@ -366,10 +367,15 @@ export default class TilingShellExtension extends Extension {
         );
 
         // enable/disable addition of tiled windows at the end of ALT+TAB from preferences
-        this._signals.connect(Settings, Settings.KEY_OVERRIDE_ALT_TAB, () => {
-            if (Settings.OVERRIDE_ALT_TAB) OverriddenAltTab.enable();
-            else OverriddenAltTab.disable();
-        });
+        this._signals.connect(
+            Settings.behaviour,
+            Settings.behaviour.keys.OVERRIDE_ALT_TAB,
+            () => {
+                if (Settings.behaviour.overrideAltTab)
+                    OverriddenAltTab.enable();
+                else OverriddenAltTab.disable();
+            }
+        );
 
         /* todo move maximized to workspace
         this._signals.connect(
@@ -497,7 +503,7 @@ export default class TilingShellExtension extends Extension {
         if (!monitorTilingManager) return;
 
         if (
-            Settings.ENABLE_AUTO_TILING &&
+            Settings.behaviour.enableAutoTiling &&
             (focus_window.maximizedHorizontally ||
                 focus_window.maximizedVertically)
         ) {
@@ -588,7 +594,8 @@ export default class TilingShellExtension extends Extension {
         const windowList = filterUnfocusableWindows(
             focus_window.get_workspace().list_windows()
         );
-        const onlyTiledWindows = Settings.ENABLE_DIRECTIONAL_FOCUS_TILED_ONLY;
+        const onlyTiledWindows =
+            Settings.behaviour.enableDirectionalFocusTiledOnly;
 
         windowList
             .filter(win => {
@@ -662,7 +669,7 @@ export default class TilingShellExtension extends Extension {
         let nextIndex = -1;
         switch (direction) {
             case FocusSwitchDirection.PREV:
-                if (focusedIdx === 0 && Settings.WRAPAROUND_FOCUS) {
+                if (focusedIdx === 0 && Settings.behaviour.wraparoundFocus) {
                     windowList[windowList.length - 1].activate(
                         global.get_current_time()
                     );
@@ -674,7 +681,7 @@ export default class TilingShellExtension extends Extension {
                 break;
             case FocusSwitchDirection.NEXT:
                 nextIndex = (focusedIdx + 1) % windowList.length;
-                if (nextIndex > 0 || Settings.WRAPAROUND_FOCUS)
+                if (nextIndex > 0 || Settings.behaviour.wraparoundFocus)
                     windowList[nextIndex].activate(global.get_current_time());
                 break;
         }

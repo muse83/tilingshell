@@ -26,7 +26,8 @@ export class ResizingManager {
                 const moving =
                     grabOp === Meta.GrabOp.KEYBOARD_MOVING ||
                     grabOp === Meta.GrabOp.MOVING;
-                if (moving || !Settings.RESIZE_COMPLEMENTING_WINDOWS) return;
+                if (moving || !Settings.behaviour.resizeComplementingWindows)
+                    return;
 
                 this._onWindowResizingBegin(window, grabOp & ~1024);
             }
@@ -55,12 +56,7 @@ export class ResizingManager {
     }
 
     private _onWindowResizingBegin(window: Meta.Window, grabOp: Meta.GrabOp) {
-        if (
-            !window ||
-            !isTiled(window) ||
-            !this._signals
-        )
-            return;
+        if (!window || !isTiled(window) || !this._signals) return;
 
         const verticalSide: [boolean, St.Side] = [false, 0];
         const horizontalSide: [boolean, St.Side] = [false, 0];
@@ -197,7 +193,7 @@ export class ResizingManager {
         const adjacentWindows: Meta.Window[] = [];
         const windowRect = window.get_frame_rect();
         const borderRect = windowRect.copy();
-        const innerGaps = Settings.get_inner_gaps();
+        const innerGaps = Settings.spacing.getInnerGaps();
         if (innerGaps.top === 0) innerGaps.top = 2;
         if (innerGaps.bottom === 0) innerGaps.bottom = 2;
         if (innerGaps.left === 0) innerGaps.left = 2;

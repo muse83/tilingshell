@@ -11,6 +11,9 @@ export interface SettingsStorage {
     setStringLists(key: string, value: string[][]): void;
     getBoolean(key: string): boolean;
     setBoolean(key: string, value: boolean): void;
+    // whole numbers, signed or unsigned depending on the key
+    getNumber(key: string): number;
+    setNumber(key: string, value: number): void;
     // list of strings, e.g. a keybinding
     getStrv(key: string): string[];
     setStrv(key: string, value: string[]): void;
@@ -23,6 +26,7 @@ export class MemoryStorage implements SettingsStorage {
     private _strings = new Map<string, string>();
     private _lists = new Map<string, string[][]>();
     private _booleans = new Map<string, boolean>();
+    private _numbers = new Map<string, number>();
     private _strvs = new Map<string, string[]>();
     private _callbacks = new Map<string, Set<() => void>>();
 
@@ -64,6 +68,16 @@ export class MemoryStorage implements SettingsStorage {
         this._notify(key);
     }
 
+    getNumber(key: string): number {
+        return this._numbers.get(key) ?? 0;
+    }
+
+    setNumber(key: string, value: number): void {
+        if (this.getNumber(key) === value) return;
+        this._numbers.set(key, value);
+        this._notify(key);
+    }
+
     getStrv(key: string): string[] {
         return [...(this._strvs.get(key) ?? [])];
     }
@@ -82,6 +96,7 @@ export class MemoryStorage implements SettingsStorage {
             this._strings.delete(key),
             this._lists.delete(key),
             this._booleans.delete(key),
+            this._numbers.delete(key),
             this._strvs.delete(key),
         ];
         if (!removed.some(Boolean)) return;

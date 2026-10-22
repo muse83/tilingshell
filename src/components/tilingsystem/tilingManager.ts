@@ -14,7 +14,10 @@ import {
 import TilingLayout from '../../components/tilingsystem/tilingLayout';
 import SnapAssist from '../snapassist/snapAssist';
 import SelectionTilePreview from '../tilepreview/selectionTilePreview';
-import { ActivationKey, EdgeTilingMode } from '../../settings/settings';
+import {
+    ActivationKey,
+    EdgeTilingMode,
+} from '../../settings/behaviourSettings';
 import Settings from '../../settings/settings';
 import { SIGNAL_SELECTED_CHANGED } from '../../settings/layoutsSettings';
 import SignalHandling from '../../utils/signalHandling';
@@ -142,8 +145,8 @@ export class TilingManager {
             const ws = global.workspaceManager.get_workspace_by_index(i);
             if (!ws) continue;
 
-            const innerGaps = buildMargin(Settings.get_inner_gaps());
-            const outerGaps = buildMargin(Settings.get_outer_gaps());
+            const innerGaps = buildMargin(Settings.spacing.getInnerGaps());
+            const outerGaps = buildMargin(Settings.spacing.getOuterGaps());
             const layout = GlobalState.get().getSelectedLayoutOfMonitor(
                 monitor.index,
                 ws.index()
@@ -161,8 +164,8 @@ export class TilingManager {
         }
 
         this._tilingSuggestionsLayout = new TilingLayoutWithSuggestions(
-            buildMargin(Settings.get_inner_gaps()),
-            buildMargin(Settings.get_outer_gaps()),
+            buildMargin(Settings.spacing.getInnerGaps()),
+            buildMargin(Settings.spacing.getOuterGaps()),
             this._workArea,
             monitorScalingFactor
         );
@@ -213,18 +216,26 @@ export class TilingManager {
             }
         );
 
-        this._signals.connect(Settings, Settings.KEY_INNER_GAPS, () => {
-            const innerGaps = buildMargin(Settings.get_inner_gaps());
-            this._workspaceTilingLayout.forEach(tilingLayout =>
-                tilingLayout.relayout({ innerGaps })
-            );
-        });
-        this._signals.connect(Settings, Settings.KEY_OUTER_GAPS, () => {
-            const outerGaps = buildMargin(Settings.get_outer_gaps());
-            this._workspaceTilingLayout.forEach(tilingLayout =>
-                tilingLayout.relayout({ outerGaps })
-            );
-        });
+        this._signals.connect(
+            Settings.spacing,
+            Settings.spacing.keys.INNER_GAPS,
+            () => {
+                const innerGaps = buildMargin(Settings.spacing.getInnerGaps());
+                this._workspaceTilingLayout.forEach(tilingLayout =>
+                    tilingLayout.relayout({ innerGaps })
+                );
+            }
+        );
+        this._signals.connect(
+            Settings.spacing,
+            Settings.spacing.keys.OUTER_GAPS,
+            () => {
+                const outerGaps = buildMargin(Settings.spacing.getOuterGaps());
+                this._workspaceTilingLayout.forEach(tilingLayout =>
+                    tilingLayout.relayout({ outerGaps })
+                );
+            }
+        );
 
         this._signals.connect(
             global.display,
@@ -272,8 +283,8 @@ export class TilingManager {
                         this._monitor.index,
                         ws.index()
                     );
-                const innerGaps = buildMargin(Settings.get_inner_gaps());
-                const outerGaps = buildMargin(Settings.get_outer_gaps());
+                const innerGaps = buildMargin(Settings.spacing.getInnerGaps());
+                const outerGaps = buildMargin(Settings.spacing.getOuterGaps());
 
                 this._debug('created new tiling layout for active workspace');
                 this._workspaceTilingLayout.set(
@@ -320,7 +331,7 @@ export class TilingManager {
             'unmaximized',
             (_, window: Meta.Window) => {
                 // a window that got its tile back from before the maximise stays there
-                if (Settings.ENABLE_AUTO_TILING && !isTiled(window))
+                if (Settings.behaviour.enableAutoTiling && !isTiled(window))
                     this.autoTile(window);
             }
         );
@@ -539,16 +550,16 @@ export class TilingManager {
 
         // workaround for gnome-shell bug https://gitlab.gnome.org/GNOME/gnome-shell/-/issues/2857
         if (
-            Settings.ENABLE_BLUR_SNAP_ASSISTANT ||
-            Settings.ENABLE_BLUR_SELECTED_TILEPREVIEW
+            Settings.appearance.enableBlurSnapAssistant ||
+            Settings.appearance.enableBlurSelectedTilepreview
         ) {
             this._signals.connect(window, 'position-changed', () => {
-                if (Settings.ENABLE_BLUR_SELECTED_TILEPREVIEW) {
+                if (Settings.appearance.enableBlurSelectedTilepreview) {
                     this._selectedTilesPreview
                         .get_effect('blur')
                         ?.queue_repaint();
                 }
-                if (Settings.ENABLE_BLUR_SNAP_ASSISTANT) {
+                if (Settings.appearance.enableBlurSnapAssistant) {
                     this._snapAssist
                         .get_first_child()
                         ?.get_effect('blur')
@@ -606,7 +617,7 @@ export class TilingManager {
             : global.get_pointer();
         const currPointerPos = { x, y };
 
-        const deactivationKey = Settings.TILING_SYSTEM_DEACTIVATION_KEY;
+        const deactivationKey = Settings.behaviour.tilingSystemDeactivationKey;
         const { decision, state } = decideDrag({
             previous: this._dragState,
             pointer: currPointerPos,
@@ -614,19 +625,19 @@ export class TilingManager {
             pointerOnThisMonitor: this._isPointerInsideThisMonitor(window),
             tilingSystemKeyHeld: this._activationKeyStatus(
                 modifier,
-                Settings.TILING_SYSTEM_ACTIVATION_KEY
+                Settings.behaviour.tilingSystemActivationKey
             ),
             tilingSystemDeactivationKeyHeld:
                 deactivationKey !== ActivationKey.NONE &&
                 this._activationKeyStatus(modifier, deactivationKey),
             spanKeyHeld: this._activationKeyStatus(
                 modifier,
-                Settings.SPAN_MULTIPLE_TILES_ACTIVATION_KEY
+                Settings.behaviour.spanMultipleTilesActivationKey
             ),
-            tilingSystemEnabled: Settings.TILING_SYSTEM,
-            spanMultipleTilesEnabled: Settings.SPAN_MULTIPLE_TILES,
-            activeScreenEdgesEnabled: Settings.ACTIVE_SCREEN_EDGES,
-            snapAssistEnabled: Settings.SNAP_ASSIST,
+            tilingSystemEnabled: Settings.behaviour.tilingSystem,
+            spanMultipleTilesEnabled: Settings.behaviour.spanMultipleTiles,
+            activeScreenEdgesEnabled: Settings.behaviour.activeScreenEdges,
+            snapAssistEnabled: Settings.behaviour.snapAssist,
             snapAssisting: this._snapAssistingInfo.isSnapAssisting,
             pointerNearEdge:
                 this._edgeTilingManager.canActivateEdgeTiling(currPointerPos),
@@ -653,7 +664,7 @@ export class TilingManager {
             squaredEuclideanDistance(currPointerPos, this._grabStartPosition)
         );
         if (sizeBeforeTile) {
-            if (Settings.RESTORE_WINDOW_ORIGINAL_SIZE) {
+            if (Settings.behaviour.restoreWindowOriginalSize) {
                 const windowRect = window.get_frame_rect();
                 const offsetX = (x - windowRect.x) / windowRect.width;
                 const offsetY = (y - windowRect.y) / windowRect.height;
@@ -782,7 +793,7 @@ export class TilingManager {
         const decision = decideDrop({
             tilingSystemKeyHeld: this._activationKeyStatus(
                 global.get_pointer()[2],
-                Settings.TILING_SYSTEM_ACTIVATION_KEY
+                Settings.behaviour.tilingSystemActivationKey
             ),
             snapAssisting: this._snapAssistingInfo.isSnapAssisting,
             snapAssistLayoutId: wasSnapAssistingLayout?.id,
@@ -790,14 +801,15 @@ export class TilingManager {
             edgeNeedsMaximize: this._edgeTilingManager.needMaximize(),
             windowCanMaximize: window.can_maximize(),
             edgeModeIsDefault:
-                Settings.EDGE_TILING_MODE === EdgeTilingMode.DEFAULT,
+                Settings.behaviour.edgeTilingMode === EdgeTilingMode.DEFAULT,
             suggestionsForSnapAssistant:
-                Settings.ENABLE_SNAP_ASSISTANT_WINDOWS_SUGGESTIONS,
+                Settings.behaviour.enableSnapAssistantWindowsSuggestions,
             suggestionsForEdgeTiling:
-                Settings.ENABLE_SCREEN_EDGES_WINDOWS_SUGGESTIONS,
+                Settings.behaviour.enableScreenEdgesWindowsSuggestions,
             suggestionsForTilingSystem:
-                Settings.ENABLE_TILING_SYSTEM_WINDOWS_SUGGESTIONS,
-            syncLayoutWithSnapAssistant: Settings.SNAP_ASSIST_SYNC_LAYOUT,
+                Settings.behaviour.enableTilingSystemWindowsSuggestions,
+            syncLayoutWithSnapAssistant:
+                Settings.behaviour.snapAssistSyncLayout,
             // abort if the pointer is moving on another monitor: the user moved
             // the window to another monitor not handled by this tiling manager
             pointerOnThisMonitor: this._isPointerInsideThisMonitor(window),
