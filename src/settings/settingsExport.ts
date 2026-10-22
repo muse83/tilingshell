@@ -1,10 +1,11 @@
 import { Gio, GLib } from '../gi/prefs';
 import Settings from '../settings/settings';
+import { KEY_LAYOUTS_JSON } from '../settings/layoutsSettings';
 import SettingsOverride from '../settings/settingsOverride';
 
 const dconfPath = '/org/gnome/shell/extensions/tilingshell/';
 const excludedKeys: string[] = [
-    Settings.KEY_SETTING_LAYOUTS_JSON,
+    KEY_LAYOUTS_JSON,
     Settings.KEY_REMEMBERED_WINDOWS,
     Settings.KEY_LAST_VERSION_NAME_INSTALLED,
     Settings.KEY_OVERRIDDEN_SETTINGS,

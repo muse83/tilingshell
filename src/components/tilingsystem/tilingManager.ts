@@ -16,6 +16,7 @@ import SnapAssist from '../snapassist/snapAssist';
 import SelectionTilePreview from '../tilepreview/selectionTilePreview';
 import { ActivationKey, EdgeTilingMode } from '../../settings/settings';
 import Settings from '../../settings/settings';
+import { SIGNAL_SELECTED_CHANGED } from '../../settings/layoutsSettings';
 import SignalHandling from '../../utils/signalHandling';
 import Layout from '../layout/Layout';
 import Tile from '../layout/Tile';
@@ -187,20 +188,16 @@ export class TilingManager {
      *  - handle grabbed window's movement.
      */
     public enable() {
-        this._signals.connect(
-            Settings,
-            Settings.KEY_SETTING_SELECTED_LAYOUTS,
-            () => {
-                const ws = global.workspaceManager.get_active_workspace();
-                if (!ws) return;
+        this._signals.connect(Settings.layouts, SIGNAL_SELECTED_CHANGED, () => {
+            const ws = global.workspaceManager.get_active_workspace();
+            if (!ws) return;
 
-                const layout = GlobalState.get().getSelectedLayoutOfMonitor(
-                    this._monitor.index,
-                    ws.index()
-                );
-                this._workspaceTilingLayout.get(ws)?.relayout({ layout });
-            }
-        );
+            const layout = GlobalState.get().getSelectedLayoutOfMonitor(
+                this._monitor.index,
+                ws.index()
+            );
+            this._workspaceTilingLayout.get(ws)?.relayout({ layout });
+        });
         this._signals.connect(
             GlobalState.get(),
             GlobalState.SIGNAL_LAYOUTS_CHANGED,

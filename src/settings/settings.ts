@@ -1,6 +1,6 @@
-import { Gio, GObject, GLib } from '../gi/shared';
-import Layout from '../components/layout/Layout';
-import Tile from '../components/layout/Tile';
+import { Gio, GObject } from '../gi/shared';
+import GnomeStorage from './gnomeStorage';
+import LayoutsSettings from './layoutsSettings';
 
 export enum ActivationKey {
     NONE = -1,
@@ -81,6 +81,7 @@ function set_activationkey(key: string, val: ActivationKey): boolean {
 export default class Settings {
     static _settings: Gio.Settings | null;
     static _is_initialized: boolean = false;
+    private static _layouts: LayoutsSettings | null = null;
 
     static KEY_LAST_VERSION_NAME_INSTALLED = 'last-version-name-installed';
     static KEY_OVERRIDDEN_SETTINGS = 'overridden-settings';
@@ -125,8 +126,6 @@ export default class Settings {
     static KEY_OUTER_GAPS = 'outer-gaps';
     static KEY_SNAP_ASSISTANT_ANIMATION_TIME = 'snap-assistant-animation-time';
     static KEY_TILE_PREVIEW_ANIMATION_TIME = 'tile-preview-animation-time';
-    static KEY_SETTING_LAYOUTS_JSON = 'layouts-json';
-    static KEY_SETTING_SELECTED_LAYOUTS = 'selected-layouts';
     static KEY_WINDOW_BORDER_WIDTH = 'window-border-width';
     static KEY_ENABLE_SMART_WINDOW_BORDER_RADIUS =
         'enable-smart-window-border-radius';
@@ -170,13 +169,22 @@ export default class Settings {
 
         this._is_initialized = true;
         this._settings = settings;
+        this._layouts = new LayoutsSettings(new GnomeStorage(settings));
     }
 
     static destroy() {
         if (this._is_initialized) {
             this._is_initialized = false;
+            this._layouts?.destroy();
+            this._layouts = null;
             this._settings = null;
         }
+    }
+
+    // the layouts group of the settings module (ADR 0008)
+    static get layouts(): LayoutsSettings {
+        if (!this._layouts) throw new Error('Settings are not initialized');
+        return this._layouts;
     }
 
     static get gioSetting(): Gio.Settings {
@@ -572,181 +580,6 @@ export default class Settings {
             left: value,
             right: value,
         };
-    }
-
-    static get_layouts_json(): Layout[] {
-        try {
-            const layouts = JSON.parse(
-                this._settings?.get_string(this.KEY_SETTING_LAYOUTS_JSON) ||
-                    '[]'
-            ) as Layout[];
-            if (layouts.length === 0)
-                throw new Error('At least one layout is required');
-            return layouts.filter(layout => layout.tiles.length > 0);
-        } catch (_unused) {
-            this.reset_layouts_json();
-            return JSON.parse(
-                this._settings?.get_string(this.KEY_SETTING_LAYOUTS_JSON) ||
-                    '[]'
-            ) as Layout[];
-        }
-    }
-
-    static get_selected_layouts(): string[][] {
-        const variant = this._settings?.get_value(
-            Settings.KEY_SETTING_SELECTED_LAYOUTS
-        );
-        if (!variant) return [];
-
-        const result: string[][] = [];
-        // for each monitor
-        for (let i = 0; i < variant.n_children(); i++) {
-            const monitor_variant = variant.get_child_value(i);
-            if (!monitor_variant) continue;
-
-            const n_workspaces = monitor_variant.n_children();
-            const monitor_result: string[] = [];
-            // for each workspace
-            for (let j = 0; j < n_workspaces; j++) {
-                const layout_variant = monitor_variant.get_child_value(j);
-                if (!layout_variant) continue;
-
-                monitor_result.push(layout_variant.get_string()[0]);
-            }
-            result.push(monitor_result);
-        }
-        return result;
-    }
-
-    static reset_layouts_json() {
-        this.save_layouts_json([
-            new Layout(
-                [
-                    new Tile({
-                        x: 0,
-                        y: 0,
-                        height: 0.5,
-                        width: 0.22,
-                        groups: [1, 2],
-                    }), // top-left
-                    new Tile({
-                        x: 0,
-                        y: 0.5,
-                        height: 0.5,
-                        width: 0.22,
-                        groups: [1, 2],
-                    }), // bottom-left
-                    new Tile({
-                        x: 0.22,
-                        y: 0,
-                        height: 1,
-                        width: 0.56,
-                        groups: [2, 3],
-                    }), // center
-                    new Tile({
-                        x: 0.78,
-                        y: 0,
-                        height: 0.5,
-                        width: 0.22,
-                        groups: [3, 4],
-                    }), // top-right
-                    new Tile({
-                        x: 0.78,
-                        y: 0.5,
-                        height: 0.5,
-                        width: 0.22,
-                        groups: [3, 4],
-                    }), // bottom-right
-                ],
-                'Layout 1'
-            ),
-            new Layout(
-                [
-                    new Tile({
-                        x: 0,
-                        y: 0,
-                        height: 1,
-                        width: 0.22,
-                        groups: [1],
-                    }),
-                    new Tile({
-                        x: 0.22,
-                        y: 0,
-                        height: 1,
-                        width: 0.56,
-                        groups: [1, 2],
-                    }),
-                    new Tile({
-                        x: 0.78,
-                        y: 0,
-                        height: 1,
-                        width: 0.22,
-                        groups: [2],
-                    }),
-                ],
-                'Layout 2'
-            ),
-            new Layout(
-                [
-                    new Tile({
-                        x: 0,
-                        y: 0,
-                        height: 1,
-                        width: 0.33,
-                        groups: [1],
-                    }),
-                    new Tile({
-                        x: 0.33,
-                        y: 0,
-                        height: 1,
-                        width: 0.67,
-                        groups: [1],
-                    }),
-                ],
-                'Layout 3'
-            ),
-            new Layout(
-                [
-                    new Tile({
-                        x: 0,
-                        y: 0,
-                        height: 1,
-                        width: 0.67,
-                        groups: [1],
-                    }),
-                    new Tile({
-                        x: 0.67,
-                        y: 0,
-                        height: 1,
-                        width: 0.33,
-                        groups: [1],
-                    }),
-                ],
-                'Layout 4'
-            ),
-        ]);
-    }
-
-    static save_layouts_json(layouts: Layout[]) {
-        this._settings?.set_string(
-            this.KEY_SETTING_LAYOUTS_JSON,
-            JSON.stringify(layouts)
-        );
-    }
-
-    static save_selected_layouts(ids: string[][]) {
-        if (ids.length === 0) {
-            this._settings?.reset(Settings.KEY_SETTING_SELECTED_LAYOUTS);
-            return;
-        }
-        const variants = ids.map(monitor_ids =>
-            GLib.Variant.new_strv(monitor_ids)
-        );
-        const result = GLib.Variant.new_array(null, variants);
-        this._settings?.set_value(
-            Settings.KEY_SETTING_SELECTED_LAYOUTS,
-            result
-        );
     }
 
     static connect(key: string, func: (..._arg: unknown[]) => void): number {

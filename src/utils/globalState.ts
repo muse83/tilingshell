@@ -1,6 +1,10 @@
 import { registerGObjectClass } from '../utils/gjs';
 import Layout from '../components/layout/Layout';
 import Settings from '../settings/settings';
+import {
+    SIGNAL_LAYOUTS_CHANGED,
+    SIGNAL_SELECTED_CHANGED,
+} from '../settings/layoutsSettings';
 import SignalHandling from './signalHandling';
 import { GObject, Meta, Gio } from '../gi/ext';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -38,7 +42,6 @@ export default class GlobalState extends GObject.Object {
     private static _instance: GlobalState | null;
 
     private _signals: SignalHandling;
-    private _layouts: Layout[];
     private _tilePreviewAnimationTime: number;
     // if workspaces are reordered, we use this map to know which layouts where selected
     // to each workspace and we save the new ordering in the settings
@@ -53,7 +56,6 @@ export default class GlobalState extends GObject.Object {
     static destroy() {
         if (this._instance) {
             this._instance._signals.disconnect();
-            this._instance._layouts = [];
             this._instance = null;
         }
     }
@@ -62,7 +64,6 @@ export default class GlobalState extends GObject.Object {
         super();
 
         this._signals = new SignalHandling();
-        this._layouts = Settings.get_layouts_json();
         this._tilePreviewAnimationTime = 100;
         this._selected_layouts = new Map();
         this.validate_selected_layouts();
@@ -73,46 +74,37 @@ export default class GlobalState extends GObject.Object {
             'tilePreviewAnimationTime',
             Gio.SettingsBindFlags.GET
         );
-        this._signals.connect(
-            Settings,
-            Settings.KEY_SETTING_LAYOUTS_JSON,
-            () => {
-                this._layouts = Settings.get_layouts_json();
-                this.emit(GlobalState.SIGNAL_LAYOUTS_CHANGED);
-            }
+        // the layouts group reloads; this only forwards its announcement
+        this._signals.connect(Settings.layouts, SIGNAL_LAYOUTS_CHANGED, () =>
+            this.emit(GlobalState.SIGNAL_LAYOUTS_CHANGED)
         );
 
-        this._signals.connect(
-            Settings,
-            Settings.KEY_SETTING_SELECTED_LAYOUTS,
-            () => {
-                const selected_layouts = Settings.get_selected_layouts();
-                if (selected_layouts.length === 0) {
-                    this.validate_selected_layouts();
-                    return;
-                }
-
-                const defaultLayout: Layout = this._layouts[0];
-                const n_monitors = Main.layoutManager.monitors.length;
-                const n_workspaces = global.workspaceManager.get_n_workspaces();
-                for (let i = 0; i < n_workspaces; i++) {
-                    const ws =
-                        global.workspaceManager.get_workspace_by_index(i);
-                    if (!ws) continue;
-
-                    const monitors_layouts =
-                        i < selected_layouts.length
-                            ? selected_layouts[i]
-                            : [defaultLayout.id];
-                    while (monitors_layouts.length < n_monitors)
-                        monitors_layouts.push(defaultLayout.id);
-                    while (monitors_layouts.length > n_monitors)
-                        monitors_layouts.pop();
-
-                    this._selected_layouts.set(ws, monitors_layouts);
-                }
+        this._signals.connect(Settings.layouts, SIGNAL_SELECTED_CHANGED, () => {
+            const selected_layouts = Settings.layouts.selected;
+            if (selected_layouts.length === 0) {
+                this.validate_selected_layouts();
+                return;
             }
-        );
+
+            const defaultLayout: Layout = this.layouts[0];
+            const n_monitors = Main.layoutManager.monitors.length;
+            const n_workspaces = global.workspaceManager.get_n_workspaces();
+            for (let i = 0; i < n_workspaces; i++) {
+                const ws = global.workspaceManager.get_workspace_by_index(i);
+                if (!ws) continue;
+
+                const monitors_layouts =
+                    i < selected_layouts.length
+                        ? selected_layouts[i]
+                        : [defaultLayout.id];
+                while (monitors_layouts.length < n_monitors)
+                    monitors_layouts.push(defaultLayout.id);
+                while (monitors_layouts.length > n_monitors)
+                    monitors_layouts.pop();
+
+                this._selected_layouts.set(ws, monitors_layouts);
+            }
+        });
 
         this._signals.connect(
             global.workspaceManager,
@@ -139,7 +131,7 @@ export default class GlobalState extends GObject.Object {
                 if (secondLastWsLayoutsId.length === 0) {
                     secondLastWsLayoutsId.push(
                         ...Main.layoutManager.monitors.map(
-                            () => this._layouts[0].id
+                            () => this.layouts[0].id
                         )
                     );
                 }
@@ -159,7 +151,7 @@ export default class GlobalState extends GObject.Object {
                     to_be_saved.push(monitors_layouts);
                 }
 
-                Settings.save_selected_layouts(to_be_saved);
+                Settings.layouts.setSelected(to_be_saved);
             }
         );
 
@@ -181,7 +173,7 @@ export default class GlobalState extends GObject.Object {
                     newMap.set(ws, monitors_layouts);
                     to_be_saved.push(monitors_layouts);
                 }
-                Settings.save_selected_layouts(to_be_saved);
+                Settings.layouts.setSelected(to_be_saved);
 
                 this._selected_layouts.clear();
                 this._selected_layouts = newMap;
@@ -201,7 +193,7 @@ export default class GlobalState extends GObject.Object {
 
     public validate_selected_layouts() {
         const n_monitors = Main.layoutManager.monitors.length;
-        const old_selected_layouts = Settings.get_selected_layouts();
+        const old_selected_layouts = Settings.layouts.selected;
         for (let i = 0; i < global.workspaceManager.get_n_workspaces(); i++) {
             const ws = global.workspaceManager.get_workspace_by_index(i);
             if (!ws) continue;
@@ -209,12 +201,12 @@ export default class GlobalState extends GObject.Object {
             const monitors_layouts =
                 i < old_selected_layouts.length ? old_selected_layouts[i] : [];
             while (monitors_layouts.length < n_monitors)
-                monitors_layouts.push(this._layouts[0].id);
+                monitors_layouts.push(this.layouts[0].id);
             while (monitors_layouts.length > n_monitors) monitors_layouts.pop();
 
             monitors_layouts.forEach((_, ind) => {
                 if (
-                    this._layouts.findIndex(
+                    this.layouts.findIndex(
                         lay => lay.id === monitors_layouts[ind]
                     ) === -1
                 )
@@ -238,29 +230,26 @@ export default class GlobalState extends GObject.Object {
             to_be_saved.push(monitors_layouts);
         }
 
-        Settings.save_selected_layouts(to_be_saved);
+        Settings.layouts.setSelected(to_be_saved);
     }
 
     get layouts(): Layout[] {
-        return this._layouts;
+        return Settings.layouts.layouts;
     }
 
     public addLayout(newLay: Layout) {
-        this._layouts.push(newLay);
-        // easy way to trigger save and signal emission
-        this.layouts = this._layouts;
+        this.layouts = [...this.layouts, newLay];
     }
 
     public deleteLayout(layoutToDelete: Layout) {
-        const layFoundIndex = this._layouts.findIndex(
+        const layFoundIndex = this.layouts.findIndex(
             lay => lay.id === layoutToDelete.id
         );
         if (layFoundIndex === -1) return;
 
-        this._layouts.splice(layFoundIndex, 1);
-
-        // easy way to trigger a save and emit layouts-changed signal
-        this.layouts = this._layouts;
+        this.layouts = this.layouts.filter(
+            (_, index) => index !== layFoundIndex
+        );
 
         this._selected_layouts.forEach(monitors_selected => {
             if (
@@ -268,42 +257,39 @@ export default class GlobalState extends GObject.Object {
                 monitors_selected[Main.layoutManager.primaryIndex]
             ) {
                 monitors_selected[Main.layoutManager.primaryIndex] =
-                    this._layouts[0].id;
+                    this.layouts[0].id;
                 this._save_selected_layouts();
             }
         });
     }
 
     public editLayout(newLay: Layout) {
-        const layFoundIndex = this._layouts.findIndex(
+        const layFoundIndex = this.layouts.findIndex(
             lay => lay.id === newLay.id
         );
         if (layFoundIndex === -1) return;
 
-        this._layouts[layFoundIndex] = newLay;
-        // easy way to trigger save and signal emission
-        this.layouts = this._layouts;
+        this.layouts = this.layouts.map((lay, index) =>
+            index === layFoundIndex ? newLay : lay
+        );
     }
 
     public swapLayouts(first: number, second: number) {
-        const tmp = this._layouts[first];
-        this._layouts[first] = this._layouts[second];
-        this._layouts[second] = tmp;
-        // easy way to trigger save and signal emission
-        this.layouts = this._layouts;
+        const layouts = [...this.layouts];
+        [layouts[first], layouts[second]] = [layouts[second], layouts[first]];
+        this.layouts = layouts;
     }
 
+    // saving makes the layouts group reload and announce, which we forward
     set layouts(layouts: Layout[]) {
-        this._layouts = layouts;
-        Settings.save_layouts_json(layouts);
-        this.emit(GlobalState.SIGNAL_LAYOUTS_CHANGED);
+        Settings.layouts.setLayouts(layouts);
     }
 
     public getSelectedLayoutOfMonitor(
         monitorIndex: number,
         workspaceIndex: number
     ): Layout {
-        const selectedLayouts = Settings.get_selected_layouts();
+        const selectedLayouts = Settings.layouts.selected;
         if (workspaceIndex < 0 || workspaceIndex >= selectedLayouts.length)
             workspaceIndex = 0;
 
@@ -315,9 +301,9 @@ export default class GlobalState extends GObject.Object {
             monitorIndex = 0;
 
         return (
-            this._layouts.find(
+            this.layouts.find(
                 lay => lay.id === monitors_selected[monitorIndex]
-            ) || this._layouts[0]
+            ) || this.layouts[0]
         );
     }
 
@@ -334,7 +320,7 @@ export default class GlobalState extends GObject.Object {
         monitorIndex: number
     ) {
         // get the currently selected layouts
-        const selected = Settings.get_selected_layouts();
+        const selected = Settings.layouts.selected;
         // select the layout for the given monitor
         selected[global.workspaceManager.get_active_workspace_index()][
             monitorIndex
@@ -356,9 +342,7 @@ export default class GlobalState extends GObject.Object {
 
             // check if there are tiled windows on that monitor and in the last workspace
             const tiledWindows = getWindows(lastWs).find(
-                win =>
-                    isTiled(win) &&
-                    win.get_monitor() === monitorIndex
+                win => isTiled(win) && win.get_monitor() === monitorIndex
             );
             if (!tiledWindows) {
                 // the last workspace, on that monitor, is empty
@@ -367,6 +351,6 @@ export default class GlobalState extends GObject.Object {
             }
         }
 
-        Settings.save_selected_layouts(selected);
+        Settings.layouts.setSelected(selected);
     }
 }

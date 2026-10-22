@@ -5,6 +5,10 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { getMonitors, getScalingFactorOf } from '../utils/ui';
 import Settings from '../settings/settings';
 import {
+    SIGNAL_LAYOUTS_CHANGED,
+    SIGNAL_SELECTED_CHANGED,
+} from '../settings/layoutsSettings';
+import {
     displayScale,
     styleWidgetForItsMonitor,
 } from '../components/displayScale/gnomeDisplayScale';
@@ -164,44 +168,36 @@ export default class DefaultMenu implements CurrentMenu {
         this._layoutsRows = [];
         this._drawLayouts();
         // update the layouts shown by the indicator when they are modified
-        this._signals.connect(
-            Settings,
-            Settings.KEY_SETTING_LAYOUTS_JSON,
-            () => {
-                this._drawLayouts();
-            }
-        );
+        this._signals.connect(Settings.layouts, SIGNAL_LAYOUTS_CHANGED, () => {
+            this._drawLayouts();
+        });
         this._signals.connect(Settings, Settings.KEY_INNER_GAPS, () => {
             this._drawLayouts();
         });
 
         // if the selected layout was changed externaly, update the selected button
-        this._signals.connect(
-            Settings,
-            Settings.KEY_SETTING_SELECTED_LAYOUTS,
-            () => {
-                this._updateScaling();
-                if (this._layoutsRows.length !== getMonitors().length)
-                    this._drawLayouts();
+        this._signals.connect(Settings.layouts, SIGNAL_SELECTED_CHANGED, () => {
+            this._updateScaling();
+            if (this._layoutsRows.length !== getMonitors().length)
+                this._drawLayouts();
 
-                const selected_layouts = Settings.get_selected_layouts();
-                const wsIndex =
-                    global.workspaceManager.get_active_workspace_index();
-                getMonitors().forEach((m, index) => {
-                    const selectedId =
-                        wsIndex < selected_layouts.length
-                            ? selected_layouts[wsIndex][index]
-                            : GlobalState.get().layouts[0].id;
-                    this._layoutsRows[index].selectLayout(selectedId);
-                });
-            }
-        );
+            const selected_layouts = Settings.layouts.selected;
+            const wsIndex =
+                global.workspaceManager.get_active_workspace_index();
+            getMonitors().forEach((m, index) => {
+                const selectedId =
+                    wsIndex < selected_layouts.length
+                        ? selected_layouts[wsIndex][index]
+                        : GlobalState.get().layouts[0].id;
+                this._layoutsRows[index].selectLayout(selectedId);
+            });
+        });
 
         this._signals.connect(
             global.workspaceManager,
             'active-workspace-changed',
             () => {
-                const selected_layouts = Settings.get_selected_layouts();
+                const selected_layouts = Settings.layouts.selected;
                 const wsIndex =
                     global.workspaceManager.get_active_workspace_index();
                 getMonitors().forEach((m, index) => {
@@ -325,7 +321,7 @@ export default class DefaultMenu implements CurrentMenu {
         this._container.destroy_all_children();
         this._layoutsRows = [];
 
-        const selected_layouts = Settings.get_selected_layouts();
+        const selected_layouts = Settings.layouts.selected;
         const ws_index = global.workspaceManager.get_active_workspace_index();
         const monitors = getMonitors();
         this._layoutsRows = monitors.map(monitor => {

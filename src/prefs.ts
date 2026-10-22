@@ -488,7 +488,7 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                                     `Create file with path ${file.get_path()}`
                                 );
                                 const content = JSON.stringify(
-                                    Settings.get_layouts_json()
+                                    Settings.layouts.layouts
                                 );
                                 file.replace_contents_bytes_async(
                                     new TextEncoder().encode(content),
@@ -559,10 +559,10 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
                                     importedLayouts = importedLayouts.filter(
                                         layout => layout.tiles.length > 0
                                     );
-                                    const newLayouts =
-                                        Settings.get_layouts_json();
-                                    newLayouts.push(...importedLayouts);
-                                    Settings.save_layouts_json(newLayouts);
+                                    Settings.layouts.setLayouts([
+                                        ...Settings.layouts.layouts,
+                                        ...importedLayouts,
+                                    ]);
                                 } else {
                                     debug('Error while opening file');
                                 }
@@ -585,13 +585,13 @@ export default class TilingShellExtensionPreferences extends ExtensionPreference
             _('Reset layouts'),
             _('Bring back the default layouts'),
             () => {
-                Settings.reset_layouts_json();
-                const layouts = Settings.get_layouts_json();
-                const newSelectedLayouts = Settings.get_selected_layouts().map(
+                Settings.layouts.resetLayouts();
+                const layouts = Settings.layouts.layouts;
+                const newSelectedLayouts = Settings.layouts.selected.map(
                     monitors_selected =>
                         monitors_selected.map(() => layouts[0].id)
                 );
-                Settings.save_selected_layouts(newSelectedLayouts);
+                Settings.layouts.setSelected(newSelectedLayouts);
             },
             'destructive-action'
         );
