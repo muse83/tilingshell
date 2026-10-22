@@ -38,3 +38,27 @@ order that is written down nowhere. Only the shell can run any of it, so none of
   and deletion of the old class, last the start/stop module (issues #27 to #30, parent #21).
 - Preferences runs in its own process and initialises the settings itself; the module must work in
   both processes.
+
+## Amendment: Layouts group and storage seam (issue 27, 2026-10-22)
+- Storage interface (`storage.ts`): strings, lists of string lists, reset, and `onChange` per key.
+  Adapters: GNOME (`gnomeStorage.ts`) and in-memory (`MemoryStorage`). Like GNOME settings, the
+  in-memory adapter reports no change when a value is written unchanged.
+- Layouts group (`layoutsSettings.ts`) holds the layout list and the selected layouts per workspace
+  and monitor. It offers `connect`/`disconnect` (GObject style, so `SignalHandling` can hold the
+  connection) for two announcements: layouts changed, selected layouts changed. It is created in
+  `Settings.initialize`, reachable as `Settings.layouts`, and works in the extension and in
+  preferences.
+- Deviation from the ticket's expand step: the old layout methods of the wide settings class were
+  deleted at once and all callers moved, because keeping them would leave a second place that
+  re-reads layouts.
+- Kept 1:1: broken or empty data is repaired to the default layouts; layouts without tiles are
+  filtered out; if that leaves nothing, nothing is repaired (as before).
+- Differences to before: repair runs when the group is created and when the key changes, not on every
+  read. The global state's layouts-changed signal now fires only when the stored layouts really
+  changed (before: on every save). The layout list handed out is the group's shared array; callers
+  replace it through `setLayouts`, they do not mutate it.
+- Checked in the dev stack: extension active, preferences build without errors, broken layout data
+  written from outside is repaired by the running extension at once. Editing layouts by clicking in
+  preferences cannot be done there (no interactive access).
+- Left for later tickets: the global state now only passes layout access through; the layout import
+  in preferences filters empty layouts a second time.
